@@ -56,6 +56,13 @@ export class LiveFieldController extends EventEmitter
 
 		this.DOM.outerWrap = this.DOM.wrap.appendChild(Tag.render`<div class="calendar-resbook-webform-wrapper"></div>`);
 
+		if (this.isCrmWebFormIdentificationMissing())
+		{
+			this.showPreviewUnavailableNotice();
+
+			return;
+		}
+
 		this.showMainLoader();
 		this.requireFormData().then(()=>{
 			this.hideMainLoader();
@@ -66,6 +73,11 @@ export class LiveFieldController extends EventEmitter
 
 	check()
 	{
+		if (this.previewUnavailable)
+		{
+			return true;
+		}
+
 		let result = true;
 
 		if (this.usersDisplayed() && !this.getSelectedUser())
@@ -115,16 +127,23 @@ export class LiveFieldController extends EventEmitter
 
 	buildFormControls()
 	{
-		this.DOM.innerWrap = this.DOM.outerWrap.appendChild(Tag.render`<div class="calendar-resbook-webform-inner"></div>`);
-		this.DOM.inputsWrap = this.DOM.innerWrap.appendChild(Tag.render`<div></div>`);
+		this.DOM.inputsWrap = this.getInnerWrap().appendChild(Tag.render`<div></div>`);
 
 		if (!this.getFieldParams())
 		{
-			this.statusControl = new StatusInformer({
-				outerWrap: this.DOM.innerWrap
-			});
-			this.statusControl.refresh({});
-			this.statusControl.setError('[UF_NOT_FOUND] ' + Loc.getMessage('WEBF_RES_BOOKING_UF_WARNING'));
+			// inside the form editor an unsaved field has no stored settings yet, so it is not a misconfiguration
+			if (this.params.editorPreview === true)
+			{
+				this.showPreviewUnavailableNotice();
+			}
+			else
+			{
+				this.statusControl = new StatusInformer({
+					outerWrap: this.DOM.innerWrap
+				});
+				this.statusControl.refresh({});
+				this.statusControl.setError('[UF_NOT_FOUND] ' + Loc.getMessage('WEBF_RES_BOOKING_UF_WARNING'));
+			}
 		}
 		else
 		{
@@ -147,6 +166,36 @@ export class LiveFieldController extends EventEmitter
 				this.refreshControlsState();
 			}
 		}
+	}
+
+	getInnerWrap()
+	{
+		this.DOM.innerWrap = this.DOM.innerWrap
+			|| this.DOM.outerWrap.appendChild(Tag.render`<div class="calendar-resbook-webform-inner"></div>`);
+
+		return this.DOM.innerWrap;
+	}
+
+	showPreviewUnavailableNotice()
+	{
+		this.previewUnavailable = true;
+		this.statusControl = new StatusInformer({
+			outerWrap: this.getInnerWrap(),
+		});
+		this.statusControl.refresh({});
+		this.statusControl.setNotice(Loc.getMessage('WEBF_RES_BOOKING_PREVIEW_SAVE_FORM_NOTICE'));
+	}
+
+	isCrmWebFormIdentificationMissing()
+	{
+		if (this.params.sourceType !== 'crm-webform')
+		{
+			return false;
+		}
+
+		const formId = Number(this.params.formId);
+
+		return !Number.isSafeInteger(formId) || formId <= 0 || !this.params.sec;
 	}
 
 	refreshControlsState()
@@ -354,14 +403,7 @@ export class LiveFieldController extends EventEmitter
 
 		return new Promise((resolve, reject) => {
 			let
-				data = {
-					settingsData: this.getSettingsData() || null
-				};
-
-			if (!this.userFieldParams)
-			{
-				data.fieldName = this.params.field.entity_field_name;
-			}
+				data = {};
 
 			let
 				dateFrom = Type.isDate(params.from) ? params.from : new Date(),
@@ -379,6 +421,11 @@ export class LiveFieldController extends EventEmitter
 
 			data.from = BookingUtil.formatDate(this.DATE_FORMAT, dateFrom);
 			data.to = BookingUtil.formatDate(this.DATE_FORMAT, dateTo);
+
+			data.sourceType = this.params.sourceType || '';
+			data.formId = this.params.formId || 0;
+			data.sec = this.params.sec || '';
+			data.fieldCode = this.params.fieldCode || this.params.field.name;
 
 			this.setLoadedDataLimits(dateFrom, dateTo);
 

@@ -96,7 +96,24 @@ jn.define('im/messenger/lib/reaction-assets-manager', (require, exports, module)
 		 */
 		getPackByType(type)
 		{
-			return ReactionPack.getPackByReactionIds(type, OrderType.DEFAULT, true);
+			return ReactionPack.getPackByReactionIds(type, OrderType.DEFAULT, true, this.#getDefaultReaction());
+		}
+
+		/**
+		 * @desc Returns the reaction to pin first in the quick row/menu. When the main-reaction
+		 * feature is unavailable on the native side, falls back to the pre-feature baseline
+		 * ("like"), so the row behaves exactly as before. Otherwise returns the user's main
+		 * reaction from the model (falling back to "like").
+		 * @return {string}
+		 */
+		#getDefaultReaction()
+		{
+			if (!Feature.isDefaultReactionAvailable)
+			{
+				return ReactionType.like;
+			}
+
+			return this.store.getters['applicationModel/getDefaultReaction']() || ReactionType.like;
 		}
 
 		/**
@@ -191,7 +208,12 @@ jn.define('im/messenger/lib/reaction-assets-manager', (require, exports, module)
 		{
 			try
 			{
-				const packFromCache = ReactionPack.getCurrentUserFavoritePackFromCache(REACTION_MESSAGE_MENU_COUNT);
+				const packFromCache = ReactionPack.getCurrentUserFavoritePackFromCache(
+					REACTION_MESSAGE_MENU_COUNT,
+					true,
+					false,
+					this.#getDefaultReaction(),
+				);
 				if (Type.isArrayFilled(packFromCache))
 				{
 					return packFromCache;
@@ -199,14 +221,25 @@ jn.define('im/messenger/lib/reaction-assets-manager', (require, exports, module)
 
 				this.logger.warn('getTopReactions warn, favorites pack is empty, default pack will be used');
 
-				return this.getPackByType(ReactionPack.QUICK);
+				return this.#getQuickFallbackPack();
 			}
 			catch (error)
 			{
 				this.logger.error('getTopReactions error, default pack will be used:', error);
 
-				return this.getPackByType(ReactionPack.QUICK);
+				return this.#getQuickFallbackPack();
 			}
+		}
+
+		/**
+		 * @desc Default QUICK pack for the message menu with the main reaction pinned first.
+		 * Capped at REACTION_MESSAGE_MENU_COUNT so a main reaction outside QUICK does not
+		 * push the row past the menu limit (the pinned primary keeps index 0).
+		 * @return {Array<ReactionData>}
+		 */
+		#getQuickFallbackPack()
+		{
+			return this.getPackByType(ReactionPack.QUICK).slice(0, REACTION_MESSAGE_MENU_COUNT);
 		}
 
 		/**

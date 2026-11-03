@@ -23,17 +23,33 @@ export const FieldAdd = {
 			type: Boolean,
 			default: false,
 		},
+		withTabStop: {
+			type: Boolean,
+			default: true,
+		},
 		isLocked: {
 			type: Boolean,
 			default: false,
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+		ariaHaspopup: {
+			type: String,
+			default: '',
+		},
+		ariaExpanded: {
+			type: Boolean,
+			default: null,
+		},
 	},
 	template: `
-		<HoverPill>
+		<HoverPill :ariaLabel :ariaHaspopup :ariaExpanded :withTabStop>
 			<div :class="['b24-field-add', { '--disabled': disabled }]">
-				<BIcon :name="icon"/>
+				<BIcon :name="icon" aria-hidden="true"/>
 				<div>{{ loc('TASKS_V2_FIELD_ADD') }}</div>
-				<BIcon v-if="isLocked" :name="Outline.LOCK_L" class="b24-field-add__lock"/>
+				<BIcon v-if="isLocked" :name="Outline.LOCK_L" class="b24-field-add__lock" aria-hidden="true"/>
 			</div>
 		</HoverPill>
 	`,

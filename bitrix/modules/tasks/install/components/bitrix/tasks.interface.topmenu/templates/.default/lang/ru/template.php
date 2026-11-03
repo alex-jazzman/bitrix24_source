@@ -17,3 +17,5 @@ $MESS["TASKS_PANEL_TEXT_EFFECTIVE"] = "<strong>Эффективность</stron
 
 $MESS["TASKS_PANEL_TAB_SCRUM"] = "Скрам";
 $MESS["TASKS_PANEL_TAB_FLOW"] = "Потоки";
+
+$MESS["TASKS_PANEL_NAV_ARIA_LABEL"] = "Разделы задач";

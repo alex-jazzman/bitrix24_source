@@ -1,9 +1,24 @@
 .tasks-task-line-expand-toggle {
+	font: inherit;
+	text-align: inherit;
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	/* The card scrolls the control flush with its edge, where the ring would not fit. */
+	scroll-margin-block: 4px;
+}
+
+.tasks-task-line-expand-toggle:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.tasks-task-line-expand-toggle {
 	grid-column: 1 / -1;
 	display: flex;
 	align-items: center;
 	padding: 1px 0;
-	cursor: pointer;
 	--ui-icon-set__icon-size: 16px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }

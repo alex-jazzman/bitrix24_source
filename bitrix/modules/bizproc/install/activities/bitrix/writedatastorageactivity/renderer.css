@@ -21,11 +21,6 @@ div[data-role="start-storage-selector"]
 	padding: 12px;
 }
 
-/* the dialog draws its own caption for the property, the visible title lives inside the block */
-#row_write_fields .node-settings-edit-caption {
-	display: none;
-}
-
 .bizproc-write-activity__fields-title {
 	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-xl);

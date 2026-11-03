@@ -53,7 +53,10 @@ export class SettingsPanel
 	render(): void
 	{
 		const list = Tag.render`
-			<div class="biconnector-settings-panel__card-list"></div>
+			<div
+				class="biconnector-settings-panel__card-list"
+				data-testid="biconnector-settings-panel"
+			></div>
 		`;
 
 		for (const card of this.#cards)

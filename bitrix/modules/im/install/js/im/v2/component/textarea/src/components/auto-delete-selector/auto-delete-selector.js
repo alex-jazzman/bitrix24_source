@@ -1,6 +1,7 @@
-import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
+import { Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { AutoDeletePopup, AutoDeleteHint } from 'im.v2.component.elements.auto-delete';
+import { IconButton } from 'im.v2.component.elements.icon-button';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { AutoDeleteManager } from 'im.v2.lib.auto-delete';
 import { Color } from 'im.v2.const';
@@ -12,7 +13,7 @@ const ICON_SIZE = 24;
 
 export const AutoDeleteSelector = {
 	name: 'AutoDeleteSelector',
-	components: { BIcon, AutoDeleteHint, AutoDeletePopup },
+	components: { IconButton, AutoDeleteHint, AutoDeletePopup },
 	props:
 	{
 		dialogId: {
@@ -94,12 +95,14 @@ export const AutoDeleteSelector = {
 	},
 	template: `
 		<div ref="autoDeleteIcon" class="bx-im-textarea__icon-container">
-			<BIcon 
-				:name="OutlineIcons.TIMER_DOT"
-				:color="Color.accentBlue"
-				:title="loc('IM_TEXTAREA_AUTO_DELETE_TITLE')"
-				:size="ICON_SIZE"
+			<IconButton
+				:iconName="OutlineIcons.TIMER_DOT"
+				:label="loc('IM_TEXTAREA_AUTO_DELETE_TITLE')"
+				:iconColor="Color.accentBlue"
+				:iconSize="ICON_SIZE"
+				:expanded="showAutoDeleteMessagesPopup"
 				class="bx-im-textarea__icon"
+				data-testid="im-textarea-auto-delete-btn"
 				@click="onIconClick"
 			/>
 		</div>

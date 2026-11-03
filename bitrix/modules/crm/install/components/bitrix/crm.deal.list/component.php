@@ -23,6 +23,7 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\RepeatSaleDataProvider\Segments;
 use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Filter\RelatedEntity;
+use Bitrix\Crm\Integration\BizProc\ListDocumentStateReader;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
@@ -312,6 +313,8 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
 $arResult['DISABLE_NAVIGATION_BAR'] = $arParams['DISABLE_NAVIGATION_BAR'] ?? 'N';
 $arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
+$arResult['IS_REPEAT_SALE_WIDGET_DEAL_GRID'] =
+	Context::getCurrent()->getRequest()->getQuery('repeatSaleWidgetDealGrid') === 'Y';
 
 $arResult['HAVE_CUSTOM_CATEGORIES'] = DealCategory::isCustomized();
 
@@ -734,7 +737,13 @@ if (!$bInternal || $isExtendedInternal)
 		$effectiveFilterFieldIDs[] = 'CONTACT_ID';
 	}
 
+	if (!in_array('DATE_CREATE', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'DATE_CREATE';
+	}
+
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
+	(new Crm\RepeatSale\Segment\Field())->appendEffectiveFilterFields($effectiveFilterFieldIDs);
 
 	//Is necessary for deal funnel filter.
 	if ($arResult['CATEGORY_ID'] >= 0)
@@ -772,6 +781,12 @@ $arResult['HEADERS'] = array(
 	array('id' => 'DEAL_SUMMARY', 'name' => Loc::getMessage('CRM_COLUMN_DEAL'), 'sort' => 'title', 'width' => 200, 'default' => true, 'editable' => true),
 	array('id' => 'CATEGORY_ID', 'name' => Loc::getMessage('CRM_COLUMN_CATEGORY_ID'), 'sort' => 'category_id', 'default' => false),
 	array('id' => 'IS_RETURN_CUSTOMER', 'name' => Loc::getMessage('CRM_COLUMN_IS_RETURN_CUSTOMER'), 'sort' => 'is_return_customer', 'default' => false),
+	[
+		'id' => 'OPENED',
+		'name' => \CCrmDeal::GetFieldCaption('OPENED'),
+		'sort' => false,
+		'default' => false,
+	],
 	array('id' => 'IS_REPEATED_APPROACH', 'name' => Loc::getMessage('CRM_COLUMN_IS_REPEATED_APPROACH'), 'sort' => 'is_repeated_approach', 'default' => false),
 );
 
@@ -1120,7 +1135,9 @@ else
 				'id' => 'SOURCE_ID',
 				'name' => Loc::getMessage('CRM_COLUMN_SOURCE'),
 				'sort' => 'source_id',
-				'editable' => ['items' => CCrmStatus::GetStatusList('SOURCE')],
+				'editable' => [
+					'items' => Crm\Filter\SourceDataProvider::getListWithEmptyValue(),
+				],
 				'type' => 'list',
 			],
 			[
@@ -2511,6 +2528,22 @@ $myCompanies =
 ;
 unset($myCompanyIds);
 
+$allDocumentStates = [];
+if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['DEAL']))
+{
+	$entityIds = array_map(function ($item)
+		{
+			return "DEAL_{$item['ID']}";
+		},
+		$arResult['DEAL']);
+
+	$allDocumentStates = (new ListDocumentStateReader())->read(
+		['crm', 'CCrmDocumentDeal', 'DEAL'],
+		$entityIds,
+		true,
+	);
+}
+
 foreach($arResult['DEAL'] as &$arDeal)
 {
 	$entityID = $arDeal['ID'];
@@ -2813,8 +2846,11 @@ foreach($arResult['DEAL'] as &$arDeal)
 		}
 	}
 
-	$arDeal['DEAL_LEGEND'] = isset($arDeal['SOURCE_ID']) && isset($arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']])
-		? $arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] : '';
+	$sourceID = $arDeal['~SOURCE_ID'] ?? $arDeal['SOURCE_ID'] ?? '';
+	$arDeal['~SOURCE_ID'] = $sourceID;
+	$arDeal['SOURCE_ID'] = $sourceID;
+	$arDeal['DEAL_LEGEND'] = isset($arResult['SOURCE_LIST'][$sourceID])
+		? $arResult['SOURCE_LIST'][$sourceID] : '';
 	//endregion
 
 	$originatorID = $arDeal['~ORIGINATOR_ID'] ?? '';
@@ -2870,10 +2906,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 		$arDeal['BIZPROC_STATUS'] = '';
 		$arDeal['BIZPROC_STATUS_HINT'] = '';
 
-		$arDocumentStates = CBPDocument::GetDocumentStates(
-			array('crm', 'CCrmDocumentDeal', 'DEAL'),
-			array('crm', 'CCrmDocumentDeal', "DEAL_{$entityID}")
-		);
+		$arDocumentStates = $allDocumentStates["DEAL_{$entityID}"] ?? [];
 
 		$arDeal['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_DEAL_SHOW'] ?? '',
@@ -3220,7 +3253,10 @@ if (!empty($restrictedItemIds) && $itemsMutator)
 }
 unset($item);
 
-$arResult['ENABLE_TOOLBAR'] = $arParams['ENABLE_TOOLBAR'] ?? false;
+$arResult['ENABLE_TOOLBAR'] =
+	!$arResult['IS_REPEAT_SALE_WIDGET_DEAL_GRID']
+	&& ($arParams['ENABLE_TOOLBAR'] ?? false)
+;
 if ($arResult['ENABLE_TOOLBAR'])
 {
 	$arResult['PATH_TO_DEAL_ADD'] = CComponentEngine::MakePathFromTemplate(

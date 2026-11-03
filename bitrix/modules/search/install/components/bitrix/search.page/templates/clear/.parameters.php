@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arCurrentValues */
+
 $arTemplateParameters = [
 	'USE_SUGGEST' => [
 		'NAME' => GetMessage('TP_BSP_USE_SUGGEST'),

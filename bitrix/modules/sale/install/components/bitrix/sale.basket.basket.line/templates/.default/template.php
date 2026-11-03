@@ -4,6 +4,9 @@
  * @global string $templateName
  * @var CBitrixComponentTemplate $this
  */
+\Bitrix\Main\Loader::includeModule('ui');
+\Bitrix\Main\UI\Extension::load(['ui.a11y']);
+
 $cartStyle = 'bx-basket';
 $cartId = "bx_basket".$this->randString();
 $arParams['cartId'] = $cartId;

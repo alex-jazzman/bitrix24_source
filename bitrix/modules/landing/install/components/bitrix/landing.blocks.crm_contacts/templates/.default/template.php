@@ -48,7 +48,7 @@ $arParams['TITLE'] = HtmlFilter::encode($arParams['TITLE']);
 $arParams['BUTTON_TITLE'] = HtmlFilter::encode($arParams['BUTTON_TITLE']);
 $arParams['BUTTON_CLASSES'] = HtmlFilter::encode($arParams['BUTTON_CLASSES']);
 $textAlign = $arParams['BUTTON_POSITION'] === 'right' ? 'text-left' : 'text-right';
-$titleBlock = $arParams['TITLE'] ? "<h6 class=\"crmcontacts-text-title h6\">{$arParams['TITLE']}</h6>" : '';
+$titleBlock = $arParams['TITLE'] ? "<h2 class=\"crmcontacts-text-title h6\">{$arParams['TITLE']}</h2>" : '';
 $textBlock = <<<HTML
 	<div class="crmcontacts-text-block {$textAlign} col-8">
 		{$titleBlock}

@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/folder/selector/selector', (require, exports,
 	const { DiskIcon } = require('assets/icons');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { FolderSelectorList } = require('im/messenger/controller/folder/selector/selector-list');
 	const { setChatFolders, showSetChatFoldersSuccessToast } = require('im/messenger/controller/folder/lib/actions');
@@ -21,7 +22,15 @@ jn.define('im/messenger/controller/folder/selector/selector', (require, exports,
 
 	class FolderSelector
 	{
-		static open({ chatId, parentWidget, onComplete })
+		/**
+		 * @param {object} options
+		 * @param {number} options.chatId
+		 * @param {DialogId} [options.dialogId] - chat of the membership labels; without it none is sent
+		 * @param {string} [options.subSection] - surface the selector was opened from
+		 * @param {LayoutWidget} [options.parentWidget]
+		 * @param {Function} [options.onComplete]
+		 */
+		static open({ chatId, dialogId, subSection, parentWidget, onComplete })
 		{
 			const opener = parentWidget || PageManager;
 
@@ -52,6 +61,9 @@ jn.define('im/messenger/controller/folder/selector/selector', (require, exports,
 			const folders = store.getters['folderModel/getPersonalFolders']();
 			const selectedFolderIds = store.getters['folderModel/getFoldersForChat'](normalizedChatId)
 				.map((folder) => folder.id);
+			// The selector stays open after a save, so the baseline of the membership labels moves with
+			// it: a second save reports only what that save changed.
+			let savedFolderIds = [...selectedFolderIds];
 			let selectorList = null;
 			let isSubmitting = false;
 			const bottomSheet = new BottomSheet({
@@ -78,6 +90,14 @@ jn.define('im/messenger/controller/folder/selector/selector', (require, exports,
 									folderIds,
 									layoutWidget: widget,
 								});
+
+								FolderSelector.sendMembershipAnalytics({
+									dialogId,
+									subSection,
+									savedFolderIds,
+									folderIds,
+								});
+								savedFolderIds = [...folderIds];
 
 								selectorList?.markSaved();
 								onComplete?.(folderIds);
@@ -106,6 +126,36 @@ jn.define('im/messenger/controller/folder/selector/selector', (require, exports,
 				.setNavigationBarColor(Color.bgContentPrimary.toHex())
 				.open()
 			;
+		}
+
+		/**
+		 * @desc The selector saves the whole set of folders of one chat, so what the user did with the
+		 *       memberships is the difference between the set it had stored and the one it saved. The
+		 *       label carries no folder, so a chat put into two folders at once is two facts.
+		 * @param {object} params
+		 * @param {DialogId} [params.dialogId]
+		 * @param {string} [params.subSection]
+		 * @param {Array<number>} params.savedFolderIds
+		 * @param {Array<number>} params.folderIds
+		 */
+		static sendMembershipAnalytics({ dialogId, subSection, savedFolderIds, folderIds })
+		{
+			if (!dialogId)
+			{
+				return;
+			}
+
+			const analyticsService = AnalyticsService.getInstance();
+			const selectedBefore = new Set(savedFolderIds);
+			const selectedAfter = new Set(folderIds);
+
+			folderIds
+				.filter((folderId) => !selectedBefore.has(folderId))
+				.forEach(() => analyticsService.sendAddToFolder({ dialogId, subSection }));
+
+			savedFolderIds
+				.filter((folderId) => !selectedAfter.has(folderId))
+				.forEach(() => analyticsService.sendDeleteFromFolder({ dialogId, subSection }));
 		}
 	}
 

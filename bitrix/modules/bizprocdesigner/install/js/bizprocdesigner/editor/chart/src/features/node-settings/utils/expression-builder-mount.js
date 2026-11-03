@@ -1,18 +1,24 @@
 import { Dom, Event, Loc, Type } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 
+import { ExpressionBuilder } from 'bizprocdesigner.expression-builder';
 import { Feature, FeatureCode } from 'bizprocdesigner.feature';
 
-import { mountWithChartPinia } from '../../../shared/stores';
-import { ExpressionBuilder } from '../ui/expression-builder/expression-builder';
+import { withChartPinia } from '../../../shared/stores';
+// Direct file import (not the utils barrel) for the same reason the source collection takes it
+// that way: the barrel pulls in stores this module has no business loading.
+import { systemValuesCache } from '../../../shared/utils/system-values-cache';
+import { collectEditorSourceSections } from './expression-builder-sources';
 import {
 	SELECTOR_BUTTON_ROLE,
+	applyExpression,
 	findTargetInput,
-	insertExpression,
 	isSelectorButtonHidden,
 	resolveFieldHost,
 } from './expression-builder-insert';
 import { closeReadableExpressionPopover, mountFormVeneers } from './readable-expressions-veneer';
+
+import './expression-builder-mount.css';
 
 const TRIGGER_ROLE = 'expression-builder-trigger';
 const TRIGGER_TESTID = 'bizprocdesigner-expression-builder-trigger';
@@ -67,14 +73,21 @@ function openBuilder(trigger: HTMLElement, fieldHost: HTMLElement, button: HTMLE
 	const app = BitrixVue.createApp(ExpressionBuilder, {
 		bindElement: trigger,
 		initialValue,
-		nodeContext,
+		// The window owns no source of its own: what the editor offers is collected here, on the
+		// first entry into the source list, over the context of the node the trigger belongs to.
+		// The collection reads the stores of the editor, and it runs on a click inside a window that
+		// is an application of its own — hence the instance of the editor named for the call, see
+		// withChartPinia().
+		sourcesProvider: () => withChartPinia(() => collectEditorSourceSections(nodeContext)),
 		onApply: (value: string): void => {
 			// The field is gone when its form was re-rendered or closed under the open window:
-			// there is nothing to insert into any more, and writing into the detached input would
+			// there is nothing to write into any more, and writing into the detached input would
 			// report success while the value disappears. So the builder only closes.
+			// The value the field holds right now decides how it is written (see applyExpression),
+			// not `initialValue`: the field could have been edited under the open window.
 			if (fieldHost.isConnected)
 			{
-				insertExpression(findTargetInput(fieldHost, button), value);
+				applyExpression(findTargetInput(fieldHost, button), value);
 			}
 
 			closeExpressionBuilder();
@@ -84,10 +97,7 @@ function openBuilder(trigger: HTMLElement, fieldHost: HTMLElement, button: HTMLE
 		},
 	});
 
-	// The window is an application of its own and gets no Pinia installed, so it reads the stores of
-	// the editor through the active instance. The mount is where it collects its sources, and the
-	// substitution lasts exactly that long — see mountWithChartPinia() for why not `app.use()`.
-	mountWithChartPinia(() => app.mount(container));
+	app.mount(container);
 
 	activeBuilder = { app, container };
 }
@@ -237,6 +247,20 @@ export function mountExpressionBuilders(root: ?HTMLElement, nodeContext: Object 
 	if (!Feature.instance().isAvailable(FeatureCode.expressionBuilder))
 	{
 		return;
+	}
+
+	// The catalog of system values is asked for as soon as a form with a selector button is processed,
+	// not when the source list is entered: a page that does not inline the settings of `bp_selector`
+	// leaves the catalog cold until someone asks, and the first look into the list would then wait for
+	// the server. The sections themselves no longer wait for one another — each one is handed over as
+	// soon as it is there (DTO-01) — so this only brings the first of them closer. Warmed only where
+	// there is a button to open the list with: a form without one has nothing to open the builder
+	// from, and the walk after the catalog would pull the legacy assets of `bp_selector` in for
+	// nothing. A hidden button counts — the field may show it later. Fire-and-forget and memoized by
+	// the cache itself: a warm one answers synchronously, a settled failure is not asked again.
+	if (root.querySelector(`[data-role="${SELECTOR_BUTTON_ROLE}"]`))
+	{
+		systemValuesCache.load();
 	}
 
 	// The context is read at click time: a form root outlives a re-render, and by the next mounting

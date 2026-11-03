@@ -16,6 +16,27 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 	const LAST_USERS_TO_SHOW = 3;
 
 	/**
+	 * @param {Object} store
+	 * @param {RestCommentInfo | Array<RestCommentInfo>} payload
+	 * @param {CommentsSetCommentsActions} actionName
+	 */
+	const commitCommentList = (store, payload, actionName) => {
+		const rawList = Type.isArray(payload) ? payload : [payload];
+		const commentList = rawList.map((comment) => validate(comment));
+		if (commentList.length === 0)
+		{
+			return;
+		}
+
+		store.commit('setComments', {
+			actionName,
+			data: {
+				commentList,
+			},
+		});
+	};
+
+	/**
 	 *
 	 * @type {CommentMessengerModel}
 	 */
@@ -88,19 +109,34 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 						return null;
 					}
 
-					/**
-					 * @type {RelationCommentInfo}
-					 */
+					// The parent chat is known only while the post itself is in the messages model.
+					// A relation without it would overwrite the stored row with a zero parent, and the
+					// cold start would not find it anymore, so such an element is not given to the writer.
+					const message = rootGetters['messagesModel/getById'](commentInfo.messageId);
+					if (!Type.isNumber(message.chatId) || message.chatId <= 0)
+					{
+						return null;
+					}
+
+					/** @type {RelationCommentInfo} */
 					const relationCommentInfo = {
 						commentChatId: commentInfo.chatId,
 						parentMessageId: commentInfo.messageId,
-						parentChatId: 0,
+						parentChatId: message.chatId,
 					};
 
-					const message = rootGetters['messagesModel/getById'](commentInfo.messageId);
-					if (Type.isNumber(message.id))
+					// The writer saves the row whole, and a field absent in the payload falls back to
+					// the default value of the column. So the data of the plate the element already has
+					// travels with the relation - otherwise any pass of the writer would wipe it.
+					// A count of zero and an empty list are the default of the element itself, not data.
+					if (commentInfo.messageCount > 0)
 					{
-						relationCommentInfo.parentChatId = message.chatId;
+						relationCommentInfo.messageCount = commentInfo.messageCount;
+					}
+
+					if (Type.isArrayFilled(commentInfo.lastUserIds))
+					{
+						relationCommentInfo.lastUserIds = commentInfo.lastUserIds;
 					}
 
 					return relationCommentInfo;
@@ -227,23 +263,18 @@ jn.define('im/messenger/model/comment/model', (require, exports, module) => {
 
 			/** @function commentModel/setComments */
 			setComments: (store, payload) => {
-				if (!Type.isArray(payload))
-				{
-					payload = [payload];
-				}
+				commitCommentList(store, payload, 'setComments');
+			},
 
-				const commentList = payload.map((comment) => validate(comment));
-				if (commentList.length === 0)
-				{
-					return;
-				}
-
-				store.commit('setComments', {
-					actionName: 'setComments',
-					data: {
-						commentList,
-					},
-				});
+			/**
+			 * The same merge as setComments, but for the section of the synchronization: its cells are
+			 * written to the local base by the filler of the base, so the writer of the model must not
+			 * repeat that write. The writer tells the paths apart by the name of the action.
+			 *
+			 * @function commentModel/setCommentsFromSync
+			 */
+			setCommentsFromSync: (store, payload) => {
+				commitCommentList(store, payload, 'setCommentsFromSync');
 			},
 
 			/** @function commentModel/updateComment */

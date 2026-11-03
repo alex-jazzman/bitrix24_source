@@ -22,10 +22,19 @@ jn.define('im/messenger/controller/recent/service/filter/dummy', (require, expor
 
 		/**
 		 * @param {FilterId} filterId
+		 * @param {{ bySelf?: boolean }} [options]
 		 */
-		async applyFilter(filterId)
+		async applyFilter(filterId, options = {})
 		{
-			this.logger.log('applyFilter', filterId);
+			this.logger.log('applyFilter', filterId, options);
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		consumeChangedBySelf()
+		{
+			return false;
 		}
 
 		/**

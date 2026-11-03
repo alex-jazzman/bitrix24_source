@@ -207,13 +207,17 @@ export const Application = {
 					.filter(groupList => groupList.length > 0)
 			);
 		},
-		handleGroupSelected(group: ?GroupData)
+		handleGroupSelected(group: ?GroupData, activatedByKeyboard: boolean = false)
 		{
 			this.searching = false;
 			this.$refs.search?.clearSearch();
 
 			this.selectedGroupId = group ? group.id : null;
 			this.selectedGroup = group ?? null;
+			if (group && activatedByKeyboard)
+			{
+				this.$nextTick(() => this.$refs.mainContent?.focusContent());
+			}
 		},
 		onSearch(event: BaseEvent)
 		{
@@ -326,6 +330,7 @@ export const Application = {
 				</template>
 			</MainGroups>
 			<MainContent
+				ref="mainContent"
 				:items="itemsBySelectedGroupId"
 				:items-to-show="computedShownItems"
 				:group="selectedGroup"

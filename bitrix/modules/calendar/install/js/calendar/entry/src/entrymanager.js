@@ -1,4 +1,5 @@
 import { Entry } from './entry';
+import { Analytics } from 'calendar.analytics';
 import { SectionManager } from 'calendar.sectionmanager';
 import { Util } from 'calendar.util';
 import { Event, Loc, Type } from 'main.core';
@@ -181,6 +182,13 @@ export class EntryManager
 		{
 			const util = BX.Calendar.Util || bx.Calendar.Util;
 			const calendarContext = util.getCalendarContext();
+			const userSettings = util.getUserSettings();
+			const userTimezone = userSettings?.timezoneName || userSettings?.timezoneDefaultName;
+			const timezoneOffset = options.timezoneOffset ?? (
+				Type.isStringFilled(userTimezone) && Type.isDate(options.entry?.from)
+					? -util.getTimeZoneOffset(userTimezone, options.entry.from) * 60
+					: null
+			);
 
 			const roomsManager = options?.isLocationCalendar ? calendarContext.roomsManager : null;
 			const categoryManager = options?.isLocationCalendar ? calendarContext.categoryManager : null;
@@ -199,6 +207,7 @@ export class EntryManager
 					ownerId: options.ownerId || 0,
 					userId: options.userId,
 					formDataValue: options.formDataValue || null,
+					timezoneOffset,
 					jumpToControl: options.jumpToControl,
 				},
 			).show();
@@ -627,6 +636,8 @@ export class EntryManager
 		const compactForm = EntryManager.getCompactViewForm();
 		if (!compactForm.isShown())
 		{
+			EntryManager.sendCreateEventAnalytics(options);
+
 			compactForm.unsubscribeAll('onClose');
 			if (Type.isFunction(options.closeCallback))
 			{
@@ -634,6 +645,37 @@ export class EntryManager
 			}
 			compactForm.showInEditMode(options);
 		}
+	}
+
+	static sendCreateEventAnalytics(options = {})
+	{
+		const isProject = options.type === 'group';
+		const calendar = Util.getCalendarContext();
+
+		Analytics.sendEvent({
+			event: 'click_create_event',
+			cSection: isProject ? 'project' : 'calendar',
+			cSubSection: isProject ? 'calendar_project' : 'calendar_personal',
+			cElement: 'short_form',
+			projectId: isProject ? parseInt(options.ownerId, 10) : null,
+			userType: EntryManager.getAnalyticsUserType(calendar),
+			status: 'success',
+		});
+	}
+
+	static getAnalyticsUserType(calendar)
+	{
+		if (calendar?.util?.isExtranetUser())
+		{
+			return 'user_extranet';
+		}
+
+		if (calendar?.isCollabUser)
+		{
+			return 'user_collaber';
+		}
+
+		return 'user_intranet';
 	}
 
 	static getEntryInstance(entry, userIndex, options = {})

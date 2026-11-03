@@ -1,0 +1,35 @@
+<?php
+
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_COMPENSATION_DONE'] = '#REASON# Карточка документа #DOCUMENT_ID# осталась в Битрикс24 — удалите её, если она больше не нужна';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_DOCUMENT_REUSED'] = 'Новый черновик не создан: для этого элемента уже есть черновик, созданный тем же блоком. Его данные возвращены в результатах блока';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_ACCESS_DENIED'] = 'Недостаточно прав для создания документа на подпись с сотрудником';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_DISK_FILE_INVALID'] = 'Не удалось определить файл на Диске, укажите его ID';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_DISK_FILE_NOT_FOUND'] = 'Черновик не создан: файл на Диске не найден. Выберите файл заново';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_DISK_MODULE_MISSING'] = 'Черновик не создан: файл выбран на Диске, но Диск недоступен в этом Битрикс24. Укажите файл из поля элемента или через выражение';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_EMPTY_FILE'] = 'Черновик не создан: ни поле «Файл», ни поле «Файл из выражения» не вернули файл';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_FILE_EXTENSION'] = 'Формат файла не поддерживается. Допустимые форматы: #EXTENSIONS#';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_FILE_NOT_FOUND'] = 'Черновик не создан: файл документа не найден. Проверьте настройки блока';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_FILE_NOT_SET'] = 'Не указан файл документа. Выберите файл в поле «Файл» или задайте его выражением в поле «Файл из выражения»';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_FILE_SINGLE_EXPECTED'] = 'Для документа нужен 1 файл, оставьте в поле «Файл» одно значение';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_FILE_SOURCE_CONFLICT'] = 'Файл документа указан дважды. Оставьте заполненным либо поле «Файл», либо поле «Файл из выражения»';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_LICENSE_SERVICE_UNAVAILABLE'] = 'Черновик не создан: не удалось проверить ограничения тарифа, сервис лицензий не ответил. Запустите процесс позже';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_RESPONSIBLE_FOR_SMART_DOCUMENT_NOT_SET'] = 'Черновик создан, но ответственный в его карточке не указан. Укажите ответственного в карточке документа #DOCUMENT_ID#';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_RESPONSIBLE_NOT_SET'] = 'Черновик не создан: ответственный не определён. Выражение в поле «Ответственный» не вернуло сотрудника Битрикс24';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_SOURCE_CONFLICT'] = 'Черновик не создан: файл документа указан дважды — и в поле «Файл», и в поле «Файл из выражения». Оставьте заполненным только одно из них';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_SOURCE_VALUE_MISMATCH'] = 'Черновик не создан: значение источника не распознано как файл. Проверьте, на какое поле ссылается выражение в настройках блока';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_TARIFF_RESTRICTED'] = 'Черновик не создан: подписание документов с сотрудниками недоступно на текущем тарифе';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNABLE_TO_CREATE_BLANK'] = 'Черновик не создан: не удалось подготовить документ из файла.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNABLE_TO_CREATE_DOC'] = 'Черновик не создан: не удалось зарегистрировать документ на подпись.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNABLE_TO_UPLOAD_DOC'] = 'Черновик не создан: не удалось передать файл документа в сервис подписания.';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNAVAILABLE'] = 'Черновик не создан: создание документов на подпись с сотрудниками недоступно в этом Битрикс24';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNKNOWN_REASON'] = 'Черновик не создан. Ответ сервиса: #REASON#';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_UNSUPPORTED_FILE_EXTENSION'] = 'Черновик не создан: формат полученного файла не поддерживается. Документ создаётся из файлов #EXTENSIONS#';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ERROR_VALUE_IS_MULTIPLE'] = 'Черновик не создан: источник вернул несколько файлов, а документ создаётся из одного. Укажите в настройках блока поле с одним файлом';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_FILE'] = 'Файл';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_FILE_EXPRESSION'] = 'Файл из выражения';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_RESPONSIBLE'] = 'Ответственный';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_ROBOT_TITLE'] = 'Создать черновик документа с сотрудником';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_SOURCE'] = 'Расположение файла';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_SOURCE_DISK'] = 'Диск';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_SOURCE_FILE'] = 'Поля элемента';
+$MESS['SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_DRAFT_WARNING_RELATION_FAILED'] = 'Черновик создан, но связать его с элементом, из которого запущен процесс, не удалось';

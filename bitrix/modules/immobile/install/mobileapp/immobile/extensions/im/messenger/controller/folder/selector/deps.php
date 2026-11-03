@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/ui/notification',
+		'im:messenger/provider/services/analytics',
 		'im:messenger/controller/folder/lib/ui/loadable-button',
 		'im:messenger/controller/folder/lib/actions',
 	],

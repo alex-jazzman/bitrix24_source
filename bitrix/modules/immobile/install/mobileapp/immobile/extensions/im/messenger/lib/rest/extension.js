@@ -12,23 +12,63 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 	const ABORT_ERROR = 'AbortError';
 
 	/**
+	 * Builds the config representation for the network log.
+	 * The `config.data` keys listed in `options.maskDataKeysInLog` are replaced
+	 * with `{ fieldIds, masked: true }`, so the content of the user input never
+	 * reaches the device log — only its field ids. The config itself
+	 * is not changed and goes to the network as is.
+	 *
+	 * @param {ajaxConfig} config
+	 * @param {{ maskDataKeysInLog?: Array<string> }} [options]
+	 * @return {ajaxConfig}
+	 */
+	const createConfigForLog = (config, options = {}) => {
+		const maskDataKeys = options.maskDataKeysInLog ?? [];
+		if (maskDataKeys.length === 0 || !config?.data)
+		{
+			return config;
+		}
+
+		const maskedData = { ...config.data };
+		for (const key of maskDataKeys)
+		{
+			if (!(key in maskedData))
+			{
+				continue;
+			}
+
+			const value = maskedData[key];
+			maskedData[key] = {
+				fieldIds: (value !== null && typeof value === 'object') ? Object.keys(value) : [],
+				masked: true,
+			};
+		}
+
+		return { ...config, data: maskedData };
+	};
+
+	/**
 	 * @template T
 	 * @param {string} action
 	 * @param {ajaxConfig} config
+	 * @param {{ maskDataKeysInLog?: Array<string> }} [options] - `config.data` keys
+	 * whose content must not reach the device log (masked in the request,
+	 * response and catch log entries)
 	 * @return {Promise<T>}
 	 */
-	const runAction = (action, config = {}) => {
-		logger.log('ajax.runAction.request >>', action, config);
+	const runAction = (action, config = {}, options = {}) => {
+		const logConfig = createConfigForLog(config, options);
+		logger.log('ajax.runAction.request >>', action, logConfig);
 
 		return new Promise((resolve, reject) => {
 			BX.ajax.runAction(action, config)
 				.then((response) => {
-					logger.log('ajax.runAction.response <<', response, action, config);
+					logger.log('ajax.runAction.response <<', response, action, logConfig);
 
 					return resolve(response.data);
 				})
 				.catch((response) => {
-					logger.error('ajax.runAction.catch:', response, action, config);
+					logger.error('ajax.runAction.catch:', response, action, logConfig);
 
 					const httpStatus = response?.data?.ajaxRejectData?.xhr?.status;
 					if (isGuestUnauthorized(httpStatus))
@@ -100,6 +140,7 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 		runAction,
 		runAbortableAction,
 		callMethod,
+		createConfigForLog,
 		ABORT_ERROR,
 	};
 });

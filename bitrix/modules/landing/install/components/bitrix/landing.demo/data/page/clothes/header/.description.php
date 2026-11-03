@@ -66,7 +66,7 @@ return array(
 			'nodes' => array(
 				'.landing-block-node-menu-logo' => array(
 					0 => array(
-						'alt' => 'Logo',
+						'alt' => Loc::getMessage('LANDING_DEMO_CLOTHES_HEADER_LOGO_ALT'),
 						'src' => 'https://cdn.bitrix24.site/bitrix/images/landing/business/eshop/logo_wo_icon.png',
 						'src2x' => 'https://cdn.bitrix24.site/bitrix/images/landing/business/eshop/logo_wo_icon@2x.png',
 					),

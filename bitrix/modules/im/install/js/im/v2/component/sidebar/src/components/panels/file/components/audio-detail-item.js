@@ -41,13 +41,15 @@ export const AudioDetailItem = {
 		},
 	},
 	template: `
-		<div class="bx-im-sidebar-file-audio-detail-item__container bx-im-sidebar-file-audio-detail-item__scope">
+		<div
+			class="bx-im-sidebar-file-audio-detail-item__container bx-im-sidebar-file-audio-detail-item__scope"
+			data-testid="im-sidebar-audio-item"
+		>
 			<AudioPlayer
 				:src="audioUrl"
 				:file="file"
 				:messageId="sidebarFileItem.messageId"
 				:authorId="sidebarFileItem.authorId"
-				:withPlaybackRateControl="true"
 				:withTranscription="false"
 				:playlistScope="PlaylistScope.sidebar"
 				@contextMenuClick="onContextMenuClick"

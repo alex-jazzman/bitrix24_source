@@ -1,4 +1,4 @@
-import { ajax, Runtime } from "main.core";
+import { ajax, Dom, Runtime } from 'main.core';
 import { WidgetLoader } from 'intranet.widget-loader';
 
 export class SettingsWidgetLoader
@@ -9,6 +9,7 @@ export class SettingsWidgetLoader
 	#isAdmin: boolean = false;
 	#isRequisite: boolean = false;
 	#isMainPageAvailable: boolean = false;
+	#ariaLabel: string = '';
 	#node: ?HTMLElement = false;
 
 	constructor(params)
@@ -17,12 +18,19 @@ export class SettingsWidgetLoader
 		this.#isAdmin = params['isAdmin'];
 		this.#isRequisite = params['isRequisite'];
 		this.#isMainPageAvailable = params['isMainPageAvailable'];
+		this.#ariaLabel = params['ariaLabel'];
 	}
 
 	showOnce(node)
 	{
 		this.#node = node;
 		const popup = this.#getWidgetLoader().getPopup();
+		popup.subscribe('onShow', () => {
+			this.#updateAriaExpanded(true);
+		});
+		popup.subscribe('onClose', () => {
+			this.#updateAriaExpanded(false);
+		});
 		popup.show();
 
 		const popupContainer = popup.getPopupContainer();
@@ -35,10 +43,22 @@ export class SettingsWidgetLoader
 			.then(() => {
 				if (typeof BX.Intranet.SettingsWidget !== 'undefined')
 				{
-					BX.Intranet.SettingsWidget.bindAndShow(node);
+					const settingsWidget = BX.Intranet.SettingsWidget.bind(node);
+					if (settingsWidget && popup.isShown())
+					{
+						settingsWidget.show(node);
+					}
 				}
 			})
 		;
+	}
+
+	#updateAriaExpanded(expanded: boolean): void
+	{
+		if (this.#node)
+		{
+			Dom.attr(this.#node, 'aria-expanded', expanded);
+		}
 	}
 
 	#getWidgetLoader(): WidgetLoader
@@ -52,6 +72,11 @@ export class SettingsWidgetLoader
 			id: "bx-settings-header-popup",
 			bindElement: this.#node,
 			width: 374,
+			ariaLabel: this.#ariaLabel,
+			focusTrap: {
+				initialFocus: 'container',
+			},
+			testId: 'settings-widget-popup',
 		});
 
 		widgetLoader.addHeaderSkeleton();

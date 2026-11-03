@@ -18,6 +18,7 @@ import { calendar } from 'tasks.v2.lib.calendar';
 import { UserAvatar, UserAvatarSize } from 'tasks.v2.component.elements.user-avatar';
 import { EntityCollapsibleText } from 'tasks.v2.component.entity-text';
 import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
+import { DownloadArchiveButton, canDownloadArchive } from 'tasks.v2.component.fields.files';
 import { userService } from 'tasks.v2.provider.service.user-service';
 import { EntityTypes, fileService } from 'tasks.v2.provider.service.file-service';
 import { resultService } from 'tasks.v2.provider.service.result-service';
@@ -45,6 +46,7 @@ export const ResultListItem = {
 		UserAvatar,
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
 		EntityCollapsibleText,
+		DownloadArchiveButton,
 		TextSm,
 	},
 	directives: { hint },
@@ -76,6 +78,7 @@ export const ResultListItem = {
 
 		return {
 			Outline,
+			EntityTypes,
 			resultsMeta,
 			UserAvatarSize,
 			fileService: fileServiceRef,
@@ -139,12 +142,21 @@ export const ResultListItem = {
 		{
 			return this.files.length;
 		},
+		archiveLink(): ?string
+		{
+			return this.result.archiveLink;
+		},
+		canDownloadArchive(): boolean
+		{
+			return canDownloadArchive(this.filesCount, this.archiveLink);
+		},
 		widgetOptions(): UserFieldWidgetOptions
 		{
 			return {
 				isEmbedded: true,
 				withControlPanel: false,
 				canCreateDocuments: false,
+				viewMode: 'list',
 				tileWidgetOptions: {
 					compact: true,
 					hideDropArea: true,
@@ -159,7 +171,7 @@ export const ResultListItem = {
 			return {
 				id: `result-action-menu-${Text.getRandom()}`,
 				bindOptions: { forceBindPosition: true },
-				bindElement: this.$refs.moreIcon.$el,
+				bindElement: this.$refs.moreIcon,
 				targetContainer: document.body,
 				offsetLeft: -100,
 				minWidth: 250,
@@ -244,6 +256,11 @@ export const ResultListItem = {
 		}
 	},
 	methods: {
+		handleMenuClose(): void
+		{
+			this.isMenuShown = false;
+			this.$refs.moreIcon?.focus();
+		},
 		handleEditClick(): void
 		{
 			this.$emit('edit', this.resultId);
@@ -277,38 +294,64 @@ export const ResultListItem = {
 		},
 	},
 	template: `
-		<div class="tasks-field-results-result --list-mode">
+		<div class="tasks-field-results-result --list-mode" data-testid="tasks-result-list-item">
 			<div
 				class="tasks-field-results-title --list-mode"
 				:class="{ '--sticky': isSticky }"
+				data-testid="task-result-list-title"
 				ref="title"
-				@click="$emit('titleClick', resultId)"
 			>
-				<div class="tasks-field-results-title-main">
-					<BIcon :name="Outline.WINDOW_FLAG"/>
+				<button
+					type="button"
+					class="tasks-field-results-title-main"
+					data-testid="tasks-result-list-item-title-btn"
+					@click="$emit('titleClick', resultId)"
+				>
+					<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
 					<HeadlineSm>{{ resultTitle }}</HeadlineSm>
-				</div>
+				</button>
 				<div class="tasks-field-results-title-actions print-ignore">
-					<BIcon
+					<button
 						v-if="hasMenuItems"
-						class="tasks-field-results-title-icon --big"
-						:name="Outline.MORE_L"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						aria-haspopup="menu"
+						data-testid="tasks-result-list-item-menu-btn"
+						:aria-expanded="isMenuShown ? 'true' : 'false'"
+						:aria-label="loc('TASKS_V2_RESULT_ITEM_MENU_LABEL')"
 						ref="moreIcon"
 						@click.stop="isMenuShown = true"
-					/>
-					<BIcon
+					>
+						<BIcon
+							class="tasks-field-results-title-icon --big"
+							:name="Outline.MORE_L"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
+					<button
 						v-if="isSticky && !embedded"
-						class="tasks-field-results-title-icon --big"
-						:name="resizeIcon"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						:aria-expanded="isResized ? 'true' : 'false'"
+						:aria-label="isResized
+							? loc('TASKS_V2_RESULT_COLLAPSE_LABEL')
+							: loc('TASKS_V2_RESULT_EXPAND_LABEL')"
+						data-testid="tasks-result-list-item-resize-btn"
 						@click.stop="handleResizeClick"
-					/>
+					>
+						<BIcon
+							class="tasks-field-results-title-icon --big"
+							:name="resizeIcon"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
 					<div v-if="isSticky" class="tasks-field-results-result-empty"/>
 					<BMenu
 						v-if="isMenuShown"
 						:options="menuOptions"
-						@close="isMenuShown = false"
+						@close="handleMenuClose"
 					/>
 				</div>
 			</div>
@@ -316,8 +359,10 @@ export const ResultListItem = {
 				class="tasks-field-results-result-content"
 				ref="content"
 			>
-				<div
+				<button
+					type="button"
 					class="tasks-field-results-result-author"
+					:aria-label="loc('TASKS_V2_RESULT_AUTHOR_PROFILE_LABEL', { '#NAME#': resultAuthor.name })"
 					@click="handleAuthorClick"
 				>
 					<UserAvatar
@@ -334,7 +379,7 @@ export const ResultListItem = {
 					>
 						{{ resultAuthor.name }}
 					</TextSm>
-				</div>
+				</button>
 				<EntityCollapsibleText
 					ref="collapsible"
 					:content="resultText"
@@ -347,8 +392,16 @@ export const ResultListItem = {
 				<div
 					v-if="filesCount > 0"
 					class="tasks-field-results-result-files --list-mode"
+					data-testid="task-result-list-files"
 				>
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+					<DownloadArchiveButton
+						v-if="canDownloadArchive"
+						:files
+						:archiveLink
+						:entityId="resultId"
+						:entityType="EntityTypes.Result"
+					/>
 				</div>
 			</div>
 			<div v-if="showDelimiter" class="tasks-field-results-result-separator"/>

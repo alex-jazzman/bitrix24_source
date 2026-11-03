@@ -1,8 +1,7 @@
 import { Dom, Tag } from 'main.core';
-import { MemoryCache } from 'main.core.cache';
-import type { BaseCache } from 'main.core.cache';
+import { MemoryCache, type BaseCache } from 'main.core.cache';
 import { EventEmitter } from 'main.core.events';
-import type { DatePicker } from './date-picker';
+import { type DatePicker } from './date-picker';
 
 export class BasePicker extends EventEmitter
 {
@@ -44,6 +43,7 @@ export class BasePicker extends EventEmitter
 				<button
 					type="button"
 					class="ui-date-picker-button --left-arrow"
+					data-testid="ui-date-picker-prev-btn"
 					aria-label="${this.getPrevBtnLabel()}"
 					title="${this.getPrevBtnLabel()}"
 					onclick="${this.handlePrevBtnClick.bind(this)}"
@@ -61,6 +61,7 @@ export class BasePicker extends EventEmitter
 				<button
 					type="button"
 					class="ui-date-picker-button --right-arrow"
+					data-testid="ui-date-picker-next-btn"
 					aria-label="${this.getNextBtnLabel()}"
 					title="${this.getNextBtnLabel()}"
 					onclick="${this.handleNextBtnClick.bind(this)}"
@@ -81,14 +82,59 @@ export class BasePicker extends EventEmitter
 		return '';
 	}
 
+	// A navigation button becomes unavailable in the very render its own click causes, and the browser
+	// blurs a button it disables. Keeping it focusable and refusing the navigation here keeps the focus.
+	setPrevBtnDisabled(disabled: boolean): void
+	{
+		this.#setBtnDisabled(this.getPrevBtn(), disabled);
+	}
+
+	setNextBtnDisabled(disabled: boolean): void
+	{
+		this.#setBtnDisabled(this.getNextBtn(), disabled);
+	}
+
 	handlePrevBtnClick()
 	{
+		if (this.#isBtnDisabled(this.getPrevBtn()))
+		{
+			this.#announcePeriodBoundary();
+
+			return;
+		}
+
 		this.emit('onPrevBtnClick');
 	}
 
 	handleNextBtnClick()
 	{
+		if (this.#isBtnDisabled(this.getNextBtn()))
+		{
+			this.#announcePeriodBoundary();
+
+			return;
+		}
+
 		this.emit('onNextBtnClick');
+	}
+
+	#announcePeriodBoundary(): void
+	{
+		this.getDatePicker().announcePeriodBoundary();
+	}
+
+	#setBtnDisabled(button: HTMLButtonElement, disabled: boolean): void
+	{
+		const ariaDisabled = disabled ? 'true' : 'false';
+		if (button.getAttribute('aria-disabled') !== ariaDisabled)
+		{
+			button.setAttribute('aria-disabled', ariaDisabled);
+		}
+	}
+
+	#isBtnDisabled(button: HTMLButtonElement): boolean
+	{
+		return button.getAttribute('aria-disabled') === 'true';
 	}
 
 	render(): void

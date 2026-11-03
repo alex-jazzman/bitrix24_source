@@ -4,15 +4,21 @@ import { markRaw } from 'ui.vue3';
 import 'ui.notification';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
+import { LiveAnnouncer } from 'ui.a11y';
 import 'ui.icon-set.outline';
 import { BIcon, Outline, Solid } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.solid';
-import { DocumentList, BulkActionsBar, createSelection } from 'note.ui.document-list';
+import { DocumentList, DocumentSection, BulkActionsBar, createSelection } from 'note.ui.document-list';
 import { ActionMenuService } from 'note.ui.action-menu';
 import { App as PermissionsApp } from 'note.permissions';
 import { DialogService, NoteEvent } from 'note.sidebar';
 import { NoteThemeContext } from 'note.ui.theme-context';
-import { SubscriptionApi, SUBSCRIPTION_SCOPE_COLLECTION, SUBSCRIPTION_MODE_ALL } from 'note.ui.document-history';
+import {
+	hasSubscriptionSurface,
+	SubscriptionApi,
+	SUBSCRIPTION_MODE_ALL,
+	SUBSCRIPTION_SCOPE_COLLECTION,
+} from 'note.ui.document-history';
 import { NoteAnalytics } from 'note.analytics';
 import { WorkspaceService } from './services/workspace-service';
 import { AboutPanel } from './components/about-panel';
@@ -23,26 +29,61 @@ const PAGE_SIZE = 50;
 const TAB_ABOUT = 'about';
 const TAB_ALL = 'all';
 const TAB_MINE = 'mine';
-// [API-05] Refusal of a subscription on a knowledge base that is not in the favorites list.
+const QUERY_KEY_ALL = 'all';
+const QUERY_KEY_MINE = 'mine';
+// Refusal of a subscription on a knowledge base that is not in the favorites list.
 const FAVORITE_REQUIRED_ERROR = 'FAVORITE_REQUIRED';
+
+// The only place that decides which tabs narrow the list to the current user. Both the request
+// and the key that files its answer are built from it, so they cannot start disagreeing.
+function isOwnedByMe(tab: string): boolean
+{
+	return tab === TAB_MINE;
+}
+
+// Effective query behind a tab of a collection: the description tab shows the same documents as
+// "All documents", so switching between the two keeps the loaded pages instead of refetching them.
+// The collection belongs in the key because the request is parameterized by it as well - a key that
+// describes less than the request lets the answer to one query be filed under another.
+function listQueryKey(collectionId: number, tab: string): string
+{
+	return `${collectionId}:${isOwnedByMe(tab) ? QUERY_KEY_MINE : QUERY_KEY_ALL}`;
+}
+
+export const NoteWorkspaceEmptyStateComponent = {
+	name: 'NoteWorkspaceEmptyState',
+	props: {
+		text: { type: String, required: true },
+	},
+	template: `
+		<div class="note-workspace-page__empty" data-testid="note-workspace-empty-state">
+			<div class="note-workspace-page__empty-image" aria-hidden="true"></div>
+			<p class="note-workspace-page__empty-text">{{ text }}</p>
+			<slot/>
+		</div>
+	`,
+};
 
 export const NoteWorkspacePageComponent = {
 	name: 'NoteWorkspacePage',
 	components: {
 		BIcon,
 		DocumentList,
+		DocumentSection,
 		AboutPanel,
 		BulkActionsBar,
+		NoteWorkspaceEmptyStateComponent,
 	},
 	inject: {
 		sidebarActions: { from: 'noteSidebarActions', default: null },
 		sidebarState: { from: 'noteSidebarState', default: null },
 		sidebarStore: { from: 'noteSidebarStore', default: null },
+		documentActions: { from: 'noteDocumentActions', default: null },
 	},
 	props: {
 		collectionId: { type: Number, required: true },
 	},
-	emits: ['open', 'archived', 'deleted', 'not-found'],
+	emits: ['open', 'archived', 'not-found'],
 	data()
 	{
 		return {
@@ -53,7 +94,34 @@ export const NoteWorkspacePageComponent = {
 			items: [],
 			loading: false,
 			hasMore: false,
+			// The first page failed, so there is nothing usable on screen. A failed next page is a
+			// different fact and lives in loadMoreFailed: what is already loaded stays usable.
 			hasError: false,
+			// The next page failed. Paging stops asking on its own and offers an explicit retry
+			// instead (see DocumentList.loadMoreFailed / onRetryLoadMore).
+			loadMoreFailed: false,
+			// Message of the failed list load, kept for the section on the description tab; the toast
+			// is fired from loadPage() for every tab and does not depend on this.
+			listError: null,
+			// Query key the message above belongs to. Same discipline as loadedQueryKey: a failure of
+			// another tab or another knowledge base is not this tab's failure.
+			listErrorQueryKey: null,
+			// Whether that failure belongs to the description tab - the surface the documents section
+			// lives on. The key alone cannot say: the description tab and "All documents" share one,
+			// so a failure the user is waiting out on the description tab looks exactly like one
+			// left behind on the neighbouring tab. Set where the failure happens, dropped whenever
+			// the tab or the knowledge base changes - what is opened anew waits for its own content
+			// instead of rising with a loader in it.
+			listErrorInSection: false,
+			// Query key the currently loaded pages belong to (see listQueryKey - collection and tab
+			// both). Null means nothing usable is loaded yet.
+			loadedQueryKey: null,
+			// Query key of the request on its way. Lets a tab or collection switch tell "this query
+			// is already being loaded" from "this query needs a request of its own".
+			inflightQueryKey: null,
+			// A list that is already on screen is being reloaded. The section on the description tab
+			// stays mounted for it and lets DocumentList draw its own loader (see showAboutDocuments).
+			reloadingShownList: false,
 			nextCursor: null,
 			requestId: 0,
 			isRenamingTitle: false,
@@ -89,7 +157,7 @@ export const NoteWorkspacePageComponent = {
 		{
 			return Boolean(this.collection?.subscribed);
 		},
-		// [TPL-01] Is this knowledge base in the personal favorites list. The sidebar store is the owner
+		// Is this knowledge base in the personal favorites list. The sidebar store is the owner
 		// of the flag when the sidebar is on the page (its stars and EVENT-01 pushes both land there), so
 		// adding the base with a star lights the bell here without a reload; the meta of the first page
 		// answers when there is no sidebar.
@@ -103,13 +171,17 @@ export const NoteWorkspacePageComponent = {
 
 			return Boolean(this.collection?.isFavorite);
 		},
-		// [AC-045] Notifications live on favorites: the bell is offered for a base in the list, and for
+		// Notifications live on favorites: the bell is offered for a base in the list, and for
 		// one whose subscription is still in force after the star came off - otherwise there would be no
 		// way to switch that subscription off.
+		//
+		// MODES-01: and only while the shipping has a mode for a knowledge base at all. A base is
+		// subscribed with `all`, which is not shipped, so the header offers no bell - read from the
+		// policy, so widening the shipping brings it back without touching the button or its handler.
 		showSubscribeToggle(): boolean
 		{
 			return Boolean(this.collection)
-				&& this.notificationsEnabled
+				&& hasSubscriptionSurface(SUBSCRIPTION_SCOPE_COLLECTION, this.notificationsEnabled)
 				&& (this.isFavorite || this.isSubscribed)
 			;
 		},
@@ -187,14 +259,13 @@ export const NoteWorkspacePageComponent = {
 				menuArchive: Loc.getMessage('NOTE_WORKSPACE_MENU_ARCHIVE') || '',
 				menuDelete: Loc.getMessage('NOTE_WORKSPACE_MENU_DELETE') || '',
 				emptyText: Loc.getMessage('NOTE_WORKSPACE_EMPTY_TEXT') || '',
-				confirmDeleteCollection: Loc.getMessage('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION') || '',
-				confirmDeleteCollectionTitle: Loc.getMessage('NOTE_SIDEBAR_CONFIRM_DELETE_COLLECTION_TITLE') || '',
+				documentsSection: Loc.getMessage('NOTE_WORKSPACE_DOCUMENTS_SECTION') || '',
+				listRetry: Loc.getMessage('NOTE_WORKSPACE_LIST_RETRY') || '',
+				listLoadError: Loc.getMessage('NOTE_WORKSPACE_LIST_LOAD_ERROR') || '',
 				confirmArchiveCollection: Loc.getMessage('NOTE_WORKSPACE_CONFIRM_ARCHIVE_COLLECTION') || '',
 				confirmArchiveCollectionTitle: Loc.getMessage('NOTE_WORKSPACE_CONFIRM_ARCHIVE_COLLECTION_TITLE') || '',
-				delete: Loc.getMessage('NOTE_SIDEBAR_DELETE') || '',
 				archive: Loc.getMessage('NOTE_WORKSPACE_ARCHIVE') || '',
 				errorArchive: Loc.getMessage('NOTE_COLLECTION_ARCHIVE_ERROR') || '',
-				errorDelete: Loc.getMessage('NOTE_COLLECTION_DELETE_ERROR') || '',
 				favoriteOn: Loc.getMessage('NOTE_WORKSPACE_FAVORITE_ON') || '',
 				favoriteOff: Loc.getMessage('NOTE_WORKSPACE_FAVORITE_OFF') || '',
 				subscribe: Loc.getMessage('NOTE_WORKSPACE_SUBSCRIBE') || '',
@@ -305,7 +376,7 @@ export const NoteWorkspacePageComponent = {
 		{
 			return this.canCreateDocuments && !(this.isAboutTab && this.aboutEditMode);
 		},
-		// [P8.T3] notifications_enabled bootstrap flag (from the injected sidebar root state) —
+		// notifications_enabled bootstrap flag (from the injected sidebar root state) -
 		// gates the collection subscription toggle in the header.
 		notificationsEnabled(): boolean
 		{
@@ -329,17 +400,89 @@ export const NoteWorkspacePageComponent = {
 		{
 			return this.selection.count;
 		},
-		showSelectButton(): boolean
+		// Feeds DocumentList's `selectable`: whether the cards may offer selection at all. Cards on
+		// screen are selectable, and that is the whole rule - a failed next page must not take the
+		// checkbox away from the pages that did arrive (a failed first page leaves no cards anyway).
+		selectionAvailable(): boolean
 		{
-			// The "About" tab renders the description, not a list — bulk selection has nothing to act on.
-			return !this.isAboutTab && !this.hasError && this.items.length > 0;
+			return this.items.length > 0;
+		},
+		// One source of truth for the list: the description tab renders it inside a section, the
+		// documents tabs render it directly, and both get the same params and the same handlers.
+		documentListBindings(): Object
+		{
+			return {
+				items: this.listItems,
+				hasMore: this.hasMore,
+				loading: this.loading,
+				mode: 'cards',
+				selectionEnabled: this.selection.mode,
+				selectable: this.selectionAvailable,
+				isMobile: this.isMobile,
+				selectedIds: this.selection.ids,
+				loadMoreFailed: this.loadMoreFailed,
+				onOpen: this.onOpen,
+				onLoadMore: this.onLoadMore,
+				onRetryLoadMore: this.onRetryLoadMore,
+				onSelect: this.onSelect,
+			};
+		},
+		// Anything about the loaded list is unfinished business: the first page failed, or the next
+		// one did.
+		hasFailedLoad(): boolean
+		{
+			return this.hasError || this.loadMoreFailed;
+		},
+		// The failure message of the query on screen right now. A load that failed on another tab or
+		// in another knowledge base left its message behind, and that message describes neither.
+		currentListError(): ?string
+		{
+			const queryKey = listQueryKey(this.collectionId, this.activeTab);
+
+			return this.listErrorQueryKey === queryKey ? this.listError : null;
+		},
+		// The section rises for a failure of its own tab only: the load failed on the description tab
+		// and the user has not left it since. A failure of "All documents" shares the query key but
+		// not the surface, and nothing of it belongs here.
+		sectionHoldingFailure(): boolean
+		{
+			return this.listErrorInSection && this.currentListError !== null;
+		},
+		// The failure message yields to the list while a retry is in flight: DocumentList draws its
+		// own loader for an empty loading list, so the section keeps its place instead of collapsing.
+		showListError(): boolean
+		{
+			return this.currentListError !== null && !this.loading;
+		},
+		// The description tab keeps the documents of the knowledge base under the description itself.
+		// The section waits for both: a loaded non-empty list (an empty one means "nothing to show
+		// here", never "still loading") and a rendered description, so it neither blinks during the
+		// load nor is pushed down when the lazily mounted editor takes its place. A load that failed
+		// on this tab keeps the section up - it carries its own message and retry. So does a
+		// reload of a list already on screen (bulk archive, delete, move): the section holds its
+		// place and the list shows its own loader instead of the page collapsing under the
+		// description and springing back.
+		showAboutDocuments(): boolean
+		{
+			const descriptionRendered = this.aboutReady || this.aboutError;
+
+			return this.isAboutTab
+				&& !this.aboutEditMode
+				&& descriptionRendered
+				&& (this.items.length > 0 || this.sectionHoldingFailure || this.reloadingShownList)
+			;
 		},
 	},
 	watch: {
 		collectionId: {
 			handler(): void
 			{
+				this.isLocalDestruction = false;
 				const previousTab = this.activeTab;
+				// Another knowledge base is another list, and the activeTab watcher below does not
+				// fire when the tab stays the same. Without this the message of the previous base
+				// would be waiting for its key to come back - which it does, on the way back to it.
+				this.listErrorInSection = false;
 				this.applyDefaultTab();
 				this.isRenamingTitle = false;
 				this.titleDraft = '';
@@ -348,31 +491,54 @@ export const NoteWorkspacePageComponent = {
 				// the list (and resets the About state); loading here too would send a redundant
 				// second service.list. Load directly only when the tab did not change (collection
 				// swap on the default tab, where the activeTab watcher will not fire).
-				if (previousTab === this.activeTab && this.activeTab !== TAB_ABOUT)
+				if (previousTab === this.activeTab)
 				{
 					void this.loadPage(false);
 				}
 			},
 		},
-		activeTab(): void
+		activeTab(next): void
 		{
 			this.resetSelection();
+			// A tab just opened waits for its own content: the message of a failure the user has
+			// walked away from no longer holds a place, however well its query key matches.
+			this.listErrorInSection = false;
 
-			// The "About" tab renders the main document, not a document list - skip list loading.
-			if (this.activeTab === TAB_ABOUT)
+			// Leaving "About" unmounts AboutPanel, so drop its state - otherwise the top bar could
+			// briefly show stale description controls when the tab is reopened.
+			if (next !== TAB_ABOUT)
+			{
+				this.resetAboutState();
+			}
+
+			// The request on its way answers this tab too. A second identical one would only throw
+			// the first answer away and restart the loader.
+			if (this.loading && listQueryKey(this.collectionId, next) === this.inflightQueryKey)
 			{
 				return;
 			}
 
-			// Leaving "About" unmounts AboutPanel, so drop its state - otherwise the top bar could
-			// briefly show stale description controls when the tab is reopened.
-			this.resetAboutState();
+			// Same effective query - the loaded pages already answer it. A failed load, of the first
+			// page or of the next one, is the one case worth retrying on the way back.
+			if (listQueryKey(this.collectionId, next) === this.loadedQueryKey && !this.hasFailedLoad)
+			{
+				return;
+			}
+
 			void this.loadPage(false);
+		},
+		aboutEditMode(next): void
+		{
+			// Editing the description hides the section, and the bulk bar is teleported to
+			// body - left alone it would keep offering archive/delete for cards nobody can see.
+			if (next)
+			{
+				this.resetSelection();
+			}
 		},
 		collection(next, prev): void
 		{
-			// Skip when initiator's onDelete/onArchive cleared the entry locally -
-			// they already emit 'deleted'/'archived' which trigger the redirect.
+			// Managed deletion and archive remove the current entry locally.
 			if (prev && !next && !this.isLocalDestruction)
 			{
 				this.$emit('not-found', { collectionId: this.collectionId });
@@ -393,43 +559,76 @@ export const NoteWorkspacePageComponent = {
 	{
 		this.service = new WorkspaceService();
 		this.actionMenuService = markRaw(new ActionMenuService({ popupClass: 'note-action-menu' }));
+		// The failure message is mounted already filled - a live region born together with its text
+		// announces nothing on most screen readers, and a second failure in a row recreates the node
+		// instead of changing it. The region of ui.a11y lives in the body from the page's first
+		// moment, outside everything the list rebuilds, so every failure is a change inside it.
+		// The visible block keeps role="status" for its meaning, with aria-live off: the phrase is
+		// announced from one place, not from two.
+		this.liveAnnouncer = markRaw(new LiveAnnouncer());
 		this.dialogService = markRaw(new DialogService());
+		this.collectionDeletionStatusHandler = (event) => {
+			this.onCollectionDeletionStatus(event);
+		};
+		EventEmitter.subscribe(NoteEvent.COLLECTION_DELETION_STARTED, this.collectionDeletionStatusHandler);
+		const initialTab = this.activeTab;
 		this.applyDefaultTab();
-		if (this.activeTab !== TAB_ABOUT)
+		// Same bookkeeping as the collectionId watcher: when applyDefaultTab lands on another tab,
+		// the activeTab watcher is the one that loads the first page - loading here too would send
+		// a second, identical service.list.
+		if (initialTab === this.activeTab)
 		{
 			void this.loadPage(false);
 		}
 	},
 	beforeUnmount()
 	{
+		EventEmitter.unsubscribe(NoteEvent.COLLECTION_DELETION_STARTED, this.collectionDeletionStatusHandler);
+		this.collectionDeletionStatusHandler = null;
 		this.actionMenuService?.destroy?.();
 		this.actionMenuService = null;
+		this.liveAnnouncer?.destroy();
+		this.liveAnnouncer = null;
 		this.dialogService = null;
 	},
 	methods: {
 		async loadPage(append: boolean): Promise<void>
 		{
+			// One snapshot of the effective query, taken before the await: the same collection and tab
+			// build the request and mark its result, so a switch during the flight can no longer file
+			// the answer under someone else's query.
+			const { collectionId } = this;
+			const ownedByMe = isOwnedByMe(this.activeTab);
+			const queryKey = listQueryKey(collectionId, this.activeTab);
 			if (!append)
 			{
+				// Only a reload of the very same query keeps the section up: another collection or
+				// another tab is a different list, and an empty one must not flash a loader first.
+				this.reloadingShownList = this.items.length > 0 && this.loadedQueryKey === queryKey;
 				this.items = [];
 				this.nextCursor = null;
 				this.hasMore = false;
 				this.hasError = false;
+				// Paging starts over, so the latch of its failure goes with it.
+				this.loadMoreFailed = false;
+				// Nothing usable is loaded until the answer arrives.
+				this.loadedQueryKey = null;
 			}
 
+			this.inflightQueryKey = queryKey;
 			const currentRequestId = ++this.requestId;
 			this.loading = true;
 
 			try
 			{
 				const response = await this.service.list({
-					collectionId: this.collectionId,
-					ownedByMe: this.activeTab === TAB_MINE,
+					collectionId,
+					ownedByMe,
 					limit: PAGE_SIZE,
 					afterCursor: append ? this.nextCursor : null,
 				});
 
-				if (currentRequestId !== this.requestId)
+				if (currentRequestId !== this.requestId || this.isLocalDestruction)
 				{
 					return;
 				}
@@ -437,6 +636,16 @@ export const NoteWorkspacePageComponent = {
 				this.items = append ? [...this.items, ...response.items] : response.items;
 				this.nextCursor = response.nextCursor;
 				this.hasMore = Boolean(response.nextCursor);
+				if (!append)
+				{
+					this.loadedQueryKey = queryKey;
+					// Cleared on success, not when the request starts: the section on the description
+					// tab stays mounted through a retry and swaps the message for the list loader
+					// instead of disappearing and shifting the page.
+					this.listError = null;
+					this.listErrorQueryKey = null;
+					this.listErrorInSection = false;
+				}
 
 				// In "select all" mode paginated-in items join the selection so they render checked.
 				if (append && this.allInCollection && this.selection.mode)
@@ -452,7 +661,7 @@ export const NoteWorkspacePageComponent = {
 			}
 			catch (error)
 			{
-				if (currentRequestId !== this.requestId)
+				if (currentRequestId !== this.requestId || this.isLocalDestruction)
 				{
 					return;
 				}
@@ -465,25 +674,115 @@ export const NoteWorkspacePageComponent = {
 					return;
 				}
 
-				this.hasError = true;
-				this.showErrorToast(error?.message || '');
+				if (append)
+				{
+					// The pages already on screen are still good, so this is not hasError: the list
+					// keeps them, stops paging by itself and offers the retry inside its own footer.
+					this.loadMoreFailed = true;
+				}
+				else
+				{
+					this.hasError = true;
+					// Kept for diagnostics only. The transport speaks English ("Network error"), so
+					// what the section renders is the localized phrase, never this string.
+					this.listError = String(error?.message || '');
+					this.listErrorQueryKey = queryKey;
+					this.listErrorInSection = this.isAboutTab;
+				}
+
+				// Same rule as the section message: the transport speaks English, the user reads
+				// the localized phrase. error.message stays in listError for diagnostics.
+				this.liveAnnouncer?.announce(this.messages.listLoadError);
+				this.showErrorToast(this.messages.listLoadError);
 			}
 			finally
 			{
 				if (currentRequestId === this.requestId)
 				{
 					this.loading = false;
+					this.inflightQueryKey = null;
+					this.reloadingShownList = false;
 				}
 			}
 		},
+		onCollectionDeletionStatus(event: BaseEvent): void
+		{
+			const { collectionId, status } = event.getData();
+			if (Number(collectionId) !== Number(this.collectionId))
+			{
+				return;
+			}
+
+			if (status === 'started')
+			{
+				this.startLocalDestruction();
+
+				return;
+			}
+
+			if (status !== 'cancelled')
+			{
+				return;
+			}
+
+			this.isLocalDestruction = false;
+			if (!this.collection)
+			{
+				this.$emit('not-found', { collectionId: this.collectionId });
+
+				return;
+			}
+
+			this.loading = false;
+			// Every tab, the description one included: its documents section shows the same list, and
+			// startLocalDestruction has already thrown away the answer the section was waiting for.
+			void this.loadPage(false);
+		},
+		startLocalDestruction(): void
+		{
+			this.isLocalDestruction = true;
+			this.requestId += 1;
+		},
+		// The automatic path, driven by the sentinel coming into view. It never repeats a page that
+		// failed: the same viewport keeps the sentinel visible, so retrying here would be a loop.
 		onLoadMore(): void
 		{
-			if (this.loading || !this.hasMore)
+			if (this.loading || this.loadMoreFailed || !this.hasMore)
 			{
 				return;
 			}
 
 			void this.loadPage(true);
+		},
+		// The user's own request for that page. Lifting the latch is what tells it apart from the
+		// automatic path above.
+		onRetryLoadMore(): void
+		{
+			this.loadMoreFailed = false;
+			this.onLoadMore();
+		},
+		onRetryList(): void
+		{
+			// The button sits inside the error block and the reload unmounts that block, so the
+			// focus has to leave before the click is acted upon. The section stays mounted through
+			// both states and holds the heading and the list the user asked to reload, which is why
+			// the template makes it programmatically focusable (WCAG 2.4.3).
+			const section = this.$refs.aboutDocumentsSection?.$el;
+			if (section instanceof HTMLElement)
+			{
+				section.focus();
+			}
+
+			void this.loadPage(false);
+		},
+		// Collapsing the section takes the cards off the screen, and the bulk bar is teleported to
+		// body - the same hole the aboutEditMode watcher closes, reached through the other control.
+		onAboutDocumentsToggle(collapsed: boolean): void
+		{
+			if (collapsed)
+			{
+				this.resetSelection();
+			}
 		},
 		onOpen(item): void
 		{
@@ -579,7 +878,18 @@ export const NoteWorkspacePageComponent = {
 
 			if (payload.type === 'document')
 			{
-				this.$emit('open', { documentId: id });
+				if (Type.isFunction(this.documentActions?.openInternalDocument))
+				{
+					void this.documentActions.openInternalDocument({
+						id,
+						hash: payload.hash,
+						origin: payload.origin,
+					});
+				}
+				else
+				{
+					this.$emit('open', { documentId: id });
+				}
 
 				return;
 			}
@@ -676,56 +986,28 @@ export const NoteWorkspacePageComponent = {
 				return;
 			}
 
-			this.isLocalDestruction = true;
-			this.removeFromSidebar(collectionId);
+			this.startLocalDestruction();
+			this.sidebarStore?.removeArchivedCollectionLocal?.(collectionId);
+			if (this.sidebarStore?.isCollectionSelected?.(collectionId))
+			{
+				this.sidebarStore.clearCollectionSelection?.();
+			}
 			this.$emit('archived', { collectionId });
 		},
 		async onDelete(): Promise<void>
 		{
 			const collection = this.collection;
-			if (!collection || !this.canManagePermissions || !this.dialogService)
+			if (!collection || !this.sidebarActions)
 			{
 				return;
 			}
 
-			const confirmed = await this.dialogService.confirm(
-				this.messages.confirmDeleteCollection,
-				this.messages.confirmDeleteCollectionTitle,
-				this.messages.delete,
-			);
-			if (!confirmed)
+			const deleted = await this.sidebarActions.deleteCollection(collection);
+			if (!deleted)
 			{
 				return;
 			}
 
-			const collectionId = Number(collection.id);
-			try
-			{
-				await this.service.deleteCollection(collectionId);
-			}
-			catch (error)
-			{
-				this.showErrorToast(error?.message || this.messages.errorDelete);
-
-				return;
-			}
-
-			this.isLocalDestruction = true;
-			this.removeFromSidebar(collectionId);
-			this.$emit('deleted', { collectionId });
-		},
-		removeFromSidebar(collectionId: number): void
-		{
-			if (!this.sidebarStore)
-			{
-				return;
-			}
-
-			this.sidebarStore.removeCollectionLocal?.(collectionId);
-			if (this.sidebarStore.isCollectionSelected?.(collectionId))
-			{
-				this.sidebarStore.clearCollectionSelection?.();
-			}
 		},
 		openMoreMenu(event: MouseEvent): void
 		{
@@ -755,7 +1037,7 @@ export const NoteWorkspacePageComponent = {
 
 			BX.UI.Notification.Center.notify({ content: text, position: 'top-right' });
 		},
-		// [TPL-01] Star of the knowledge base, next to the bell exactly as in the activity line of a
+		// Star of the knowledge base, next to the bell exactly as in the activity line of a
 		// document. The store owns the flag and the transport (optimistic flip, EVENT-01, the local
 		// announcement every other star listens to), so the page only asks it to toggle.
 		async onToggleFavorite(): Promise<void>
@@ -818,7 +1100,7 @@ export const NoteWorkspacePageComponent = {
 			catch (error)
 			{
 				this.sidebarStore?.updateCollectionLocal?.(collectionId, { subscribed: wasSubscribed });
-				// [API-05] The base left the favorites list between the read and the press. The roll-back
+				// The base left the favorites list between the read and the press. The roll-back
 				// above is already the server's answer about the subscription; what is stale is the list,
 				// so it is re-read instead of reporting a technical failure.
 				if (String(error?.errors?.[0]?.code || '') === FAVORITE_REQUIRED_ERROR)
@@ -1105,7 +1387,7 @@ export const NoteWorkspacePageComponent = {
 				// Roots-only volume is exact whenever the selection can't expand (no children, or the
 				// toggle is off), so the common case shows the count immediately with no dry-run.
 				initialCount: ids.length,
-				// The dry-run is consulted only to expand a subtree (AC-015); the roots-only branch
+				// The dry-run is consulted only to expand a subtree; the roots-only branch
 				// resolves locally. Absent entirely when nothing can expand.
 				resolveCount: hasNested
 					? (nextWithNested) => {
@@ -1670,35 +1952,54 @@ export const NoteWorkspacePageComponent = {
 				</button>
 			</div>
 
-			<AboutPanel
-				v-if="activeTab === '${TAB_ABOUT}'"
-				ref="about"
-				:main-document-id="mainDocumentId"
-				:has-description="hasDescription"
-				:can-manage="canManagePermissions"
-				@state-change="onAboutStateChange"
-				@open-internal-link="onOpenInternalLink"
-			/>
-			<template v-else>
-				<div v-if="showEmpty" class="note-workspace-page__empty">
-					<div class="note-workspace-page__empty-image" aria-hidden="true"></div>
-					<p class="note-workspace-page__empty-text">{{ messages.emptyText }}</p>
-				</div>
-				<DocumentList
-					v-else-if="!hasError"
-					ref="documentList"
-					:items="listItems"
-					:has-more="hasMore"
-					:loading="loading"
-					mode="cards"
-					:selection-enabled="selection.mode"
-					:selectable="showSelectButton"
-					:is-mobile="isMobile"
-					:selected-ids="selection.ids"
-					@open="onOpen"
-					@load-more="onLoadMore"
-					@select="onSelect"
+			<template v-if="isAboutTab">
+				<AboutPanel
+					ref="about"
+					:main-document-id="mainDocumentId"
+					:has-description="hasDescription"
+					:can-manage="canManagePermissions"
+					@state-change="onAboutStateChange"
+					@open-internal-link="onOpenInternalLink"
 				/>
+				<DocumentSection
+					v-if="showAboutDocuments"
+					ref="aboutDocumentsSection"
+					tabindex="-1"
+					:label="messages.documentsSection"
+					:heading-level="3"
+					test-id="note-workspace-about-documents"
+					@toggle="onAboutDocumentsToggle"
+				>
+					<div
+						v-if="showListError"
+						class="note-workspace-page__empty"
+						role="status"
+						aria-live="off"
+						data-testid="note-workspace-about-documents-error"
+					>
+						<p class="note-workspace-page__empty-text note-workspace-page__empty-text--error">
+							{{ messages.listLoadError }}
+						</p>
+						<button
+							type="button"
+							class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps"
+							data-testid="note-workspace-about-documents-retry"
+							@click="onRetryList"
+						>
+							{{ messages.listRetry }}
+						</button>
+					</div>
+					<DocumentList
+						v-else
+						ref="documentList"
+						data-testid="note-workspace-about-documents-list"
+						v-bind="documentListBindings"
+					/>
+				</DocumentSection>
+			</template>
+			<template v-else>
+				<NoteWorkspaceEmptyStateComponent v-if="showEmpty" :text="messages.emptyText" />
+				<DocumentList v-else-if="!hasError" ref="documentList" v-bind="documentListBindings" />
 			</template>
 			</div>
 

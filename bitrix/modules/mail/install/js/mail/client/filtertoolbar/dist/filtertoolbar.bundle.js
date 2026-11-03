@@ -130,7 +130,7 @@ this.BX.Mail = this.BX.Mail || {};
 				return;
 			}
 			const counterBtn = main_core.Tag.render`<span class="mail-toolbar-counter">
-			<span class="mail-msg-counter-number" data-role="unread-counter-number"></span>
+			<span class="mail-msg-counter-number" data-role="unread-counter-number" data-testid="mail-filter-toolbar-counter"></span>
 			<span class="mail-msg-counter-text">${main_core.Loc.getMessage("MAIL_FILTER_NOT_READ")}</span>
 			<span class="mail-msg-counter-remove"></span>
 		</span>`;
@@ -163,6 +163,13 @@ this.BX.Mail = this.BX.Mail || {};
 					} else {
 						this.hideReadAllBtn();
 					}
+					const sectionCount = this.#getActiveSectionCount(event.data);
+					if (sectionCount !== null) {
+						// a section spans the whole mailbox, so its own number stands instead of the total
+						this.setCount(sectionCount);
+						this.showCounter();
+						return;
+					}
 					if (currentDir === '') {
 						currentFolderCount = event['data']['total'];
 					}
@@ -174,6 +181,15 @@ this.BX.Mail = this.BX.Mail || {};
 					}
 				}
 			}.bind(this));
+		}
+		#getActiveSectionCount(data) {
+			const activeSection = data.activeSection;
+			const sections = data.sections;
+			if (!activeSection || !sections) {
+				return null;
+			}
+			const count = Number(sections[activeSection]);
+			return Number.isFinite(count) ? count : null;
 		}
 	}
 

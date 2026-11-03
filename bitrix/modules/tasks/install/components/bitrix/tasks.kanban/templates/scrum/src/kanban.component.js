@@ -1,17 +1,19 @@
+import { Dom } from 'main.core';
+
 export type AjaxComponentParams = {
 	USER_ID: number,
 	GROUP_ID: number,
 	GROUP_ID_FORCED: number,
 	SPRINT_ID: number,
 	PERSONAL: string,
-	TIMELINE_MODE: string
+	TIMELINE_MODE: string,
 }
 
 type Params = {
 	filterId: string,
 	defaultPresetId: string,
 	ajaxComponentPath: string,
-	ajaxComponentParams: AjaxComponentParams
+	ajaxComponentParams: AjaxComponentParams,
 }
 
 export class KanbanComponent

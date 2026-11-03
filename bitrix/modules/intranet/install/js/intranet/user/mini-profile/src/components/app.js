@@ -1,11 +1,17 @@
 import { Backend } from '../classes/backend';
-import { InitialParamDict, InitialParamService } from '../classes/initial-param-service';
+import {
+	InitialParamDict,
+	InitialParamService,
+	RightSideViewDict,
+	type RightSideViewType,
+} from '../classes/initial-param-service';
 
 import type { DepartmentType, UserData } from '../type';
 import { Divider } from './divider/divider';
 import { ErrorState } from './error-state/error-state';
 import { ErrorStateDict } from './error-state/const';
 import { LoaderTransition } from './loader-transition/loader-transition';
+import { LocationView } from './location-view/location-view';
 import { UserMiniProfileLoader } from './loader/loader';
 import { StructureViewList } from './structure-view-list/structure-view-list';
 import { CollapseTransition } from './transition-collapse/transition-collapse';
@@ -27,6 +33,7 @@ export const UserMiniProfileComponent = {
 		CollapseTransition,
 		ErrorState,
 		LoaderTransition,
+		LocationView,
 	},
 	props: {
 		popup: {
@@ -49,6 +56,8 @@ export const UserMiniProfileComponent = {
 			isExpanded: true,
 			isExpandBlocked: false,
 			backendData: null,
+			rightSideView: RightSideViewDict.Structure,
+			isLocationBlockEmpty: false,
 		};
 	},
 	computed: {
@@ -109,9 +118,33 @@ export const UserMiniProfileComponent = {
 		{
 			return this.backendData?.baseInfo?.isSystemUser === true;
 		},
+		hasLocationBlock(): boolean
+		{
+			return this.backendData?.isLocationAvailable === true;
+		},
+		hasLocationView(): boolean
+		{
+			return this.hasLocationBlock && !this.isLocationBlockEmpty;
+		},
+		canShowRightSide(): boolean
+		{
+			return (this.canShowDepartments || this.hasLocationView) && !this.isSystemUser;
+		},
+		isMapView(): boolean
+		{
+			return this.rightSideView === RightSideViewDict.Map;
+		},
 		isShowStructure(): boolean
 		{
-			return this.canShowDepartments && this.isExpanded && !this.isSystemUser;
+			return this.canShowDepartments && this.isExpanded && !this.isSystemUser && !this.isMapView;
+		},
+		isShowLocation(): boolean
+		{
+			return this.hasLocationView && this.isExpanded && !this.isSystemUser && this.isMapView;
+		},
+		isShowRightSide(): boolean
+		{
+			return this.isShowStructure || this.isShowLocation;
 		},
 		isShowInlineStructure(): boolean
 		{
@@ -127,6 +160,7 @@ export const UserMiniProfileComponent = {
 				.then((data) => {
 					this.backendData = data;
 					this.isLoaded = true;
+					this.applyInitialRightSideView();
 				})
 				.catch((errorCode) => {
 					if (errorCode === 'ACCESS_DENIED')
@@ -164,6 +198,63 @@ export const UserMiniProfileComponent = {
 			this.$nextTick(() => {
 				this.adjustPopup();
 			});
+		},
+		applyInitialRightSideView(): void
+		{
+			const savedView = InitialParamService.getValue(InitialParamDict.RightSideView);
+
+			this.rightSideView = this.isRightSideViewAvailable(savedView)
+				? savedView
+				: this.getAvailableRightSideView();
+		},
+		isRightSideViewAvailable(view: ?RightSideViewType): boolean
+		{
+			if (view === RightSideViewDict.Map)
+			{
+				return this.hasLocationView;
+			}
+
+			if (view === RightSideViewDict.Structure)
+			{
+				return this.canShowDepartments;
+			}
+
+			return false;
+		},
+		getAvailableRightSideView(): RightSideViewType
+		{
+			return this.canShowDepartments ? RightSideViewDict.Structure : RightSideViewDict.Map;
+		},
+		onToggleRightSideView(): void
+		{
+			const nextView = this.isMapView ? RightSideViewDict.Structure : RightSideViewDict.Map;
+			if (!this.isRightSideViewAvailable(nextView))
+			{
+				return;
+			}
+
+			this.rightSideView = nextView;
+			InitialParamService.save(InitialParamDict.RightSideView, nextView);
+
+			if (!this.isExpanded)
+			{
+				this.onExpand();
+
+				return;
+			}
+
+			this.$nextTick(() => {
+				this.adjustPopup();
+			});
+		},
+		onLocationBlockEmpty(): void
+		{
+			this.isLocationBlockEmpty = true;
+
+			if (this.canShowDepartments)
+			{
+				this.rightSideView = RightSideViewDict.Structure;
+			}
 		},
 		adjustPopup(): void
 		{
@@ -209,10 +300,13 @@ export const UserMiniProfileComponent = {
 							<UserBaseInfo
 								:userId="userId"
 								:info="backendData.baseInfo"
-								:isShowExpand="canShowDepartments && !isSystemUser"
+								:isShowExpand="canShowRightSide"
+								:isShowMapButton="hasLocationView && !isSystemUser"
+								:isMapView="isMapView"
 								:isExpanded="isExpanded"
 								:canChat="canChat"
 								@expand="onExpand"
+								@toggleView="onToggleRightSideView"
 							/>
 							<template v-if="backendData.detailInfo">
 								<Divider style="margin-top: 18px; margin-bottom: 14px"/>
@@ -233,16 +327,21 @@ export const UserMiniProfileComponent = {
 								/>
 							</template>
 						</div>
-						<div v-if="isShowStructure" 
+						<div v-if="isShowRightSide"
 							class="intranet-user-mini-profile-wrapper__content__right-wrapper"
 							data-test-id="usermp_structure-wrapper"
 						>
 							<Divider isVertical style="margin: 0 18px"/>
 							<div class="intranet-user-mini-profile-wrapper__column --right" data-test-id="usermp_structure-column">
-								<StructureViewList
+								<StructureViewList v-if="isShowStructure"
 									:structure="backendData.structure"
 									:user="getUserData()"
 									data-test-id="usermp_structure-view-list"
+								/>
+								<LocationView v-else-if="isShowLocation"
+									:userId="userId"
+									@empty="onLocationBlockEmpty"
+									@render="() => this.adjustPopup()"
 								/>
 							</div>
 						</div>

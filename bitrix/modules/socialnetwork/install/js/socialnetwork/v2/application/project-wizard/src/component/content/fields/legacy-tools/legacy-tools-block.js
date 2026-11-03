@@ -1,10 +1,10 @@
 import { mapState, mapActions } from 'ui.vue3.pinia';
 import { Solid } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.solid';
-import { Switcher as UiSwitcher } from 'ui.vue3.components.switcher';
 import { SwitcherSize, type SwitcherOptions } from 'ui.switcher';
 import { TextMd, TextSm } from 'ui.system.typography.vue';
 
+import { AccessibleSwitcher } from 'socialnetwork.v2.components.elements.accessible-switcher';
 import { UiAccordion, UiAccordionItem } from 'socialnetwork.v2.components.elements.ui-accordion';
 import { useProjectStore } from 'socialnetwork.v2.model.project';
 
@@ -14,7 +14,6 @@ const toggleableFeatureIds = Object.freeze([
 	'forum',
 	'wiki',
 	'photo',
-	'groupLists',
 	'landingKnowledge',
 ]);
 
@@ -22,7 +21,6 @@ const toggleableFeatureLabels = Object.freeze({
 	forum: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_FORUM_LABEL_MSGVER_1',
 	wiki: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_WIKI_LABEL',
 	photo: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_PHOTO_LABEL',
-	groupLists: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_GROUP_LISTS_LABEL',
 	landingKnowledge: 'SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_LANDING_KNOWLEDGE_LABEL',
 });
 
@@ -34,7 +32,7 @@ export const LegacyToolsBlock = {
 		TextSm,
 		UiAccordion,
 		UiAccordionItem,
-		UiSwitcher,
+		AccessibleSwitcher,
 	},
 	setup(): Object
 	{
@@ -73,7 +71,7 @@ export const LegacyToolsBlock = {
 		...mapActions(useProjectStore, ['updateFeature']),
 	},
 	template: `
-		<UiAccordion v-model:value="tabIndex">
+		<UiAccordion v-if="items.length > 0" v-model:value="tabIndex">
 			<UiAccordionItem
 				:value="1"
 				:title="loc('SONET_EXT_PROJECT_WIZARD_LEGACY_TOOLS_TITLE')"
@@ -93,11 +91,12 @@ export const LegacyToolsBlock = {
 							:key="item.id"
 							class="sonet--project-wizard--legacy-tools-item"
 						>
-							<UiSwitcher
-								:isChecked="Boolean(features[item.id])"
+							<AccessibleSwitcher
+								:modelValue="Boolean(features[item.id])"
+								:ariaLabel="item.label"
+								:data-testid="'project-legacy-tools-toggle-' + item.id"
 								:options="switcherOptions"
-								@check="updateFeature(item.id, true)"
-								@uncheck="updateFeature(item.id, false)"
+								@update:modelValue="updateFeature(item.id, $event)"
 							/>
 							<TextMd>
 								{{ item.label }}

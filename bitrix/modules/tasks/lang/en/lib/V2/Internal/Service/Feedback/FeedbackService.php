@@ -1,2 +1,3 @@
 <?php
-$MESS["TASKS_V2_FEEDBACK_TITLE"] = "Send feedback";
+$MESS["TASKS_V2_FEEDBACK_SLIDER_TITLE"] = "Assistance";
+$MESS["TASKS_V2_FEEDBACK_TITLE"] = "Assistance";

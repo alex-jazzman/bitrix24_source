@@ -51,6 +51,29 @@
 
 		this.initAnalytics();
 		this.bindActions();
+		this.bindMailboxAvatarFallback();
+	};
+
+	BXMailView.prototype.bindMailboxAvatarFallback = function ()
+	{
+		document.querySelectorAll('img[data-mailbox-avatar-image]').forEach((image) => {
+			if (image.dataset.mailboxAvatarFallbackBound === '1')
+			{
+				return;
+			}
+
+			image.dataset.mailboxAvatarFallbackBound = '1';
+			const revealFallback = () => image.remove();
+
+			if (image.complete && image.naturalWidth === 0)
+			{
+				revealFallback();
+
+				return;
+			}
+
+			BX.bind(image, 'error', revealFallback);
+		});
 	};
 
 	BXMailView.prototype.initIframe = function()

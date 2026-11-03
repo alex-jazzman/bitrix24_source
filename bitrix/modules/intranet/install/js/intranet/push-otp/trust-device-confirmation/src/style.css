@@ -50,7 +50,7 @@
 .intranet-trust-device-confirmation-popup__icon i {
 	width: 78px;
 	height: 78px;
-	background-image: url("../images/header.png");
+	background-image: url("../images/header.webp");
 	background-size: contain;
 	background-repeat: no-repeat;
 }
@@ -90,15 +90,15 @@
 }
 
 .intranet-trust-device-confirmation-popup-content-item__icon.--device {
-	background-image: url("../images/device-icon.png");
+	background-image: url("../images/device-icon.webp");
 }
 
 .intranet-trust-device-confirmation-popup-content-item__icon.--number {
-	background-image: url("../images/number-icon.png");
+	background-image: url("../images/number-icon.webp");
 }
 
 .intranet-trust-device-confirmation-popup-content-item__icon.--email {
-	background-image: url("../images/email-icon.png");
+	background-image: url("../images/email-icon.webp");
 	background-position: center;
 	background-size: 59px 51px;
 }
@@ -106,7 +106,7 @@
 .intranet-trust-device-confirmation-popup-content-item__icon--device {
 	width: 45px;
 	height: 45px;
-	background-image: url("../images/number-icon.png");
+	background-image: url("../images/number-icon.webp");
 	background-size: contain;
 	background-repeat: no-repeat;
 }
@@ -167,4 +167,86 @@
 	display: flex;
 	justify-content: center;
 	gap: 12px;
+}
+
+@media (max-width: 767px) {
+	.popup-window.intranet-trust-device-confirmation-popup--blue,
+	.popup-window.intranet-trust-device-confirmation-popup--red {
+		box-sizing: border-box;
+		width: calc(100vw - 32px) !important;
+		max-width: 430px;
+		max-height: calc(100vh - 32px);
+		max-height: calc(100dvh - 32px);
+		overflow: hidden;
+	}
+
+	.popup-window.intranet-trust-device-confirmation-popup--blue .popup-window-content,
+	.popup-window.intranet-trust-device-confirmation-popup--red .popup-window-content {
+		max-height: calc(100vh - 32px);
+		max-height: calc(100dvh - 32px);
+		overflow-y: auto;
+	}
+
+	.intranet-trust-device-confirmation-popup__wrapper {
+		padding: 16px;
+	}
+
+	.intranet-trust-device-confirmation-popup__header {
+		align-items: flex-start;
+	}
+
+	.intranet-trust-device-confirmation-popup__title {
+		font-size: 18px;
+		line-height: 24px;
+	}
+
+	.intranet-trust-device-confirmation-popup__icon i {
+		width: 56px;
+		height: 56px;
+	}
+
+	.intranet-trust-device-confirmation-popup__content {
+		margin-top: 20px;
+	}
+
+	.intranet-trust-device-confirmation-popup-content__item {
+		height: auto;
+		min-height: 60px;
+		padding: 8px 10px;
+	}
+
+	.intranet-trust-device-confirmation-popup-content-item__icon-wrapper {
+		width: 44px;
+		height: 44px;
+	}
+
+	.intranet-trust-device-confirmation-popup-content-item__icon {
+		width: 40px;
+		height: 40px;
+	}
+
+	.intranet-trust-device-confirmation-popup-content-item__text {
+		min-width: 0;
+	}
+
+	.intranet-trust-device-confirmation-popup-content-item__description {
+		overflow-wrap: anywhere;
+	}
+
+	.intranet-trust-device-confirmation-popup-content-item__action {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		flex-shrink: 0;
+	}
+
+	.intranet-trust-device-confirmation-popup__buttons {
+		margin-top: 24px;
+		flex-direction: column;
+	}
+
+	.intranet-trust-device-confirmation-popup__buttons .ui-btn {
+		width: 100%;
+		min-height: 44px;
+	}
 }

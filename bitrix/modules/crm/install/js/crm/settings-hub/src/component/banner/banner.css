@@ -1,0 +1,21 @@
+.crm-settings-hub-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inset-xs);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-accent-soft-blue-3);
+	color: var(--ui-color-base-2);
+	line-height: 1.5;
+}
+
+.crm-settings-hub-banner.--warning {
+	background: var(--ui-color-accent-soft-orange-3);
+	border: 1px solid var(--ui-color-accent-soft-orange-1);
+}
+
+.crm-settings-hub-banner__icon {
+	flex-shrink: 0;
+	margin-top: var(--ui-space-inset-3xs);
+	color: var(--ui-color-accent-main-warning);
+}

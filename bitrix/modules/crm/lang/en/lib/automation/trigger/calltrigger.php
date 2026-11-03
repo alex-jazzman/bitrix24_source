@@ -4,5 +4,5 @@ $MESS["CRM_AUTOMATION_TRIGGER_CALL_DESCRIPTION"] = "Changes the stage when an in
 $MESS["CRM_AUTOMATION_TRIGGER_CALL_EVENT_DATE_TIME"] = "Call date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_CALL_NAME"] = "Incoming call";
 $MESS["CRM_AUTOMATION_TRIGGER_CALL_NAME_1"] = "Inbound call received";
-$MESS["CRM_AUTOMATION_TRIGGER_CALL_NODE_DESCRIPTION"] = "Triggered after receiving an inbound call from customer.";
+$MESS["CRM_AUTOMATION_TRIGGER_CALL_NODE_DESCRIPTION"] = 'Triggered after an inbound call.';
 $MESS["CRM_AUTOMATION_TRIGGER_CALL_PROPERTY_LINE"] = "Select a Channel";

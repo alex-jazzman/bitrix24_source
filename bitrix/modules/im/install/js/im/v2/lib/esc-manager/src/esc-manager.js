@@ -1,4 +1,4 @@
-import { Event } from 'main.core';
+import { Event, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { PopupWindowManager } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
@@ -7,6 +7,7 @@ import { Utils } from 'im.v2.lib.utils';
 import { CallManager } from 'im.v2.lib.call';
 import { Core } from 'im.v2.application.core';
 import { EventType, Layout, type ApplicationContext } from 'im.v2.const';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { MessengerSlider } from 'im.v2.lib.slider';
 import { DesktopManager } from 'im.v2.lib.desktop';
@@ -73,6 +74,11 @@ export class EscManager
 			return;
 		}
 
+		if (PopupWindowManager.isAnyPopupShown())
+		{
+			return;
+		}
+
 		if (this.#handleActiveInput())
 		{
 			return;
@@ -104,10 +110,14 @@ export class EscManager
 	#shouldIgnoreEscape(): boolean
 	{
 		const hasVisibleCall = CallManager.getInstance().hasVisibleCall();
-		// popups have their own escape handling
-		const isAnyPopupShown = PopupWindowManager.isAnyPopupShown();
+		// Popups handle Escape independently from the messenger.
+		const isAnyPopupBlockingBackgroundEscShown = Type.isFunction(
+			PopupWindowManager.isAnyPopupBlockingBackgroundEscShown,
+		)
+			? PopupWindowManager.isAnyPopupBlockingBackgroundEscShown()
+			: PopupWindowManager.isAnyPopupShown();
 
-		return hasVisibleCall || isAnyPopupShown || this.#isExternalSliderOpened();
+		return hasVisibleCall || isAnyPopupBlockingBackgroundEscShown || this.#isExternalSliderOpened();
 	}
 
 	async #isHandledBySubscriber(): Promise<boolean>
@@ -159,7 +169,7 @@ export class EscManager
 		}
 		else
 		{
-			this.#switchToChatLayout();
+			this.#switchToDefaultLayout();
 		}
 
 		return true;
@@ -206,10 +216,10 @@ export class EscManager
 		this.#wasKeyDownHandled = BX.UI.Viewer.Instance.isOpen();
 	}
 
-	#switchToChatLayout()
+	#switchToDefaultLayout()
 	{
 		void LayoutManager.getInstance().setLayout({
-			name: Layout.chat,
+			...(FolderManager.getDefaultLayout() ?? { name: Layout.chat }),
 			entityId: '',
 		});
 	}

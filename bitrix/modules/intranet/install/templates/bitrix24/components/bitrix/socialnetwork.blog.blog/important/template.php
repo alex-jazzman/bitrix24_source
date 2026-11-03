@@ -8,8 +8,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$arParams["OPTIONS"] = (is_array($arParams["OPTIONS"]) ? $arParams["OPTIONS"] : []);
-
 $arRes = [
 	"data" => [],
 	"page_settings" => [
@@ -111,7 +109,6 @@ foreach ($filter as $filterKey => $filterValues)
 		new BX.Intranet.ImportantMessagesWidget({
 			widgetContainerId: '<?= $widgetContainerId ?>',
 			messages: <?= Json::encode($arRes["data"]) ?>,
-			options: <?= Json::encode($arParams["OPTIONS"])?>,
 			postInfo: {
 				'template': '<?=$this->__name?>',
 				'filter': <?=Json::encode($filter)?>,

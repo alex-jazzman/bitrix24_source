@@ -3,17 +3,18 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (require, exports, module) => {
 	const { unique } = require('utils/array');
+	const { Loc } = require('im/messenger/loc');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { requireLazy } = require('require-lazy');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { Analytics, EventType, ComponentCode } = require('im/messenger/const');
 	const { addChat, addParticipants, deleteParticipant } = require(
 		'im/messenger/controller/sidebar-v2/user-actions/participants/src/rest-service',
 	);
 	const { MemberSelector } = require('im/messenger/controller/selector/member');
+	const { MemberEntitySelector } = require('im/messenger/controller/selector/member-entity');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { DialogType } = require('im/messenger/const');
-	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { Type } = require('type');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
@@ -33,7 +34,10 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 			return Promise.reject(new Error('openParticipantsAddWidget: unknown dialog'));
 		}
 
-		AnalyticsService.getInstance().sendUserAddButtonClicked({ dialogId });
+		AnalyticsService.getInstance().sendUserAddButtonClicked({
+			dialogId,
+			section: Analytics.Section.chatSidebar,
+		});
 
 		if (dialog.type === DialogType.collab)
 		{
@@ -64,15 +68,49 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 			return Promise.resolve();
 		}
 
+		// "+" in a conversation with a single person starts a new group chat instead of adding
+		// anybody to this one, so the composition of a chat is neither read nor preselected there.
+		if (!DialogHelper.isDialogId(dialogId))
+		{
+			return openCreateChatSelector({ store, dialogId, widgetTitle });
+		}
+
 		return new Promise((resolve, reject) => {
-			const memberSelector = new MemberSelector({
+			const selector = new MemberEntitySelector({
+				dialogId,
+				title: widgetTitle,
+				sendButtonName: Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_BUTTON_SELECTOR_ADD'),
+				onSelectMemberEntities: (addedEntities) => {
+					addParticipants(dialogId, addedEntities)
+						.then(resolve)
+						.catch(reject);
+				},
+			});
+
+			// A selector that never opened settles the promise of the entry point with the refusal:
+			// its caller waits for it and has nothing else to learn the failure from.
+			selector.open().catch(reject);
+		});
+	}
+
+	/**
+	 * @desc Picks the people a new group chat is started with. The org structure is out of this
+	 * scenario: there is no chat to link a node to until the chat is created.
+	 * @param {Object} store
+	 * @param {DialogId} dialogId
+	 * @param {String} [widgetTitle]
+	 * @return {Promise<{chatId: number, dialogId: string}|null>}
+	 */
+	function openCreateChatSelector({ store, dialogId, widgetTitle })
+	{
+		return new Promise((resolve, reject) => {
+			const selector = new MemberSelector({
 				title: widgetTitle,
 				excludeGuests: true,
-				onSelectMembers: async (selectedUsersIds) => {
+				onSelectMembers: (selectedUsersIds) => {
 					try
 					{
-						const currentDialog = store.getters['dialoguesModel/getById'](dialogId);
-						const { participants } = currentDialog;
+						const { participants } = store.getters['dialoguesModel/getById'](dialogId);
 						const currentParticipantIds = unique(participants.filter(Boolean));
 						const uniqueIds = selectedUsersIds.filter((id) => !currentParticipantIds.includes(id));
 
@@ -83,30 +121,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 							return;
 						}
 
-						const isCreateChat = !DialogHelper.isDialogId(dialogId);
-						if (isCreateChat)
-						{
-							addChat([...uniqueIds, ...currentParticipantIds])
-								.then(resolve)
-								.catch(reject);
-
-							return;
-						}
-
-						const dialogHelper = DialogHelper.createByModel(currentDialog);
-						if (dialogHelper?.inheritsParentChatMembership)
-						{
-							const parentChatId = currentDialog.parentChatId ?? 0;
-							const canAdd = await ProjectAccessGuard.canAddUsersToProjectChildChat(parentChatId, uniqueIds);
-							if (!canAdd)
-							{
-								resolve();
-
-								return;
-							}
-						}
-
-						addParticipants(dialogId, uniqueIds)
+						addChat([...uniqueIds, ...currentParticipantIds])
 							.then(resolve)
 							.catch(reject);
 					}
@@ -117,7 +132,7 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 				},
 			});
 
-			memberSelector.open();
+			selector.open();
 		});
 	}
 

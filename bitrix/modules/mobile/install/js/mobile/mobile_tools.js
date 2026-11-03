@@ -894,7 +894,7 @@
 					},
 				},
 				{
-					regExp: /\/(board|sheet|pres|doc|picture|media|file|audio)\/([^/?]+)(?:\?|$|\/)/i,
+					regExp: /\/(board|sheet|pres|doc|picture|media|file|audio|folder)\/([^/?]+)(?:\?|$|\/)/i,
 					result: {
 						url,
 					},

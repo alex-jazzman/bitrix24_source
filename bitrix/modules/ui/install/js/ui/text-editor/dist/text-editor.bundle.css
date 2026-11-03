@@ -148,18 +148,29 @@
 .ui-text-editor-image-dialog {
 	display: flex;
 	padding: 10px;
-	align-items: center;
+	align-items: flex-start;
+	gap: 8px;
 }
 
+/* the fields carry ui-ctl-w100, so the column must not add a margin of its own: the
+   full width plus a margin would overflow it */
 .ui-text-editor-image-dialog-form {
-	width: 320px;
+	width: 242px;
 	display: flex;
 	flex: 1;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.ui-text-editor-image-dialog-actions {
+	display: flex;
 	align-items: center;
 }
 
-.ui-text-editor-image-dialog-textbox {
-	margin-right: 8px;
+.ui-text-editor-image-dialog-hint {
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-3);
+	margin-left: var(--ui-space-inline-3xs);
 }
 
 .ui-text-editor-image-dialog-button {
@@ -235,13 +246,13 @@
 
 .ui-text-editor-video-dialog-status {
 	font-size: var(--ui-font-size-4xs);
-	color: var(--ui-color-text-subtle);
+	color: var(--ui-color-base-3);
 	margin-top: var(--ui-space-inline-3xs);
 	margin-left: var(--ui-space-inline-3xs);
 }
 
 .ui-text-editor-video-dialog-status.--error {
-	color: var(--ui-color-text-alert);
+	color: var(--ui-color-accent-main-alert);
 }
 
 .ui-text-editor-video-dialog-textbox {
@@ -265,6 +276,162 @@
 
 .ui-text-editor-video-dialog-button:hover {
 	opacity: 1;
+}
+
+.ui-text-editor-link-editor {
+	display: flex;
+	padding: 10px;
+	align-items: center;
+}
+
+.ui-text-editor-link-form {
+	width: 300px;
+	display: none;
+	flex: 1;
+}
+
+.ui-text-editor-link-preview {
+	display: flex;
+	flex: 1;
+	align-items: center;
+}
+
+.ui-text-editor-link-editor.--edit-mode .ui-text-editor-link-form {
+	display: flex;
+	align-items: center;
+}
+
+.ui-text-editor-link-editor.--edit-mode .ui-text-editor-link-preview {
+	display: none;
+}
+
+.ui-text-editor-link-editor.--auto-link-mode .ui-text-editor-link-form-delete-btn {
+	display: none;
+}
+
+.ui-text-editor-link-textbox {
+	margin-right: 8px;
+}
+
+.ui-text-editor-link-form-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 30px;
+	min-width: 30px;
+	padding: 0;
+	margin-left: 5px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	opacity: 0.7;
+	border-radius: var(--ui-border-radius-3xs);
+}
+
+.ui-text-editor-link-form-button:hover {
+	opacity: 1;
+}
+
+.ui-text-editor-link-label {
+	display: block;
+	flex: 1;
+	max-width: 250px;
+	min-width: 100px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	color: var(--ui-color-link-primary-base);
+	font-size: var(--ui-font-size-sm);
+
+}
+
+.ui-text-editor-link-label:hover {
+	-webkit-text-decoration: var(--ui-text-decoration-line-underline);
+	        text-decoration: var(--ui-text-decoration-line-underline);
+}
+
+.ui-text-editor-block-toolbar {
+	display: block;
+	opacity: 0;
+	position: absolute;
+	left: 0;
+	top: 0;
+	will-change: transform;
+}
+
+.ui-text-editor.--read-only .ui-text-editor-block-toolbar,
+.ui-text-editor.--collapsed .ui-text-editor-block-toolbar {
+	display: none;
+}
+
+.ui-text-editor-block-drag-icon {
+	width: 16px;
+	height: 24px;
+	border-radius: 3px;
+	cursor: grab;
+	overflow: hidden;
+}
+
+.ui-text-editor-block-drag-icon:hover {
+	background-color: rgba(55, 53, 47, 0.08);
+}
+
+.ui-text-editor-block-drop-line {
+	display: block;
+	box-sizing: border-box;
+	background: deepskyblue;
+	pointer-events: none;
+	height: 4px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0;
+	will-change: transform;
+}
+
+@keyframes ui-text-editor-copilot-loading {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.ui-text-editor-copilot-loading {
+	animation: ui-text-editor-copilot-loading 2s linear infinite;
+}
+
+/*
+	The keyboard focus ring of every focusable control the editor draws itself.
+
+	One rule for all of them on purpose: the ring is a single decision, and it was copied into five
+	component files before. The selectors stay as they are — other modules build markup on these
+	class names (`ui-text-editor-link-form-button` in tasks) and select them in tests, so an opt-in
+	utility class would have quietly left their controls without a ring.
+
+	The table picker grid needs a second selector: it opens from a click and then moves the focus
+	itself, and WebKit (unlike the other two engines) does not upgrade such a programmatic focus
+	to :focus-visible once an arrow key moves it, so there the ring goes by the keyboard modality
+	ui.a11y keeps on <html>.
+*/
+.ui-text-editor-toolbar-button:focus-visible,
+.ui-text-editor-image-dialog-button:focus-visible,
+.ui-text-editor-video-dialog-button:focus-visible,
+.ui-text-editor-link-form-button:focus-visible,
+.ui-text-editor-table-dialog-box:focus-visible,
+html[data-input-modality="keyboard"] .ui-text-editor-table-dialog-box:focus:not(:focus-visible) {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 1px;
+	opacity: 1;
+}
+
+/*
+	The ring is drawn inside the button box: a collapsed toolbar row is exactly as tall as its
+	buttons and clips anything drawn outside with overflow: hidden.
+*/
+.ui-text-editor-toolbar-button:focus-visible {
+	outline-offset: -1px;
 }
 
 .ui-text-editor {
@@ -444,161 +611,38 @@
 	}
 }
 
-.ui-text-editor-link-editor {
-	display: flex;
-	padding: 10px;
-	align-items: center;
+/* The vertical margins of the table move onto the scrollable wrapper */
+.ui-text-editor__table-scrollable-wrapper {
+	overflow-x: auto;
+	margin-top: var(--ui-typography-block-space-stack);
+	margin-bottom: var(--ui-typography-block-space-stack);
 }
 
-.ui-text-editor-link-form {
-	width: 300px;
-	display: none;
-	flex: 1;
+.ui-text-editor__table-scrollable-wrapper > .ui-typography-table {
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
-.ui-text-editor-link-preview {
-	display: flex;
-	flex: 1;
-	align-items: center;
+/*
+	A selected range of cells. The highlight is an overlay rather than the cell background:
+	header cells already use that background, and repainting it would highlight them
+	differently from ordinary ones. .ui-typography-table-cell is already position: relative.
+*/
+.ui-text-editor__table-cell-selected {
+	caret-color: transparent;
 }
 
-.ui-text-editor-link-editor.--edit-mode .ui-text-editor-link-form {
-	display: flex;
-	align-items: center;
-}
-
-.ui-text-editor-link-editor.--edit-mode .ui-text-editor-link-preview {
-	display: none;
-}
-
-.ui-text-editor-link-editor.--auto-link-mode .ui-text-editor-link-form-delete-btn {
-	display: none;
-}
-
-.ui-text-editor-link-textbox {
-	margin-right: 8px;
-}
-
-.ui-text-editor-link-form-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	height: 30px;
-	min-width: 30px;
-	padding: 0;
-	margin-left: 5px;
-	background: none;
-	border: none;
-	cursor: pointer;
-	opacity: 0.7;
-	border-radius: var(--ui-border-radius-3xs);
-}
-
-.ui-text-editor-link-form-button:hover {
-	opacity: 1;
-}
-
-.ui-text-editor-link-label {
-	display: block;
-	flex: 1;
-	max-width: 250px;
-	min-width: 100px;
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-	color: var(--ui-color-link-primary-base);
-	font-size: var(--ui-font-size-sm);
-
-}
-
-.ui-text-editor-link-label:hover {
-	-webkit-text-decoration: var(--ui-text-decoration-line-underline);
-	        text-decoration: var(--ui-text-decoration-line-underline);
-}
-
-.ui-text-editor-table-dialog {
-	padding: 10px;
-	--ui-text-editor-table-dialog-box-width: 16px;
-	--ui-text-editor-table-dialog-box-margin: 2px;
-}
-
-.ui-text-editor-table-dialog-grid {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	width: calc(var(--ui-text-editor-table-dialog-box-width) * 10 + var(--ui-text-editor-table-dialog-box-margin) * 20);
-}
-
-.ui-text-editor-table-dialog-box {
-	border: 1px solid #D4E1E4;
-	margin: var(--ui-text-editor-table-dialog-box-margin);
-	min-width: var(--ui-text-editor-table-dialog-box-width);
-	min-height: var(--ui-text-editor-table-dialog-box-width);
-}
-
-.ui-text-editor-table-dialog-box.--selected {
-	background-color: #AFDCEF;
-}
-
-.ui-text-editor-table-dialog-caption {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	min-height: var(--ui-size-xl);
-	color: var(--ui-color-text-primary);
-	font-size: var(--ui-font-size-sm);
-}
-
-@keyframes ui-text-editor-copilot-loading {
-	from {
-		transform: rotate(0deg);
-	}
-	to {
-		transform: rotate(360deg);
-	}
-}
-
-.ui-text-editor-copilot-loading {
-	animation: ui-text-editor-copilot-loading 2s linear infinite;
-}
-
-.ui-text-editor-block-toolbar {
-	display: block;
-	opacity: 0;
+.ui-text-editor__table-cell-selected::after {
+	content: '';
 	position: absolute;
-	left: 0;
-	top: 0;
-	will-change: transform;
-}
-
-.ui-text-editor.--read-only .ui-text-editor-block-toolbar,
-.ui-text-editor.--collapsed .ui-text-editor-block-toolbar {
-	display: none;
-}
-
-.ui-text-editor-block-drag-icon {
-	width: 16px;
-	height: 24px;
-	border-radius: 3px;
-	cursor: grab;
-	overflow: hidden;
-}
-
-.ui-text-editor-block-drag-icon:hover {
-	background-color: rgba(55, 53, 47, 0.08);
-}
-
-.ui-text-editor-block-drop-line {
-	display: block;
-	box-sizing: border-box;
-	background: deepskyblue;
+	inset: 0;
 	pointer-events: none;
-	height: 4px;
-	position: absolute;
-	left: 0;
-	top: 0;
-	opacity: 0;
-	will-change: transform;
+	background-color: var(--ui-text-editor-color-selection);
+}
+
+/* While a range drives the table selection, the native one on top of it only gets in the way */
+.ui-typography-table-selection *::selection {
+	background-color: transparent;
 }
 
 .ui-text-editor-toolbar {
@@ -687,7 +731,7 @@
 	opacity: 1;
 }
 
-.ui-text-editor-toolbar-button[disabled="true"] {
+.ui-text-editor-toolbar-button[disabled] {
 	opacity: 0.3;
 	background-color: initial;
 	pointer-events: none;
@@ -745,4 +789,51 @@
 .ui-text-editor.--collapsing .ui-text-editor__paragraph[data-placeholder]:before,
 .ui-text-editor.--expanding .ui-text-editor__paragraph[data-placeholder]:before {
 	display: none;
+}
+
+.ui-text-editor-table-dialog {
+	padding: 10px;
+	--ui-text-editor-table-dialog-box-width: 16px;
+	--ui-text-editor-table-dialog-box-margin: 2px;
+}
+
+/*
+	Rows are explicit nodes (role="row") rather than a flex-wrap side effect: the grid markup needs
+	a real row structure. The width stays as it was so that nothing moves visually.
+*/
+.ui-text-editor-table-dialog-grid {
+	display: flex;
+	flex-direction: column;
+	width: calc(var(--ui-text-editor-table-dialog-box-width) * 10 + var(--ui-text-editor-table-dialog-box-margin) * 20);
+}
+
+.ui-text-editor-table-dialog-row {
+	display: flex;
+	flex-direction: row;
+}
+
+/* the cell only carries the grid role, the box inside keeps its own size and margins */
+.ui-text-editor-table-dialog-cell {
+	display: flex;
+}
+
+.ui-text-editor-table-dialog-box {
+	border: 1px solid #D4E1E4;
+	margin: var(--ui-text-editor-table-dialog-box-margin);
+	min-width: var(--ui-text-editor-table-dialog-box-width);
+	min-height: var(--ui-text-editor-table-dialog-box-width);
+}
+
+/* the cell under the caret reads as focused, not as merely inside the picked range: see focus-ring.css */
+.ui-text-editor-table-dialog-box.--selected {
+	background-color: #AFDCEF;
+}
+
+.ui-text-editor-table-dialog-caption {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: var(--ui-size-xl);
+	color: var(--ui-color-text-primary);
+	font-size: var(--ui-font-size-sm);
 }

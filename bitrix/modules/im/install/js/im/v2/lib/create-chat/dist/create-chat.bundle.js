@@ -30,6 +30,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#preselectedMembers = [];
 		#includeCurrentUser = true;
 		#ownerId;
+		#onCreate = null;
 		static getInstance() {
 			if (!this.#instance) {
 				this.#instance = new this();
@@ -46,7 +47,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				preselectedMembers = [],
 				includeCurrentUser = true,
 				ownerId = null,
-				parentChatId = 0
+				parentChatId = 0,
+				onCreate = null
 			} = params;
 			if (clearCurrentCreation) {
 				this.setCreationStatus(false);
@@ -55,6 +57,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#preselectedMembers = preselectedMembers;
 			this.#includeCurrentUser = includeCurrentUser;
 			this.#ownerId = ownerId;
+			this.#onCreate = onCreate;
 			return im_v2_lib_layout.LayoutManager.getInstance().setLayout({
 				name: im_v2_const.Layout.createChat,
 				entityId: chatTypeToCreate
@@ -131,6 +134,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getOwnerId() {
 			return this.#ownerId ?? im_v2_application_core.Core.getUserId();
 		}
+		getOnCreate() {
+			return this.#onCreate;
+		}
 		getUndeselectedItems() {
 			if (this.#includeCurrentUser) {
 				return [['user', im_v2_application_core.Core.getUserId()]];
@@ -141,6 +147,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#ownerId = null;
 			this.#includeCurrentUser = true;
 			this.#preselectedMembers = [];
+			this.#onCreate = null;
 		}
 	}
 

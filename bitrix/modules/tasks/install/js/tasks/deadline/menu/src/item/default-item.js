@@ -130,12 +130,14 @@ export class DefaultItem extends Item
 			else if (currentDeadline === this.defaultDeadline)
 			{
 				Dom.addClass(node, this.ACCEPTED_ITEM_CLASS);
+				this.markOption(item, true);
 				isDefaultDeadlineFound = true;
 
 				return;
 			}
 
 			Dom.removeClass(node, this.ACCEPTED_ITEM_CLASS);
+			this.markOption(item, false);
 		});
 
 		if (!Type.isNull(customItem))
@@ -143,6 +145,7 @@ export class DefaultItem extends Item
 			const customItemClass = isDefaultDeadlineFound ? this.DISABLED_ITEM_CLASS : this.ACCEPTED_ITEM_CLASS;
 
 			Dom.addClass(customItem.getLayout().item, customItemClass);
+			this.markOption(customItem, !isDefaultDeadlineFound);
 
 			return;
 		}
@@ -157,7 +160,7 @@ export class DefaultItem extends Item
 			text: Loc.getMessage('TASKS_DEADLINE_MENU_DEFAULT_ITEM_CUSTOM'),
 			className: `${this.#SUBITEMS_CLASS_NAME} ${this.ACCEPTED_ITEM_CLASS}`,
 		});
-		this.#subMenu.addMenuItem(customItem);
+		this.markOption(this.#subMenu.addMenuItem(customItem), true);
 	}
 
 	#onMenuItemClick(event: BaseEvent, item: MenuItem): void

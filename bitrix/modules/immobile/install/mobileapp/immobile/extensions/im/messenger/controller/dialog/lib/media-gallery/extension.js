@@ -10,9 +10,12 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 	const { FileType } = require('im/messenger/const');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { MediaMenu } = require('im/messenger/controller/dialog/lib/media-gallery/src/media-menu');
+	const { selectGalleryFiles } = require('im/messenger/controller/dialog/lib/media-gallery/src/media-collection');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('dialog--dialog');
+
+	const GALLERY_FILE_TYPES = [FileType.image, FileType.video];
 
 	/**
 	 * @class DialogMediaGallery
@@ -113,7 +116,7 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 				return mediaList;
 			}
 
-			return this.getMessageList()
+			const messageFiles = this.getMessageList()
 				.flatMap((message) => {
 					const messageHelper = MessageHelper.createByModel(message);
 					const isBlockMedia = messageHelper.hasBlockGallery;
@@ -152,8 +155,9 @@ jn.define('im/messenger/controller/dialog/lib/media-gallery', (require, exports,
 
 							return item;
 						});
-				})
-				.filter((file) => file && (file.type === FileType.image || file.type === FileType.video));
+				});
+
+			return selectGalleryFiles(messageFiles, GALLERY_FILE_TYPES);
 		}
 
 		/**

@@ -1,0 +1,72 @@
+/*
+ * Stands right under the header of its section, above the content of the section. The block stays in
+ * the DOM while empty, so only the filled one takes space.
+ */
+.editor-chart-broken-links-alert.--filled {
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
+/* The alert lays out its own padding (18px 22px), and the panel asks for a shorter block. */
+.editor-chart-broken-links-alert .ui-system-alert-inner {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+/*
+ * The alert paints the typography of its own content, and a native button takes none of it: the reset
+ * repeats what the element had while it was plain text, and the dashed underline is what carries the
+ * affordance of a control inline.
+ */
+.editor-chart-broken-links-alert__show-more {
+	margin-left: 5px;
+	padding: 0;
+	border: 0;
+	border-bottom: 1px dashed var(--ui-color-divider-default);
+	background: none;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	cursor: pointer;
+	transition: color 200ms ease, border-color 200ms ease;
+}
+
+.editor-chart-broken-links-alert__show-more:hover {
+	color: var(--ui-color-base-1);
+	border-bottom-color: var(--ui-color-divider-accent);
+}
+
+/*
+ * A list of values is marked up as one, and the reset repeats the layout the block of items had:
+ * the rows of the list are its own children, so the gap stands between the same elements.
+ */
+.editor-chart-broken-links-alert__list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	margin: var(--ui-space-stack-xs) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/*
+ * A reference is written by the user and is not broken by spaces, so it wraps by characters. An
+ * addressed one is a native button, and the reset repeats what the element had while it was plain
+ * text: only the width of the content is kept, so the affordance does not stretch across the block.
+ */
+.editor-chart-broken-links-alert__item {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	word-break: break-word;
+}
+
+/* The dashed underline is what carries the affordance of a control inline (see __show-more). */
+.editor-chart-broken-links-alert__item.--clickable {
+	border-bottom: 1px dashed currentColor;
+	cursor: pointer;
+}

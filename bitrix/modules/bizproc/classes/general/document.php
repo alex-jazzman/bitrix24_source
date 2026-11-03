@@ -1873,6 +1873,30 @@ class CBPDocument
 
 	public static function getTemplatesForStart($userId, $documentType, $documentId = null, array $parameters = [])
 	{
+		return self::getTemplatesForStartLimited($userId, $documentType, $documentId, $parameters);
+	}
+
+	/**
+	 * Returns startable templates narrowed before access checks and enrichment.
+	 *
+	 * @param array{templateId?: int, templateIds?: int[], searchQuery?: string, limit?: int} $selection
+	 * @return array<int, array{id: int, name: string, description: string, hasParameters: bool,
+	 *     isConstantsTuned: bool}>
+	 */
+	public static function getTemplatesForStartLimited(
+		$userId,
+		$documentType,
+		$documentId = null,
+		array $parameters = [],
+		array $selection = [],
+	)
+	{
+		$limit = isset($selection['limit']) ? (int)$selection['limit'] : null;
+		if ($limit !== null && $limit < 1)
+		{
+			return [];
+		}
+
 		if (!isset($parameters['UserGroups']))
 		{
 			$currentUser = \Bitrix\Main\Engine\CurrentUser::get();
@@ -1890,16 +1914,51 @@ class CBPDocument
 		}
 		$op = CBPCanUserOperateOperation::StartWorkflow;
 
+		$filter = [
+			'DOCUMENT_TYPE' => $documentType,
+			'ACTIVE' => 'Y',
+			'IS_SYSTEM' => 'N',
+			'<AUTO_EXECUTE' => CBPDocumentEventType::Automation,
+		];
+
+		if (isset($selection['templateId']))
+		{
+			$templateId = (int)$selection['templateId'];
+			if ($templateId < 1)
+			{
+				return [];
+			}
+
+			$filter['ID'] = $templateId;
+		}
+		elseif (array_key_exists('templateIds', $selection))
+		{
+			$templateIds = array_values(array_unique(array_filter(
+				array_map(
+					'intval',
+					is_array($selection['templateIds']) ? $selection['templateIds'] : [],
+				),
+				static fn(int $templateId): bool => $templateId > 0,
+			)));
+			if ($templateIds === [])
+			{
+				return [];
+			}
+
+			$filter['ID'] = $templateIds;
+		}
+
+		$searchQuery = trim((string)($selection['searchQuery'] ?? ''));
+		if ($searchQuery !== '')
+		{
+			$filter['%NAME'] = $searchQuery;
+		}
+
 		$templates = [];
 		$dbWorkflowTemplate = CBPWorkflowTemplateLoader::GetList(
 			['SORT' => 'ASC', 'NAME' => 'ASC'],
 			array_merge(
-				[
-					"DOCUMENT_TYPE" => $documentType,
-					"ACTIVE" => "Y",
-					"IS_SYSTEM" => "N",
-					'<AUTO_EXECUTE' => CBPDocumentEventType::Automation,
-				],
+				$filter,
 				// the list is the manual start point of the document, so the templates a pilot acts on are
 				// narrowed here to the ones this employee may see; the key of the condition is its own and
 				// does not meet the ones above
@@ -1931,6 +1990,11 @@ class CBPDocument
 				'hasParameters' => count($arWorkflowTemplate['PARAMETERS']) > 0,
 				'isConstantsTuned' => CBPWorkflowTemplateLoader::isConstantsTuned($arWorkflowTemplate["ID"]),
 			];
+
+			if ($limit !== null && count($templates) >= $limit)
+			{
+				break;
+			}
 		}
 
 		return $templates;

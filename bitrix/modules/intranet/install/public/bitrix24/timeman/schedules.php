@@ -17,21 +17,7 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 }
 ?><?
 
-if (ModuleManager::isModuleInstalled("timeman"))
-{
-	try
-	{
-		$APPLICATION->IncludeComponent("bitrix:timeman.schedules", "", []);
-	}
-	catch (\Bitrix\Main\AccessDeniedException $e)
-	{
-		echo $e->getMessage();
-	}
-}
-elseif (
-	!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime')
-	&& (!\Bitrix\Main\Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Feature::isFeatureEnabled('timeman'))
-)
+if (!\Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('worktime'))
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.settings.tool.stub',
@@ -42,6 +28,17 @@ elseif (
 			'SOURCE' => 'schedules'
 		],
 	);
+}
+elseif (ModuleManager::isModuleInstalled("timeman"))
+{
+	try
+	{
+		$APPLICATION->IncludeComponent("bitrix:timeman.schedules", "", []);
+	}
+	catch (\Bitrix\Main\AccessDeniedException $e)
+	{
+		echo $e->getMessage();
+	}
 }
 elseif (!(!ModuleManager::isModuleInstalled("timeman") && in_array($licenseType, ["company", "edu", "nfr"])))
 {

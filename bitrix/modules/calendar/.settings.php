@@ -1,9 +1,17 @@
 <?php
 
+use Bitrix\Calendar\Core\Queue\Invitation\EmailInvitationDelivery;
+use Bitrix\Calendar\Core\Queue\QueueRequestLogger;
 use Bitrix\Calendar\Integration\UI\EntitySelector;
 use Bitrix\Calendar\Integration;
+use Bitrix\Calendar\Internal\Integration\Crm\CrmWebFormBookingSource;
+use Bitrix\Calendar\Internal\Service\PublicBooking\PublicBookingFormDataService;
+use Bitrix\Calendar\Internal\Service\PublicBooking\Source\SourceContextResolver;
+use Bitrix\Calendar\Internal\Service\Invitation\Messenger\Receiver\EmailInvitationReceiver;
+use Bitrix\Calendar\Internal\Service\Invitation\Messenger\Sender\EmailInvitationSender;
 use Bitrix\Calendar\Internals\Container;
 use Bitrix\Calendar\Internals\EventManager\EventManagerInterface;
+use Bitrix\Main\DI\ServiceLocator;
 
 return [
 	'controllers' => [
@@ -49,6 +57,53 @@ return [
 			],
 			'calendar.container' => [
 				'className' => Container::class,
+			],
+			SourceContextResolver::class => [
+				'className' => SourceContextResolver::class,
+				'constructorParams' => static function (): array {
+					return [
+						[
+							new CrmWebFormBookingSource(),
+						],
+					];
+				},
+			],
+			PublicBookingFormDataService::class => [
+				'className' => PublicBookingFormDataService::class,
+				'constructorParams' => static function (): array {
+					return [
+						ServiceLocator::getInstance()->get(SourceContextResolver::class),
+					];
+				},
+			],
+			'calendar.service.queue.logger' => [
+				'constructor' => static function (): QueueRequestLogger {
+					$logger = new QueueRequestLogger();
+					$logger->setType('queue');
+
+					return $logger;
+				},
+			],
+			EmailInvitationSender::class => [
+				'className' => EmailInvitationSender::class,
+				'constructorParams' => static function (): array {
+					$logger = new QueueRequestLogger();
+					$logger->setType('email_invitation');
+
+					return [$logger];
+				},
+			],
+			EmailInvitationReceiver::class => [
+				'className' => EmailInvitationReceiver::class,
+				'constructorParams' => static function (): array {
+					$logger = new QueueRequestLogger();
+					$logger->setType('email_invitation');
+
+					return [
+						new EmailInvitationDelivery(),
+						$logger,
+					];
+				},
 			],
 		],
 		'readonly' => true,
@@ -111,6 +166,16 @@ return [
 				]
 			],
 			'queues' => [
+				'calendar_email_invitation' => [
+					'broker' => 'calendar_db',
+					'handler' => \Bitrix\Calendar\Internal\Service\Invitation\Messenger\Receiver\EmailInvitationReceiver::class,
+					'retry_strategy' => [
+						'max_retries' => 10,
+						'delay' => 60,
+						'multiplier' => 2,
+						'max_delay' => 1800,
+					],
+				],
 				'google_section_sync' => [
 					'broker' => 'calendar_db',
 					'handler' => \Bitrix\Calendar\Synchronization\Internal\Service\Messenger\Receiver\GoogleSectionReceiver::class,

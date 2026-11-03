@@ -14,9 +14,7 @@ export class Header extends BaseHeader
 	{
 		const container = Tag.render`<div style="padding: 20px 20px 0;"></div>`;
 
-		const app = BitrixVue.createApp(Locator, {
-			maxWidth: this.getDialog().getWidth(),
-		});
+		const app = BitrixVue.createApp(Locator);
 		app.provide('section', this.getOption('section'));
 		app.provide('right', this.getOption('right'));
 

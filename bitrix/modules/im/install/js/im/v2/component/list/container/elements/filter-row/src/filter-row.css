@@ -1,0 +1,31 @@
+/* No breakpoints on purpose: the row never collapses into a menu, it scrolls when there is no room. */
+.bx-im-list-container-filter-row__container {
+	--im-list-container-filter-row__border-color: rgba(var(--im-color-palette-gray-90-rgb), 0.08);
+
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	/* The row scrolls and therefore clips at its padding box: the top inset carries the counter
+	   offset on top of its own value, and the negative margin gives that extra back to the layout. */
+	margin-top: calc(-1 * var(--ui-space-inset-2xs2));
+	padding: calc(var(--ui-space-inset-2xs2) * 2) var(--im-messenger__list_padding-inline) var(--ui-space-inset-sm);
+	border-bottom: 1px solid var(--im-list-container-filter-row__border-color);
+	overflow-x: auto;
+}
+
+.bx-im-list-container-filter-row__chip {
+	flex-shrink: 0;
+}
+
+.bx-im-list-container-filter-row__unread {
+	position: relative;
+	flex-shrink: 0;
+}
+
+/* Badge sits on the top-right corner of the chip, as in the design; the row's top inset covers it. */
+.bx-im-list-container-filter-row__counter {
+	position: absolute;
+	top: calc(-1 * var(--ui-space-inset-2xs2));
+	right: -4px;
+}

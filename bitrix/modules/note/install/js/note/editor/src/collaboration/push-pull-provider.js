@@ -507,11 +507,12 @@ export class PushPullYjsProvider
 			this.#awarenessManager = null;
 		}
 
-		if (this.awareness)
-		{
-			this.awareness.destroy();
-			this.awareness = null;
-		}
+		// Destroyed but still reachable, unlike the Y.Doc below. The editor outlives the provider on
+		// this path - the final markdown above is captured from a live one - and the plugin views torn
+		// down after us read `provider.awareness` to unhook their own listeners. CollaborationCaret has
+		// done exactly that since 3.30.5; nulling the field made that read throw, ProseMirror stopped
+		// walking the plugin views, and every view after the caret kept its listeners for good.
+		this.awareness?.destroy();
 
 		if (this.document)
 		{
@@ -943,11 +944,11 @@ export class PushPullYjsProvider
 			this.#awarenessManager = null;
 		}
 
-		if (this.awareness)
-		{
-			this.awareness.destroy();
-			this.awareness = null;
-		}
+		// Destroyed but still reachable, for the same reason as in destroy(): a plugin view torn down
+		// while this runs reads `provider.awareness` to unhook its own listeners. Here the field would
+		// stay null for a whole round trip to the server - connect() awaits loadForCollaboration right
+		// after this call.
+		this.awareness?.destroy();
 
 		if (this.document)
 		{

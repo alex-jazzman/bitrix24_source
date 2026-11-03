@@ -8,6 +8,7 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/open-chat-create',
+		'im:messenger/lib/integration/mobile/vibecode',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/recent/service/*',
 		'im:messenger/controller/recent/const',
@@ -16,7 +17,10 @@ return [
 	],
 	'bundle' => [
 		'./src/dummy',
+		// lib
+		'./src/lib/item-button',
 		// global
+		'./src/global/all',
 		'./src/global/channel',
 		'./src/global/chats',
 		'./src/global/collab',
@@ -24,6 +28,7 @@ return [
 		'./src/global/folder',
 		'./src/global/openlines',
 		'./src/global/task',
+		'./src/global/vibecode-app',
 		// nested
 		'./src/nested/calendar',
 		'./src/nested/collab-chat',

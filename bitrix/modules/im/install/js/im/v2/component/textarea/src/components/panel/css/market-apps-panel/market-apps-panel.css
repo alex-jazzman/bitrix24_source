@@ -44,6 +44,11 @@
 	cursor: pointer;
 }
 
+.bx-im-market-apps-panel__more-items-button.--opened {
+	background-color: var(--im-market-apps-panel__background-color_more-items-button-hover);
+	box-shadow: inset 0 0 0 1px var(--ui-color-accent-main-primary);
+}
+
 /*empty state*/
 .bx-im-market-apps-panel__empty-state-container {
 	display: flex;

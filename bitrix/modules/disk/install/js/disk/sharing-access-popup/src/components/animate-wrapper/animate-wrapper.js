@@ -3,10 +3,13 @@ export const AnimateWrapper = {
 	data()
 	{
 		return {
-			observer: null,
-			rafId: 0,
 			isReady: false,
 		};
+	},
+	created()
+	{
+		this.observer = null;
+		this.rafId = 0;
 	},
 	mounted()
 	{

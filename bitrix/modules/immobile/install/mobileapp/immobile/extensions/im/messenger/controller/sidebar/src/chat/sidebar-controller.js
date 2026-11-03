@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 		EventType,
 		DialogType,
 		Analytics,
+		CallJoinStatus,
 	} = require('im/messenger/const');
 
 	const { UserProfile } = require('im/messenger/controller/user-profile');
@@ -30,7 +31,7 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
-	const { CallManager } = require('im/messenger/lib/integration/callmobile/call-manager');
+	const { CallManager, getCallKeys } = require('im/messenger/lib/integration/callmobile/call-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
@@ -63,6 +64,8 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 			this.participantsService = new ParticipantsService(options);
 			this.sidebarUserService = null;
 			this.isDisableCallButton = false;
+			/** @type {Array<string>} keys of the joined call the button was disabled for */
+			this.disablingCallKeys = [];
 			this.isGroupDialog = false;
 			this.isNotes = false;
 			this.isBot = false;
@@ -631,22 +634,76 @@ jn.define('im/messenger/controller/sidebar/chat/sidebar-controller', (require, e
 			this.store.dispatch('sidebarModel/setHistoryLimitExceeded', { chatId: dialogData?.chatId, isHistoryLimitExceeded });
 		}
 
-		onCallActive()
+		/**
+		 * The button is blocked by the call this user is in; leaving that call arrives as another
+		 * active event with a non-local status, not as an inactive one.
+		 *
+		 * @param {RecentCallData} call
+		 * @param {RecentCallStatus} [joinStatus]
+		 */
+		onCallActive(call, joinStatus)
 		{
-			if (!this.isDisableCallButton)
+			if (!Type.isNil(joinStatus) && joinStatus !== CallJoinStatus.local)
 			{
-				this.isDisableCallButton = true;
-				this.updateAllButton();
+				if (this.isDisablingCall(call))
+				{
+					this.releaseCallButton();
+				}
+
+				return;
 			}
+
+			this.disablingCallKeys = getCallKeys(call);
+			this.setCallButtonDisabled(true);
 		}
 
-		onCallInactive()
+		/**
+		 * @param {RecentCallData} call
+		 */
+		onCallInactive(call)
 		{
-			if (this.isDisableCallButton)
+			if (this.disablingCallKeys.length > 0 && !this.isDisablingCall(call))
 			{
-				this.isDisableCallButton = false;
-				this.updateAllButton();
+				return;
 			}
+
+			this.releaseCallButton();
+		}
+
+		/**
+		 * Any identifier in common means the same call: an event about it may carry only the id or
+		 * only the uuid. A call with no identifier at all is nobody's.
+		 *
+		 * @param {RecentCallData} call
+		 * @return {boolean}
+		 */
+		isDisablingCall(call)
+		{
+			return getCallKeys(call).some((key) => this.disablingCallKeys.includes(key));
+		}
+
+		/**
+		 * setPermissions() disables the same button when the user has no right to call, so the end
+		 * of a call falls back to the permission instead of unlocking the button.
+		 */
+		releaseCallButton()
+		{
+			this.disablingCallKeys = [];
+			this.setCallButtonDisabled(this.permission ? !this.permission.canCall : false);
+		}
+
+		/**
+		 * @param {boolean} isDisabled
+		 */
+		setCallButtonDisabled(isDisabled)
+		{
+			if (this.isDisableCallButton === isDisabled)
+			{
+				return;
+			}
+
+			this.isDisableCallButton = isDisabled;
+			this.updateAllButton();
 		}
 
 		onCloseWidget()

@@ -12,6 +12,8 @@
 			this.exportPopups = {};
 			if (main_core.Type.isPlainObject(params)) {
 				this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
+				this.exportComponentName = params.exportComponentName;
+				this.exportSignedParameters = params.exportSignedParameters;
 				this.entityTypeName = params.entityTypeName;
 				this.categoryId = main_core.Text.toInteger(params.categoryId);
 				this.analytics = main_core.Type.isPlainObject(params.analytics) ? params.analytics : {};
@@ -221,7 +223,7 @@
 			if (this.exportPopups[exportType]) {
 				return Promise.resolve(this.exportPopups[exportType]);
 			}
-			return main_core.Runtime.loadExtension('ui.stepprocessing').then(exports$1 => {
+			return main_core.Runtime.loadExtension('ui.stepprocessing').then(exports => {
 				const optionsFields = {};
 				if (this.isLinkWithProductsEnabled) {
 					optionsFields.EXPORT_PRODUCT_FIELDS = {
@@ -231,19 +233,23 @@
 						value: 'N'
 					};
 				}
-				this.exportPopups[exportType] = exports$1.ProcessManager.create({
+				const exportParams = {
+					SITE_ID: main_core.Loc.getMessage('SITE_ID'),
+					entityTypeId: this.entityTypeId,
+					categoryId: this.categoryId,
+					EXPORT_TYPE: exportType,
+					COMPONENT_NAME: this.exportComponentName
+				};
+				if (this.exportSignedParameters) {
+					exportParams.signedParameters = this.exportSignedParameters;
+				}
+				this.exportPopups[exportType] = exports.ProcessManager.create({
 					id: 'crm.item.list.export.' + exportType,
 					controller: 'bitrix:crm.api.itemExport',
 					queue: [{
 						action: 'dispatcher'
 					}],
-					params: {
-						SITE_ID: main_core.Loc.getMessage('SITE_ID'),
-						entityTypeId: this.entityTypeId,
-						categoryId: this.categoryId,
-						EXPORT_TYPE: exportType,
-						COMPONENT_NAME: 'bitrix:crm.item.list'
-					},
+					params: exportParams,
 					optionsFields: optionsFields,
 					messages: {
 						DialogTitle: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
@@ -256,17 +262,14 @@
 						delete this.exportPopups[formatInner];
 					};
 				})(exportType));
-				this.exportPopups[exportType].setHandler(
-					BX.UI.StepProcessing.ProcessCallback.RequestStart,
-					function(actionData) {
-						const initialOptions = this.getDialog().getOptionFieldValues();
-						Object.keys(initialOptions).forEach(name => {
-							if (!(initialOptions[name] instanceof File)) {
-								actionData.append('INITIAL_OPTIONS[' + name + ']', initialOptions[name]);
-							}
-						});
-					}
-				);
+				this.exportPopups[exportType].setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart, function (actionData) {
+					const initialOptions = this.getDialog().getOptionFieldValues();
+					Object.keys(initialOptions).forEach(name => {
+						if (!(initialOptions[name] instanceof File)) {
+							actionData.append('INITIAL_OPTIONS[' + name + ']', initialOptions[name]);
+						}
+					});
+				});
 				return this.exportPopups[exportType];
 			});
 		}

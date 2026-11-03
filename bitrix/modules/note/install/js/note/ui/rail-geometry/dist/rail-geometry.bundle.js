@@ -5,7 +5,7 @@ this.BX.Note = this.BX.Note || {};
 	'use strict';
 
 	/*
-	 * [ALG-02] Width limit and placement mode of the chat panel.
+	 * Width limit and placement mode of the chat panel.
 	 *
 	 * The two numbers below are copies, and they have to be: `--note-history-width` is declared locally
 	 * on `.note-version-timeline` and is not readable from outside, and the comfortable document width

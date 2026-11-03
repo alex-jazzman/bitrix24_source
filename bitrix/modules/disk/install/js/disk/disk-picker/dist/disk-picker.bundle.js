@@ -3,10 +3,17 @@ this.BX = this.BX || {};
 (function (exports, main_core, main_popup) {
 	'use strict';
 
-	const POPUP_WIDTH = 980;
-	const POPUP_HEIGHT = 538;
+	const POPUP_HEIGHT = 590;
+	const POPUP_VIEWPORT_MARGIN = 16;
+	const VIEWPORT_RESIZE_DELAY = 100;
+	const SIDEBAR_WIDTH = 210;
+	const SIDEBAR_COLLAPSED_WIDTH = 80;
+	const SIDEBAR_COLLAPSE_VIEWPORT = 1000;
+	const LIST_WIDTH = 488;
+	const PREVIEW_WIDTH = 282;
 	const DEFAULT_MAX_ITEMS = 100;
 	const FILTER_HOST_SELECTOR = '[data-disk-picker-filter-host]';
+	const SESSION_LAYER_SELECTOR = '.popup-window, .main-ui-filter-popup, .menu-popup';
 	const INTERNAL_EXTENSION = 'disk.disk-picker.internal';
 	const NOTIFICATION_EXTENSION = 'ui.notification';
 	const FILE_TYPE_ALIASES = Object.freeze(['document', 'spreadsheet', 'presentation', 'board', 'image', 'audio', 'video', 'other']);
@@ -232,6 +239,7 @@ this.BX = this.BX || {};
 		#filterId = null;
 		#callbacks = null;
 		#popup = null;
+		#viewportResizeHandler = null;
 		#appHandle = null;
 		#container = null;
 		#filterHost = null;
@@ -242,6 +250,8 @@ this.BX = this.BX || {};
 		#outsideClickHandler = null;
 		#internal = null;
 		#sessionId = 0;
+		#previewShown = false;
+		#previewShownTimer = null;
 		open(params) {
 			const options = main_core.Type.isPlainObject(params) ? params : {};
 			if (sharedState !== 'idle') {
@@ -269,7 +279,7 @@ this.BX = this.BX || {};
 			Promise.all([ensureBootstrap(), ensureInternal()]).then(([result, internal]) => this.#handleBootstrapReady(sessionId, result, internal)).catch(() => this.#handleBootstrapFailed(sessionId));
 		}
 		containsEvent(event) {
-			return activeInstance === this && sharedState === 'open' && this.#isInsideSession(event);
+			return activeInstance === this && sharedState === 'open' && (this.#previewShown || this.#isInsideSession(event));
 		}
 		close() {
 			if (activeInstance !== this || !['bootstrapping', 'open'].includes(sharedState)) {
@@ -292,6 +302,7 @@ this.BX = this.BX || {};
 			this.#popup.show();
 			this.#focusContainer(container);
 			this.#bindOutsideClick();
+			this.#bindViewportResize();
 			this.#readInitialFilterValues(result.filterId);
 			this.#startSession(result.filterId, sessionId);
 			sharedState = 'open';
@@ -325,7 +336,8 @@ this.BX = this.BX || {};
 					onContextInvalid: () => this.#handleContextInvalid(sessionId),
 					notify: (code, replacements) => notify(message(code, replacements)),
 					emitSelection: result => this.#handleSelection(result),
-					requestCancel: () => this.#runClose('cancel')
+					requestCancel: () => this.#runClose('cancel'),
+					setPreviewShown: shown => this.#setPreviewShown(shown)
 				}
 			});
 		}
@@ -390,26 +402,70 @@ this.BX = this.BX || {};
 			return activeInstance === this && sessionId === this.#sessionId && (expectedState === undefined || sharedState === expectedState);
 		}
 		#createPopup(container) {
+			const {
+				width,
+				height
+			} = this.#resolveSize();
 			return new main_popup.Popup({
-				className: 'disk-picker-popup',
+				className: 'disk-picker-popup --ui-context-edge-dark',
 				ariaLabel: message('DISK_PICKER_DIALOG_LABEL'),
 				content: container,
-				width: POPUP_WIDTH,
-				height: POPUP_HEIGHT,
-				minWidth: POPUP_WIDTH,
-				minHeight: POPUP_HEIGHT,
+				width,
+				height,
+				minWidth: width,
+				minHeight: height,
 				padding: 0,
 				contentPadding: 0,
 				closeIcon: false,
 				closeByEsc: true,
 				autoHide: false,
-				overlay: true,
+				overlay: {
+					backgroundColor: 'rgba(0, 32, 78, 0.46)',
+					opacity: 100
+				},
 				cacheable: false,
 				angle: false,
 				events: {
 					onPopupClose: () => this.#handlePopupClose()
 				}
 			});
+		}
+		#resolveSize() {
+			const sidebarWidth = window.innerWidth < SIDEBAR_COLLAPSE_VIEWPORT ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
+			const preferredWidth = sidebarWidth + LIST_WIDTH + PREVIEW_WIDTH;
+			return {
+				width: Math.min(preferredWidth, Math.max(0, window.innerWidth - POPUP_VIEWPORT_MARGIN * 2)),
+				height: Math.min(POPUP_HEIGHT, Math.max(0, window.innerHeight - POPUP_VIEWPORT_MARGIN * 2))
+			};
+		}
+		#applyPopupSize() {
+			const popup = this.#popup;
+			if (!popup) {
+				return;
+			}
+			const {
+				width,
+				height
+			} = this.#resolveSize();
+			popup.setMinWidth(width);
+			popup.setMinHeight(height);
+			popup.setWidth(width);
+			popup.setHeight(height);
+			popup.adjustPosition();
+		}
+		#bindViewportResize() {
+			const debounced = main_core.Runtime.debounce(() => this.#applyPopupSize(), VIEWPORT_RESIZE_DELAY);
+			this.#viewportResizeHandler = () => {
+				debounced();
+			};
+			main_core.Event.bind(window, 'resize', this.#viewportResizeHandler);
+		}
+		#unbindViewportResize() {
+			if (!this.#viewportResizeHandler) {
+				return;
+			}
+			main_core.Event.unbind(window, 'resize', this.#viewportResizeHandler);
+			this.#viewportResizeHandler = null;
 		}
 		#relocateFilterIntoPopup(result, container) {
 			this.#filterHolder = result.holder;
@@ -461,6 +517,20 @@ this.BX = this.BX || {};
 			} catch {
 			}
 		}
+		#setPreviewShown(shown) {
+			if (this.#previewShownTimer !== null) {
+				clearTimeout(this.#previewShownTimer);
+				this.#previewShownTimer = null;
+			}
+			if (shown) {
+				this.#previewShown = true;
+				return;
+			}
+			this.#previewShownTimer = setTimeout(() => {
+				this.#previewShownTimer = null;
+				this.#previewShown = false;
+			}, 0);
+		}
 		#bindOutsideClick() {
 			const handler = event => {
 				if (this.containsEvent(event)) {
@@ -486,7 +556,7 @@ this.BX = this.BX || {};
 				if (this.#container && node === this.#container) {
 					return true;
 				}
-				return main_core.Type.isDomNode(node) && main_core.Type.isFunction(node.matches) && node.matches('.popup-window, .main-ui-filter-popup, .menu-popup');
+				return main_core.Type.isDomNode(node) && main_core.Type.isFunction(node.matches) && node.matches(SESSION_LAYER_SELECTOR);
 			});
 		}
 		#eventPath(event) {
@@ -524,7 +594,7 @@ this.BX = this.BX || {};
 			guard('onClose', onClose);
 		}
 		#teardownResources() {
-			const steps = [() => this.#unbindOutsideClick(), () => this.#appHandle?.notifyClosing(), () => this.#closeFilterPopups(), () => this.#returnFilterToHolder(), () => this.#appHandle?.unmount(), () => this.#destroyPopup()];
+			const steps = [() => this.#unbindOutsideClick(), () => this.#unbindViewportResize(), () => this.#appHandle?.notifyClosing(), () => this.#closeFilterPopups(), () => this.#returnFilterToHolder(), () => this.#appHandle?.unmount(), () => this.#destroyPopup()];
 			steps.forEach(step => {
 				try {
 					step();
@@ -575,6 +645,11 @@ this.BX = this.BX || {};
 			this.#pendingResult = null;
 			this.#tearingDown = false;
 			this.#internal = null;
+			if (this.#previewShownTimer !== null) {
+				clearTimeout(this.#previewShownTimer);
+				this.#previewShownTimer = null;
+			}
+			this.#previewShown = false;
 		}
 	}
 

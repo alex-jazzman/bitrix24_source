@@ -85,6 +85,78 @@ export class Stack
 		});
 	}
 
+	/**
+	 * The balloons of the stack the way the user reads them: from the top of the screen
+	 * down. A bottom-anchored stack grows upwards, so the balloon that came last stands
+	 * highest and opens the list.
+	 */
+	getVisualOrder(): Balloon[]
+	{
+		const balloons = [...this.getBalloons()];
+
+		return this.isBottomPosition() ? balloons.reverse() : balloons;
+	}
+
+	isBottomPosition(): boolean
+	{
+		return String(this.getPosition()).startsWith('bottom');
+	}
+
+	/**
+	 * Lines the balloon container up with the neighbours it already has in the document,
+	 * so that the document order of the stack repeats its visual order.
+	 *
+	 * Balloons are appended to the body one by one, which for a bottom-anchored stack is
+	 * the reverse of what the user sees: the keyboard would then walk the notifications
+	 * bottom-up and leave the stack right after the topmost one. Placing every container
+	 * next to its visual neighbour keeps Tab going from one notification to the next and,
+	 * after the last one, out to the usual order of the page — without a focus trap.
+	 */
+	placeContainer(balloon: Balloon): void
+	{
+		const container = balloon.getContainer();
+		const parent = container.parentNode;
+		if (parent === null)
+		{
+			return;
+		}
+
+		const order = this.getVisualOrder();
+		const index = order.indexOf(balloon);
+		if (index === -1)
+		{
+			return;
+		}
+
+		const after = order.slice(index + 1)
+			.find((item) => item.getContainer().parentNode === parent)?.getContainer() ?? null;
+		const before = order.slice(0, index).reverse()
+			.find((item) => item.getContainer().parentNode === parent)?.getContainer() ?? null;
+		const precedes = (first: Node, second: Node): boolean => {
+			return (first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING) > 0;
+		};
+
+		if ((after === null || precedes(container, after)) && (before === null || precedes(before, container)))
+		{
+			return;
+		}
+
+		// Moving a node takes the focus off whatever it holds, so it goes back afterwards.
+		const active = container.ownerDocument.activeElement;
+		const focused = Type.isElementNode(active) && container.contains(active) ? active as HTMLElement : null;
+
+		if (after === null)
+		{
+			Dom.insertAfter(container, before);
+		}
+		else
+		{
+			Dom.insertBefore(container, after);
+		}
+
+		focused?.focus({ preventScroll: true });
+	}
+
 	add(balloon: Balloon): void
 	{
 		if (this.getBalloons().length > 0 && (this.getQueue().length > 0 || !this.isBalloonFitToViewport(balloon)))
@@ -95,6 +167,11 @@ export class Stack
 		{
 			this.push(balloon);
 		}
+	}
+
+	contains(balloon: Balloon): boolean
+	{
+		return this.balloons.includes(balloon) || this.queueStack.includes(balloon);
 	}
 
 	clear(): void
@@ -180,6 +257,7 @@ export class Stack
 		}
 
 		this.balloons = this.balloons.filter((balloon) => closingBalloon !== balloon);
+		this.queueStack = this.queueStack.filter((balloon) => closingBalloon !== balloon);
 
 		this.adjustPosition();
 		this.checkQueue();

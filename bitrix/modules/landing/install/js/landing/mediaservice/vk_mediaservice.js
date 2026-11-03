@@ -123,6 +123,11 @@
 						return backend
 							.action('Vk::getVideoInfo', {videoId: videoId})
 							.then(result => {
+								if (!BX.Type.isPlainObject(result) || !BX.Type.isStringFilled(result.player))
+								{
+									return Promise.reject(BX.Landing.Loc.getMessage('LANDING_EMBED_ERROR_VK_NO_PLAYER'));
+								}
+
 								this.embedInfo = {
 									embedUrl: result.player,
 									preview: result.preview.url,
@@ -137,7 +142,8 @@
 							})
 							.catch(error => {
 								if (
-									error.type === 'error'
+									BX.Type.isObjectLike(error)
+									&& error.type === 'error'
 									&& BX.Type.isArray(error.result)
 								)
 								{
@@ -148,6 +154,13 @@
 
 									return Promise.reject(errorMessages.join('. '));
 								}
+
+								if (BX.Type.isString(error))
+								{
+									return Promise.reject(error);
+								}
+
+								return Promise.reject(BX.Landing.Loc.getMessage('LANDING_EMBED_ERROR_VK_NO_PLAYER'));
 							});
 					}
 

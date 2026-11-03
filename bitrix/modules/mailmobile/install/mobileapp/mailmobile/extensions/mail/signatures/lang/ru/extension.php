@@ -1,0 +1,30 @@
+<?php
+
+$MESS['MAILMOBILE_SIGNATURES_LIST_TITLE'] = 'Подписи';
+$MESS['MAILMOBILE_SIGNATURES_ADD'] = 'Добавить подпись';
+$MESS['MAILMOBILE_SIGNATURES_EMPTY_TITLE'] = 'Нет подписей';
+$MESS['MAILMOBILE_SIGNATURES_EMPTY_DESCRIPTION'] = 'Создайте первую подпись — она будет добавляться в новые письма';
+$MESS['MAILMOBILE_SIGNATURES_LOAD_ERROR_TITLE'] = 'Не удалось загрузить подписи';
+$MESS['MAILMOBILE_SIGNATURES_LOAD_ERROR_DESCRIPTION'] = 'Проверьте соединение и попробуйте снова';
+$MESS['MAILMOBILE_SIGNATURES_RETRY'] = 'Повторить';
+$MESS['MAILMOBILE_SIGNATURES_UNAVAILABLE'] = 'Подписи недоступны в этой версии Битрикс24';
+$MESS['MAILMOBILE_SIGNATURES_ALL_SENDERS'] = 'Все отправители';
+$MESS['MAILMOBILE_SIGNATURES_DELETE'] = 'Удалить';
+$MESS['MAILMOBILE_SIGNATURES_CANCEL'] = 'Отмена';
+$MESS['MAILMOBILE_SIGNATURES_DELETE_CONFIRM_TITLE'] = 'Удалить подпись?';
+$MESS['MAILMOBILE_SIGNATURES_DELETE_CONFIRM_DESCRIPTION'] = 'Восстановить подпись не получится';
+$MESS['MAILMOBILE_SIGNATURES_DELETE_ERROR'] = 'Не удалось удалить подпись. Попробуйте ещё раз';
+$MESS['MAILMOBILE_SIGNATURES_CREATE_TITLE'] = 'Новая подпись';
+$MESS['MAILMOBILE_SIGNATURES_TEXT_LABEL'] = 'Текст подписи';
+$MESS['MAILMOBILE_SIGNATURES_TEXT_PLACEHOLDER'] = 'Например: ФИО, должность, контакты';
+$MESS['MAILMOBILE_SIGNATURES_TEXT_HINT'] = 'Только текст — без картинок и форматирования';
+$MESS['MAILMOBILE_SIGNATURES_BIND_TO_SENDERS'] = 'Привязать к отправителю';
+$MESS['MAILMOBILE_SIGNATURES_BIND_TO_SENDERS_DESCRIPTION'] = 'Будет автоматически подставляться в письма от выбранных ящиков';
+$MESS['MAILMOBILE_SIGNATURES_SENDERS_TITLE'] = 'Ящики';
+$MESS['MAILMOBILE_SIGNATURES_CHOOSE_SENDERS'] = 'Выберите почту';
+$MESS['MAILMOBILE_SIGNATURES_CHOOSE_SENDERS_TITLE'] = 'Выберите почту';
+$MESS['MAILMOBILE_SIGNATURES_SENDER_SEARCH'] = 'Поиск по ящикам';
+$MESS['MAILMOBILE_SIGNATURES_CONNECTED_SENDERS'] = 'Подключённые ящики';
+$MESS['MAILMOBILE_SIGNATURES_SENDER_DONE'] = 'Готово';
+$MESS['MAILMOBILE_SIGNATURES_SAVE'] = 'Сохранить';
+$MESS['MAILMOBILE_SIGNATURES_SAVE_ERROR'] = 'Не удалось сохранить подпись. Попробуйте ещё раз';

@@ -21,11 +21,11 @@ return [
 	'css' => 'dist/menu.bundle.css',
 	'js' => 'dist/menu.bundle.js',
 	'rel' => [
-		'ui.dialogs.messagebox',
 		'main.core',
 		'main.core.events',
 		'main.popup',
 		'pull.client',
+		'ui.dialogs.messagebox',
 	],
 	'settings' => [
 		'isDeadlineNotificationAvailable' => Configuration::isDeadlineNotificationAvailable($currentUserId),

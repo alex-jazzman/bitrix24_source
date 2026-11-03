@@ -40,6 +40,11 @@ export class ToolsPage extends BaseSettingsPage
 	#draggable: Draggable;
 	#mainSection: Section;
 	#settingsSection: SettingsSection;
+	#switcherA11yHandlers = new Map();
+	#sectionA11yHeaderHandlers = new Map();
+	#sectionA11yDisclosureHandlers = new Map();
+	#sectionA11yDisclosureFocusHandlers = new Map();
+	#scheduledSwitcherA11yGroups = new WeakSet();
 
 	constructor()
 	{
@@ -73,6 +78,8 @@ export class ToolsPage extends BaseSettingsPage
 
 	#renderToolsSelectors(): void
 	{
+		this.#cleanupToolsA11y();
+
 		const tools: ToolConfig[] = this.getValue('tools');
 		const startSort = [];
 		const toolSelectors = [];
@@ -104,9 +111,10 @@ export class ToolsPage extends BaseSettingsPage
 					? Loc.getMessage('INTRANET_SETTINGS_ELEMENT_PERMISSION_MSG')
 					: Loc.getMessage('INTRANET_SETTINGS_FIELD_HELP_MESSAGE_DISABLED', {'#TOOL#': tool.name}),
 			});
+			this.#adaptToolSelectorA11y(toolSelector, toolSelectorItems);
 			toolSelectors.push(toolSelector);
 
-			const switcher = Switcher.getById(tool.code);
+			const switcher = this.#getToolSelectorSwitcher(toolSelector);
 			if (switcher)
 			{
 				if (tool.disableConfirmation.isNeeded)
@@ -201,6 +209,16 @@ export class ToolsPage extends BaseSettingsPage
 				isDefault: subgroupConfig.default ?? subgroupConfig.disabled ?? false,
 				helpMessage: this.#getSubToolHelpMessage(subgroupConfig, tool.name),
 			});
+			const descriptionLink = toolSelectorItem.render().querySelector(
+				'.ui-section__tools-subgroup-description-link',
+			);
+
+			if (Type.isDomNode(descriptionLink))
+			{
+				Dom.removeClass(descriptionLink, 'ui-section__tools-subgroup-description-link');
+				Dom.addClass(descriptionLink, 'ui-section__tools-description-link');
+				Dom.addClass(descriptionLink, 'intranet-settings__tools-subgroup-description-link');
+			}
 
 			if (subgroupConfig.disabled)
 			{
@@ -240,6 +258,399 @@ export class ToolsPage extends BaseSettingsPage
 		return toolSelectorItems;
 	}
 
+	#adaptToolSelectorA11y(toolSelector: SwitcherNested, toolSelectorItems: Array<SwitcherNestedItem>): void
+	{
+		const sectionNode = toolSelector.render();
+		const parentSwitcher = this.#getToolSelectorSwitcher(toolSelector);
+		const switcherGroup = {
+			controls: [],
+			sections: [toolSelector],
+		};
+
+		if (parentSwitcher)
+		{
+			switcherGroup.controls.push({
+				switcher: parentSwitcher,
+				isUnavailable: !this.getPermission().canEdit() || toolSelector.isDefault(),
+				hasUnavailableExplanation: true,
+				labelNode: sectionNode.querySelector('.ui-section__title'),
+				testId: `intranet-settings-tools-switcher-${this.#getSafeIdPart(toolSelector.getId())}`,
+			});
+		}
+
+		toolSelectorItems.forEach((item) => {
+			switcherGroup.controls.push({
+				switcher: item.getSwitcher(),
+				isUnavailable: !this.getPermission().canEdit() || item.isDefault(),
+				hasUnavailableExplanation: true,
+				labelNode: item.render().querySelector('.ui-section__row-tool-selector_title'),
+				testId: `intranet-settings-tools-switcher-${this.#getSafeIdPart(item.getId())}`,
+			});
+		});
+
+		switcherGroup.controls.forEach((control) => {
+			this.#adaptSwitcherA11y(control, switcherGroup);
+		});
+
+		this.#adaptToolSectionA11y(toolSelector);
+		this.#syncSwitcherGroupA11y(switcherGroup);
+	}
+
+	#adaptSwitcherA11y(control: Object, switcherGroup: ?Object = null): void
+	{
+		const switcher = control.switcher;
+		const switcherNode = switcher?.getNode();
+
+		if (!Type.isDomNode(switcherNode) || !Type.isDomNode(control.labelNode))
+		{
+			return;
+		}
+
+		const labelId = this.#ensureNodeId(
+			control.labelNode,
+			`${control.testId}-label`,
+		);
+
+		Dom.attr(switcherNode, {
+			role: 'switch',
+			'aria-labelledby': labelId,
+			'data-testid': control.testId,
+		});
+		Dom.addClass(switcherNode, 'intranet-settings__tools-switcher');
+
+		if (!this.#switcherA11yHandlers.has(switcher))
+		{
+			const handleKeydown = (event) => {
+				if (!this.#isSwitcherActionKey(event))
+				{
+					return;
+				}
+
+				event.preventDefault();
+
+				if (this.#isSwitcherKeyboardActionAvailable(control))
+				{
+					switcherNode.click();
+				}
+			};
+
+			const handleSync = () => {
+				if (switcherGroup)
+				{
+					this.#scheduleSwitcherGroupA11ySync(switcherGroup);
+				}
+				else
+				{
+					this.#syncSwitcherA11y(control);
+				}
+			};
+
+			EventBX.bind(switcherNode, 'keydown', handleKeydown);
+			EventEmitter.subscribe(switcher, 'toggled', handleSync);
+			EventEmitter.subscribe(switcher, 'lock', handleSync);
+			EventEmitter.subscribe(switcher, 'unlock', handleSync);
+
+			this.#switcherA11yHandlers.set(switcher, {
+				node: switcherNode,
+				keydown: handleKeydown,
+				sync: handleSync,
+			});
+		}
+
+		this.#syncSwitcherA11y(control);
+	}
+
+	#adaptToolSectionA11y(section: SwitcherNested): void
+	{
+		if (section.isNestedMenu !== true)
+		{
+			return;
+		}
+
+		const sectionNode = section.render();
+		const headerNode = sectionNode.querySelector('.ui-section__header');
+		const titleNode = sectionNode.querySelector('.ui-section__title');
+		const contentNode = sectionNode.querySelector('.ui-section__content');
+		const iconNode = sectionNode.querySelector('.ui-section__collapse-icon');
+
+		if (
+			!Type.isDomNode(headerNode)
+			|| !Type.isDomNode(titleNode)
+			|| !Type.isDomNode(contentNode)
+			|| !Type.isDomNode(iconNode)
+		)
+		{
+			return;
+		}
+
+		const safeSectionId = this.#getSafeIdPart(section.getId());
+		const titleId = this.#ensureNodeId(
+			titleNode,
+			`intranet-settings-tools-section-${safeSectionId}-label`,
+		);
+		const contentId = this.#ensureNodeId(
+			contentNode,
+			`intranet-settings-tools-section-${safeSectionId}-content`,
+		);
+		const button = this.#getToolSectionButton(iconNode, section, titleId, contentId);
+		this.#adaptToolSectionDisclosureFocus(button, titleNode);
+
+		if (!this.#sectionA11yHeaderHandlers.has(headerNode))
+		{
+			const handleHeaderClick = () => {
+				this.#scheduleToolSectionA11ySync(section);
+			};
+
+			EventBX.bind(headerNode, 'click', handleHeaderClick);
+			this.#sectionA11yHeaderHandlers.set(headerNode, handleHeaderClick);
+		}
+
+		Dom.attr(contentNode, {
+			'data-testid': `intranet-settings-tools-content-${safeSectionId}`,
+		});
+
+		this.#syncToolSectionA11y(section, button, contentNode);
+	}
+
+	#getToolSectionButton(
+		iconNode: HTMLElement,
+		section: SwitcherNested,
+		titleId: string,
+		contentId: string,
+	): HTMLElement
+	{
+		if (iconNode.tagName === 'BUTTON')
+		{
+			Dom.attr(iconNode, {
+				type: 'button',
+				'aria-labelledby': titleId,
+				'aria-controls': contentId,
+				'data-testid': `intranet-settings-tools-disclosure-${this.#getSafeIdPart(section.getId())}`,
+			});
+
+			return iconNode;
+		}
+
+		const button = Tag.render`
+			<button
+				class="${iconNode.className} intranet-settings__tools-disclosure"
+				type="button"
+				aria-labelledby="${titleId}"
+				aria-controls="${contentId}"
+				data-testid="intranet-settings-tools-disclosure-${this.#getSafeIdPart(section.getId())}"
+			></button>
+		`;
+
+		const handleButtonClick = (event) => {
+			event.stopPropagation();
+			section.toggle();
+			this.#syncToolSectionA11y(section, button);
+		};
+
+		EventBX.bind(button, 'click', handleButtonClick);
+		this.#sectionA11yDisclosureHandlers.set(button, handleButtonClick);
+
+		Dom.replace(iconNode, button);
+
+		return button;
+	}
+
+	#adaptToolSectionDisclosureFocus(button: HTMLElement, titleNode: HTMLElement): void
+	{
+		if (this.#sectionA11yDisclosureFocusHandlers.has(button))
+		{
+			return;
+		}
+
+		const handleFocus = () => {
+			if (button.matches(':focus-visible'))
+			{
+				Dom.addClass(titleNode, '--disclosure-focus-visible');
+			}
+		};
+		const handleBlur = () => {
+			Dom.removeClass(titleNode, '--disclosure-focus-visible');
+		};
+
+		EventBX.bind(button, 'focus', handleFocus);
+		EventBX.bind(button, 'blur', handleBlur);
+		this.#sectionA11yDisclosureFocusHandlers.set(button, {
+			focus: handleFocus,
+			blur: handleBlur,
+			title: titleNode,
+		});
+	}
+
+	#scheduleSwitcherGroupA11ySync(switcherGroup: Object): void
+	{
+		if (this.#scheduledSwitcherA11yGroups.has(switcherGroup))
+		{
+			return;
+		}
+
+		this.#scheduledSwitcherA11yGroups.add(switcherGroup);
+
+		queueMicrotask(() => {
+			this.#scheduledSwitcherA11yGroups.delete(switcherGroup);
+			this.#syncSwitcherGroupA11y(switcherGroup);
+		});
+	}
+
+	#syncSwitcherGroupA11y(switcherGroup: Object): void
+	{
+		switcherGroup.controls.forEach((control) => {
+			this.#syncSwitcherA11y(control);
+		});
+
+		switcherGroup.sections.forEach((section) => {
+			this.#syncToolSectionA11y(section);
+		});
+	}
+
+	#scheduleToolSectionA11ySync(section: SwitcherNested): void
+	{
+		queueMicrotask(() => {
+			this.#syncToolSectionA11y(section);
+		});
+	}
+
+	#syncSwitcherA11y(control: Object): void
+	{
+		const switcher = control.switcher;
+		const switcherNode = switcher.getNode();
+		const isAvailable = this.#isSwitcherActionAvailable(control);
+		const isKeyboardActionAvailable = this.#isSwitcherKeyboardActionAvailable(control);
+
+		Dom.attr(switcherNode, {
+			'aria-checked': switcher.isChecked() ? 'true' : 'false',
+			'aria-disabled': isAvailable ? 'false' : 'true',
+			tabindex: isKeyboardActionAvailable ? '0' : '-1',
+		});
+
+		if (switcher.isLoading())
+		{
+			Dom.attr(switcherNode, 'aria-busy', 'true');
+		}
+		else
+		{
+			switcherNode.removeAttribute('aria-busy');
+		}
+	}
+
+	#syncToolSectionA11y(
+		section: SwitcherNested,
+		button: ?HTMLElement = null,
+		contentNode: ?HTMLElement = null,
+	): void
+	{
+		const sectionNode = section.render();
+		const disclosureButton = button ?? sectionNode.querySelector('.intranet-settings__tools-disclosure');
+		const sectionContent = contentNode ?? sectionNode.querySelector('.ui-section__content');
+
+		if (!Type.isDomNode(disclosureButton) || !Type.isDomNode(sectionContent))
+		{
+			return;
+		}
+
+		const isExpanded = section.isOpen === true;
+		disclosureButton.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+
+		if (isExpanded)
+		{
+			sectionContent.removeAttribute('inert');
+			sectionContent.removeAttribute('aria-hidden');
+
+			return;
+		}
+
+		if (sectionContent.contains(document.activeElement))
+		{
+			disclosureButton.focus();
+		}
+
+		sectionContent.setAttribute('inert', '');
+		sectionContent.setAttribute('aria-hidden', 'true');
+	}
+
+	#isSwitcherActionKey(event: KeyboardEvent): boolean
+	{
+		return event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar';
+	}
+
+	#isSwitcherActionAvailable(control: Object): boolean
+	{
+		return control.isUnavailable !== true
+			&& !control.switcher.isDisabled()
+			&& !control.switcher.isLoading()
+		;
+	}
+
+	#isSwitcherKeyboardActionAvailable(control: Object): boolean
+	{
+		return !control.switcher.isDisabled()
+			&& !control.switcher.isLoading()
+			&& (
+				control.isUnavailable !== true
+				|| control.hasUnavailableExplanation === true
+			)
+		;
+	}
+
+	#getToolSelectorSwitcher(toolSelector: SwitcherNested): ?Switcher
+	{
+		const switcherNode = toolSelector.render().querySelector('.ui-section__switcher-wrapper');
+
+		if (!Type.isDomNode(switcherNode))
+		{
+			return null;
+		}
+
+		return Switcher.getList().find((switcher) => switcher.getNode() === switcherNode) ?? null;
+	}
+
+	#cleanupToolsA11y(): void
+	{
+		this.#switcherA11yHandlers.forEach(({ node, keydown, sync }, switcher) => {
+			EventBX.unbind(node, 'keydown', keydown);
+			EventEmitter.unsubscribe(switcher, 'toggled', sync);
+			EventEmitter.unsubscribe(switcher, 'lock', sync);
+			EventEmitter.unsubscribe(switcher, 'unlock', sync);
+		});
+		this.#switcherA11yHandlers.clear();
+
+		this.#sectionA11yHeaderHandlers.forEach((handler, node) => {
+			EventBX.unbind(node, 'click', handler);
+		});
+		this.#sectionA11yHeaderHandlers.clear();
+
+		this.#sectionA11yDisclosureHandlers.forEach((handler, node) => {
+			EventBX.unbind(node, 'click', handler);
+		});
+		this.#sectionA11yDisclosureHandlers.clear();
+
+		this.#sectionA11yDisclosureFocusHandlers.forEach(({ focus, blur, title }, node) => {
+			EventBX.unbind(node, 'focus', focus);
+			EventBX.unbind(node, 'blur', blur);
+			Dom.removeClass(title, '--disclosure-focus-visible');
+		});
+		this.#sectionA11yDisclosureFocusHandlers.clear();
+	}
+
+	#ensureNodeId(node: HTMLElement, id: string): string
+	{
+		if (!Type.isStringFilled(node.id))
+		{
+			Dom.attr(node, 'id', id);
+		}
+
+		return node.id;
+	}
+
+	#getSafeIdPart(value: string): string
+	{
+		return String(value).replaceAll(/[^\w-]/g, '-');
+	}
+
 	#getMainSection(): Section
 	{
 		if (this.#mainSection)
@@ -271,9 +682,13 @@ export class ToolsPage extends BaseSettingsPage
 	{
 		const descriptionText = `
 			${Loc.getMessage('INTRANET_SETTINGS_SECTION_TOOLS_DESCRIPTION')}
-			<a class="ui-section__link" onclick="top.BX.Helper.show('redirect=detail&code=18213196')">
+			<button
+				type="button"
+				class="ui-section__link intranet-settings__tools-description-more"
+				onclick="top.BX.Helper.show('redirect=detail&code=18213196')"
+			>
 				${Loc.getMessage('INTRANET_SETTINGS_CANCEL_MORE')}
-			</a>
+			</button>
 		`;
 
 		return new BX.UI.Alert({

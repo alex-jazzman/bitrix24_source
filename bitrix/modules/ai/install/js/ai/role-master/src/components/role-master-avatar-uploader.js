@@ -2,7 +2,6 @@ import { bind, unbind } from 'main.core';
 import { Uploader, UploaderError, UploaderEvent, UploaderFile } from 'ui.uploader.core';
 import { BIcon, Set as IconSet } from 'ui.icon-set.api.vue';
 import { UI } from 'ui.notification';
-import { toRaw } from 'ui.vue3';
 
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
@@ -18,9 +17,8 @@ export const RoleMasterAvatarUploader = {
 		avatarUrl: '',
 	},
 	emits: ['uploadAvatarFile', 'removeAvatarFile', 'selectAvatar', 'generateAvatar'],
-	data(): { isDraggingFile: boolean, uploader: Uploader } {
+	data(): { isDraggingFile: boolean } {
 		return {
-			uploader: null,
 			isDraggingFile: false,
 		};
 	},
@@ -64,7 +62,7 @@ export const RoleMasterAvatarUploader = {
 
 			if (files.length > 0)
 			{
-				toRaw(this.uploader).removeFiles();
+				this.uploader.removeFiles();
 				this.$emit('removeAvatarFile');
 			}
 			this.$refs.uploaderContainer.click();
@@ -83,7 +81,6 @@ export const RoleMasterAvatarUploader = {
 			multiple: false,
 			events: {
 				[UploaderEvent.FILE_LOAD_COMPLETE]: (event) => {
-					this.uploadedFile = event.getData().file;
 					this.$emit('uploadAvatarFile', event.getData().file);
 					this.$refs.uploaderContainer.blur();
 				},

@@ -1,0 +1,69 @@
+.bx-im-message-block-form__container {
+	display: flex;
+	flex-direction: column;
+	max-width: 460px;
+	padding: 8px 4px 0;
+	gap: 12px;
+}
+
+.bx-im-message-block-form__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.bx-im-message-block-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.bx-im-message-block-form__field--group {
+	gap: 6px;
+}
+
+.bx-im-message-block-form__field-label {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.bx-im-message-block-form__options {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.bx-im-message-block-form__option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.bx-im-message-block-form__option-label {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-lg);
+	padding-top: 2px;
+	word-break: break-word;
+}
+
+.bx-im-message-block-form__buttons {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	padding-top: 10px;
+}
+
+.bx-im-message-block-form__buttons-row {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+	gap: 8px;
+}
+
+.bx-im-message-block-form__error {
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-sm);
+	word-break: break-word;
+}

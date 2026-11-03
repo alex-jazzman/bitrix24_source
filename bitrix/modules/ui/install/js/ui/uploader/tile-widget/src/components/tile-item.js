@@ -127,6 +127,10 @@ export const TileItem: BitrixVueComponentProps = {
 				minWidth: targetNodeWidth,
 				maxWidth: 500,
 				closeByEsc: true,
+				// The error shows up on its own, so it must not take the focus: a popup with no
+				// focusable content inside would hold it on its container and Tab would go nowhere.
+				// The text of the error reaches a screen reader through aria-describedby of the tile.
+				focusTrap: false,
 			};
 		},
 		clampedFileName(): string

@@ -3,13 +3,142 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, main_core_events, tasks_v2_lib_showLimit, ui_vue3_vuex, ui_vue3_directives_hint, ui_vue3_components_menu, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_animated, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_lib_ahaMoments, tasks_v2_lib_fieldHighlighter, tasks_v2_component_elements_hint, tasks_v2_provider_service_resultService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_stateService, ui_vue3, tasks_v2_component_tasksPopupButtonQuote, tasks_v2_lib_calendar, tasks_v2_component_elements_userAvatar, tasks_v2_component_entityText, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_provider_service_userService, tasks_v2_provider_service_fileService, ui_vue3_components_button, tasks_v2_component_elements_bottomSheet, tasks_v2_lib_highlighter, ui_system_skeleton_vue, tasks_v2_component_dropZone, tasks_v2_lib_analytics, ui_system_chip_vue) {
+(function (exports, main_core, main_core_events, ui_a11y, tasks_v2_lib_showLimit, ui_vue3_vuex, ui_vue3_directives_hint, ui_vue3_components_menu, ui_system_typography_vue, ui_iconSet_api_vue, ui_iconSet_animated, ui_iconSet_outline, tasks_v2_core, tasks_v2_const, tasks_v2_lib_ahaMoments, tasks_v2_lib_fieldHighlighter, tasks_v2_component_elements_hint, tasks_v2_provider_service_resultService, tasks_v2_provider_service_taskService, tasks_v2_provider_service_stateService, ui_vue3, tasks_v2_component_tasksPopupButtonQuote, tasks_v2_lib_calendar, tasks_v2_component_elements_userAvatar, tasks_v2_component_entityText, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_component_fields_files, tasks_v2_provider_service_userService, tasks_v2_provider_service_fileService, ui_vue3_components_button, tasks_v2_component_elements_bottomSheet, tasks_v2_lib_bottomSheetAria, tasks_v2_lib_highlighter, ui_system_skeleton_vue, tasks_v2_component_dropZone, ui_uploader_core, ui_notificationManager, tasks_v2_lib_analytics, ui_system_chip_vue) {
 	'use strict';
 
 	const resultsMeta = Object.freeze({
 		id: tasks_v2_const.TaskField.Results,
 		title: main_core.Loc.getMessage('TASKS_V2_RESULT_TITLE_META')
 	});
+
+	function captureFocusTrigger() {
+		const active = document.activeElement;
+		return active && active !== document.body ? active : null;
+	}
+	function restoreFocusTrigger(trigger) {
+		if (trigger && trigger.isConnected && main_core.Type.isFunction(trigger.focus)) {
+			trigger.focus();
+			return;
+		}
+		ui_a11y.FocusMonitor.Instance.restoreFocus();
+	}
+
+	const REQUIRED_STABLE_INTERVALS = 2;
+	const MAX_MEASURED_FRAMES = 30;
+	function waitForStableRect(element) {
+		return new StableRectWaiter(element).start();
+	}
+
+	/**
+	 * Waits until the element has a non-zero box that keeps the same position and size.
+	 * A box-less element is awaited on a size observer, so a hidden anchor costs nothing
+	 * and still resolves once it becomes visible; measuring is limited by a frame budget,
+	 * so an endlessly moving anchor gives up instead of looping forever.
+	 */
+	class StableRectWaiter {
+		#element;
+		#promise;
+		#resolve = () => {};
+		#frameId = null;
+		#sizeObserver = null;
+		#previousRect = null;
+		#stableIntervals = 0;
+		#remainingFrames = MAX_MEASURED_FRAMES;
+		#isFinished = false;
+		constructor(element) {
+			this.#element = element;
+			this.#promise = new Promise(resolve => {
+				this.#resolve = resolve;
+			});
+		}
+		start() {
+			if (this.#element.isConnected) {
+				this.#observeSize();
+			} else {
+				this.#finish(false);
+			}
+			return {
+				promise: this.#promise,
+				cancel: () => this.#finish(false)
+			};
+		}
+		#observeSize() {
+			if (this.#isFinished) {
+				return;
+			}
+			this.#sizeObserver = new ResizeObserver(() => this.#handleResize());
+			this.#sizeObserver.observe(this.#element);
+		}
+		#handleResize() {
+			if (this.#isFinished || this.#readRect() === null) {
+				return;
+			}
+			this.#stopObserving();
+			this.#scheduleMeasure();
+		}
+		#measure() {
+			this.#frameId = null;
+			const rect = this.#readRect();
+			if (rect === null) {
+				this.#previousRect = null;
+				this.#stableIntervals = 0;
+				this.#observeSize();
+				return;
+			}
+			this.#stableIntervals = isSameRect(rect, this.#previousRect) ? this.#stableIntervals + 1 : 0;
+			this.#previousRect = rect;
+			if (this.#stableIntervals >= REQUIRED_STABLE_INTERVALS) {
+				this.#finish(true);
+				return;
+			}
+			this.#scheduleMeasure();
+		}
+		#scheduleMeasure() {
+			if (this.#remainingFrames <= 0) {
+				this.#finish(false);
+				return;
+			}
+			this.#remainingFrames--;
+			this.#frameId = requestAnimationFrame(() => this.#measure());
+		}
+		#readRect() {
+			if (!this.#element.isConnected) {
+				this.#finish(false);
+				return null;
+			}
+			const {
+				left,
+				top,
+				width,
+				height
+			} = this.#element.getBoundingClientRect();
+			return width > 0 && height > 0 ? {
+				left,
+				top,
+				width,
+				height
+			} : null;
+		}
+		#stopObserving() {
+			this.#sizeObserver?.disconnect();
+			this.#sizeObserver = null;
+		}
+		#finish(isStable) {
+			if (this.#isFinished) {
+				return;
+			}
+			this.#isFinished = true;
+			this.#stopObserving();
+			if (this.#frameId !== null) {
+				cancelAnimationFrame(this.#frameId);
+				this.#frameId = null;
+			}
+			this.#resolve(isStable);
+		}
+	}
+	function isSameRect(rect, previousRect) {
+		return previousRect !== null && rect.left === previousRect.left && rect.top === previousRect.top && rect.width === previousRect.width && rect.height === previousRect.height;
+	}
 
 	const TYPES_QUOTE_ACTIONS$1 = {
 		MESSAGE: tasks_v2_component_tasksPopupButtonQuote.TYPES_DEFAULT_QUOTE_ACTIONS.MESSAGE
@@ -24,6 +153,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent,
 			EntityCollapsibleText: tasks_v2_component_entityText.EntityCollapsibleText,
 			TasksPopupButtonQuote: tasks_v2_component_tasksPopupButtonQuote.TasksPopupButtonQuote,
+			DownloadArchiveButton: tasks_v2_component_fields_files.DownloadArchiveButton,
 			TextSm: ui_system_typography_vue.TextSm,
 			TextXs: ui_system_typography_vue.TextXs,
 			TextMd: ui_system_typography_vue.TextMd,
@@ -40,6 +170,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			resultId: {
 				type: [Number, String],
 				required: true
+			},
+			isAnySheetShown: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['titleClick', 'edit', 'highlightField'],
@@ -49,6 +183,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			const uploaderAdapterRef = ui_vue3.shallowRef(fileServiceInstance.getAdapter());
 			return {
 				Outline: ui_iconSet_api_vue.Outline,
+				EntityTypes: tasks_v2_provider_service_fileService.EntityTypes,
 				resultsMeta,
 				UserAvatarSize: tasks_v2_component_elements_userAvatar.UserAvatarSize,
 				fileService: fileServiceRef,
@@ -99,11 +234,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			filesCount() {
 				return this.files.length;
 			},
+			archiveLink() {
+				return this.result.archiveLink;
+			},
+			canDownloadArchive() {
+				return tasks_v2_component_fields_files.canDownloadArchive(this.filesCount, this.archiveLink);
+			},
 			widgetOptions() {
 				return {
 					isEmbedded: true,
 					withControlPanel: false,
 					canCreateDocuments: false,
+					viewMode: 'list',
 					tileWidgetOptions: {
 						compact: true,
 						hideDropArea: true,
@@ -119,7 +261,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					bindOptions: {
 						forceBindPosition: true
 					},
-					bindElement: this.$refs.moreIcon.$el,
+					bindElement: this.$refs.moreIcon,
 					targetContainer: document.body,
 					offsetLeft: -100,
 					minWidth: 250,
@@ -178,6 +320,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ResultFromMessageAdded, this.handleResultFromMessageAdded);
 		},
 		methods: {
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.moreIcon?.focus();
+			},
 			handleEditClick() {
 				this.$emit('edit', this.resultId);
 			},
@@ -195,6 +341,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					return;
 				}
 				this.$emit('highlightField');
+				if (this.isAnySheetShown || !this.hasMenuItems) {
+					return;
+				}
 				if (!tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaResultFromMessagePopup)) {
 					return;
 				}
@@ -216,47 +365,66 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<div
 			class="tasks-field-results-result --card print-no-border print-no-box-shadow"
+			data-testid="tasks-result-card-item"
 			:data-task-field-id="resultsMeta.id"
 			data-field-container
 		>
 			<div
 				class="tasks-field-results-title"
+				data-testid="task-result-card-title"
 				ref="title"
-				@click="$emit('titleClick', resultId)"
 			>
-				<div class="tasks-field-results-title-main">
-					<BIcon :name="Outline.WINDOW_FLAG"/>
+				<button
+					type="button"
+					class="tasks-field-results-title-main"
+					data-testid="tasks-result-card-item-title-btn"
+					@click="$emit('titleClick', resultId)"
+				>
+					<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
 					<TextMd accent>{{ resultTitle }}</TextMd>
-				</div>
+				</button>
 				<div class="tasks-field-results-title-actions print-ignore">
-					<BIcon
+					<button
 						v-if="hasMenuItems"
-						class="tasks-field-results-title-icon"
-						:name="Outline.MORE_L"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						aria-haspopup="menu"
+						data-testid="tasks-result-card-item-menu-btn"
+						:aria-expanded="isMenuShown ? 'true' : 'false'"
+						:aria-label="loc('TASKS_V2_RESULT_ITEM_MENU_LABEL')"
 						ref="moreIcon"
 						@click.stop="isMenuShown = true"
-					/>
-					<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+					>
+						<BIcon
+							class="tasks-field-results-title-icon"
+							:name="Outline.MORE_L"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
+					<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
 					<Hint
-						v-if="showResultFromMessageHint"
-						:bindElement="$refs.moreIcon.$el"
+						v-if="showResultFromMessageHint && hasMenuItems"
+						:bindElement="$refs.moreIcon"
 						:options="{
 							closeIcon: true,
 							offsetLeft: 10,
 							minWidth: 340,
 							maxWidth: 340,
+							focusTrap: { initialFocus: false },
 							bindOptions: {
 								forceBindPosition: true,
 							},
 						}"
 						@close="handleResultFromMessageHintClose"
 					>
-						<div class="tasks-field-results-hint-info">
+						<div class="tasks-field-results-hint-info --from-message">
 							<TextMd className="tasks-field-results-hint-info-text">
 								{{ loc('TASKS_V2_RESULT_AHA_RESULT_FROM_MESSAGE') }}
 							</TextMd>
 							<TextXs
+								tag="button"
+								type="button"
 								className="tasks-field-results-hint-info-link"
 								@click.stop="handleResultFromMessageHintCloseComplete"
 							>
@@ -268,8 +436,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			</div>
 			<div class="tasks-field-results-result-content" ref="content">
 				<div class="tasks-field-results-result-author-border print-no-after">
-					<div
+					<button
+						type="button"
 						class="tasks-field-results-result-author-border-clickable"
+						:aria-label="loc('TASKS_V2_RESULT_AUTHOR_PROFILE_LABEL', { '#NAME#': resultAuthor.name })"
 						@click="handleAuthorClick"
 					>
 						<UserAvatar
@@ -286,7 +456,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						>
 							{{ resultAuthor.name }}
 						</TextSm>
-					</div>
+					</button>
 				</div>
 				<EntityCollapsibleText
 					ref="collapsible"
@@ -296,8 +466,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:showFilesIndicator="false"
 					v-model:opened="opened"
 				/>
-				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId">
+				<div v-if="filesCount > 0" class="tasks-field-results-result-files print-ignore" :key="resultId" data-testid="task-result-card-files">
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+					<DownloadArchiveButton
+						v-if="canDownloadArchive"
+						:files
+						:archiveLink
+						:entityId="resultId"
+						:entityType="EntityTypes.Result"
+					/>
 				</div>
 			</div>
 			<TasksPopupButtonQuote
@@ -357,6 +534,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				minWidth: popupWidth,
 				maxWidth: popupWidth,
 				padding: 0,
+				ariaLabel: title,
+				focusTrap: { initialFocus: false },
 			}"
 			@close="$emit('close')"
 		>
@@ -372,6 +551,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							:style="AirButtonStyle.TINTED"
 							:leftIcon="Outline.PLUS_L"
 							:wide="false"
+							:dataset="{ testid: 'tasks-result-required-aha-add-btn' }"
 							@click="$emit('addResult')"
 						/>
 					</div>
@@ -396,6 +576,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			UserAvatar: tasks_v2_component_elements_userAvatar.UserAvatar,
 			UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent,
 			EntityCollapsibleText: tasks_v2_component_entityText.EntityCollapsibleText,
+			DownloadArchiveButton: tasks_v2_component_fields_files.DownloadArchiveButton,
 			TextSm: ui_system_typography_vue.TextSm
 		},
 		directives: {
@@ -426,6 +607,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			const uploaderAdapterRef = ui_vue3.shallowRef(fileServiceInstance.getAdapter());
 			return {
 				Outline: ui_iconSet_api_vue.Outline,
+				EntityTypes: tasks_v2_provider_service_fileService.EntityTypes,
 				resultsMeta,
 				UserAvatarSize: tasks_v2_component_elements_userAvatar.UserAvatarSize,
 				fileService: fileServiceRef,
@@ -477,11 +659,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			filesCount() {
 				return this.files.length;
 			},
+			archiveLink() {
+				return this.result.archiveLink;
+			},
+			canDownloadArchive() {
+				return tasks_v2_component_fields_files.canDownloadArchive(this.filesCount, this.archiveLink);
+			},
 			widgetOptions() {
 				return {
 					isEmbedded: true,
 					withControlPanel: false,
 					canCreateDocuments: false,
+					viewMode: 'list',
 					tileWidgetOptions: {
 						compact: true,
 						hideDropArea: true,
@@ -497,7 +686,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					bindOptions: {
 						forceBindPosition: true
 					},
-					bindElement: this.$refs.moreIcon.$el,
+					bindElement: this.$refs.moreIcon,
 					targetContainer: document.body,
 					offsetLeft: -100,
 					minWidth: 250,
@@ -561,6 +750,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		methods: {
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.moreIcon?.focus();
+			},
 			handleEditClick() {
 				this.$emit('edit', this.resultId);
 			},
@@ -586,38 +779,64 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<div class="tasks-field-results-result --list-mode">
+		<div class="tasks-field-results-result --list-mode" data-testid="tasks-result-list-item">
 			<div
 				class="tasks-field-results-title --list-mode"
 				:class="{ '--sticky': isSticky }"
+				data-testid="task-result-list-title"
 				ref="title"
-				@click="$emit('titleClick', resultId)"
 			>
-				<div class="tasks-field-results-title-main">
-					<BIcon :name="Outline.WINDOW_FLAG"/>
+				<button
+					type="button"
+					class="tasks-field-results-title-main"
+					data-testid="tasks-result-list-item-title-btn"
+					@click="$emit('titleClick', resultId)"
+				>
+					<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
 					<HeadlineSm>{{ resultTitle }}</HeadlineSm>
-				</div>
+				</button>
 				<div class="tasks-field-results-title-actions print-ignore">
-					<BIcon
+					<button
 						v-if="hasMenuItems"
-						class="tasks-field-results-title-icon --big"
-						:name="Outline.MORE_L"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						aria-haspopup="menu"
+						data-testid="tasks-result-list-item-menu-btn"
+						:aria-expanded="isMenuShown ? 'true' : 'false'"
+						:aria-label="loc('TASKS_V2_RESULT_ITEM_MENU_LABEL')"
 						ref="moreIcon"
 						@click.stop="isMenuShown = true"
-					/>
-					<BIcon
+					>
+						<BIcon
+							class="tasks-field-results-title-icon --big"
+							:name="Outline.MORE_L"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
+					<button
 						v-if="isSticky && !embedded"
-						class="tasks-field-results-title-icon --big"
-						:name="resizeIcon"
-						hoverable
+						type="button"
+						class="tasks-field-results-icon-button"
+						:aria-expanded="isResized ? 'true' : 'false'"
+						:aria-label="isResized
+							? loc('TASKS_V2_RESULT_COLLAPSE_LABEL')
+							: loc('TASKS_V2_RESULT_EXPAND_LABEL')"
+						data-testid="tasks-result-list-item-resize-btn"
 						@click.stop="handleResizeClick"
-					/>
+					>
+						<BIcon
+							class="tasks-field-results-title-icon --big"
+							:name="resizeIcon"
+							hoverable
+							aria-hidden="true"
+						/>
+					</button>
 					<div v-if="isSticky" class="tasks-field-results-result-empty"/>
 					<BMenu
 						v-if="isMenuShown"
 						:options="menuOptions"
-						@close="isMenuShown = false"
+						@close="handleMenuClose"
 					/>
 				</div>
 			</div>
@@ -625,8 +844,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				class="tasks-field-results-result-content"
 				ref="content"
 			>
-				<div
+				<button
+					type="button"
 					class="tasks-field-results-result-author"
+					:aria-label="loc('TASKS_V2_RESULT_AUTHOR_PROFILE_LABEL', { '#NAME#': resultAuthor.name })"
 					@click="handleAuthorClick"
 				>
 					<UserAvatar
@@ -643,7 +864,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					>
 						{{ resultAuthor.name }}
 					</TextSm>
-				</div>
+				</button>
 				<EntityCollapsibleText
 					ref="collapsible"
 					:content="resultText"
@@ -656,8 +877,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<div
 					v-if="filesCount > 0"
 					class="tasks-field-results-result-files --list-mode"
+					data-testid="task-result-list-files"
 				>
 					<UserFieldWidgetComponent :uploaderAdapter :widgetOptions/>
+					<DownloadArchiveButton
+						v-if="canDownloadArchive"
+						:files
+						:archiveLink
+						:entityId="resultId"
+						:entityType="EntityTypes.Result"
+					/>
 				</div>
 			</div>
 			<div v-if="showDelimiter" class="tasks-field-results-result-separator"/>
@@ -687,6 +916,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		</div>
 	`
 	};
+
+	// Each normalization pass peels one nesting level of empty blocks, so an unbounded walk costs
+	// O(length x depth) on crafted deep nesting. Mirrored in ResultService::assertNotEmpty().
+	const MAX_EMPTY_BLOCK_PASSES = 16;
 
 	// @vue/component
 	const ResultEditor = {
@@ -730,6 +963,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			showResize: {
 				type: Boolean,
 				default: true
+			},
+			titleId: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['close', 'resize'],
@@ -752,7 +989,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isSaving: false,
 				hasChanges: false,
 				hasFilesChanges: false,
-				buttonDisabled: !main_core.Type.isStringFilled(this.content)
+				buttonDisabled: !(main_core.Type.isStringFilled(this.getPreparedText(this.content)) || this.hasAttachedFiles())
 			};
 		},
 		computed: {
@@ -817,8 +1054,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			if (!main_core.Type.isStringFilled(this.content) || this.resultId === 0) {
 				setTimeout(this.focusToEnd, 400);
 			}
+
+			// EntityTextArea relays only onFileAdd/onFileRemove as filesChange; the upload
+			// completion (UPLOADING -> COMPLETE) arrives as a separate file-service event.
+			// Re-gate the save button directly without marking the editor dirty: onFileComplete
+			// also fires for background server attachments (loadFilesFromData/list), and routing it
+			// through handleFilesChange would set hasFilesChanges and send a spurious update on close.
+			this.fileService.subscribe('onFileComplete', this.recalcButtonState);
 		},
 		unmounted() {
+			this.fileService.unsubscribe('onFileComplete', this.recalcButtonState);
 			if (!this.isEdit && !this.isSaving) {
 				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/delete`, this.resultId);
 				tasks_v2_provider_service_fileService.fileService.delete(this.resultId, tasks_v2_provider_service_fileService.EntityTypes.Result);
@@ -888,10 +1133,60 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				const preparedOldText = this.getPreparedText(this.content);
 				const preparedNewText = this.getPreparedText(this.editor?.getText());
 				this.hasChanges = preparedOldText !== preparedNewText;
-				this.buttonDisabled = !main_core.Type.isStringFilled(preparedNewText);
+				this.recalcButtonState(preparedNewText);
+			},
+			handleFilesChange() {
+				this.hasFilesChanges = true;
+				this.recalcButtonState();
+			},
+			recalcButtonState(preparedText) {
+				const hasFiles = this.hasAttachedFiles();
+				// May be invoked as an onFileComplete handler, which passes a BaseEvent here;
+				// fall back to the editor text unless an actual prepared string was provided. With a
+				// completed file the text cannot change the outcome, so skip normalizing it: that event
+				// fires per file (background server attachments included) and each normalization walks
+				// the whole text up to MAX_EMPTY_BLOCK_PASSES times.
+				const text = main_core.Type.isString(preparedText) ? preparedText : hasFiles ? '' : this.getPreparedText(this.editor?.getText());
+				const isTextFilled = main_core.Type.isStringFilled(text);
+				const wasDisabled = this.buttonDisabled;
+				this.buttonDisabled = !(isTextFilled || hasFiles);
+
+				// Announce the disabled -> enabled transition to screen readers (WCAG 4.1.3).
+				if (wasDisabled && !this.buttonDisabled) {
+					void this.announceButtonEnabled();
+				}
+			},
+			async announceButtonEnabled() {
+				// ui.a11y is loaded lazily so this rare disabled -> enabled transition does not pull
+				// the extension into the result field's eager bundle. Best-effort: a failed load must
+				// not break the editor flow.
+				try {
+					const {
+						LiveAnnouncer
+					} = await main_core.Runtime.loadExtension('ui.a11y');
+					LiveAnnouncer.announce(this.loc('TASKS_V2_RESULT_BUTTON_ENABLED_ANNOUNCE', {
+						'#BUTTON#': this.buttonTitle
+					}));
+				} catch {
+					// Announcement is best-effort.
+				}
+			},
+			hasAttachedFiles() {
+				// count only files that finished uploading, not files in flight or failed (CT-RESULT-FILE-PRESENCE)
+				return this.fileService.getFileItems().some(({
+					status
+				}) => status === ui_uploader_core.FileStatus.COMPLETE);
 			},
 			getPreparedText(text) {
-				return text.replaceAll(/\[p]\n|\[p]\[\/p]|\[\/p]/gi, '').trim();
+				let preparedText = text.replaceAll(/\[p]\n|\[p]\s*\[\/p]|\[\/p]/gi, '');
+				let previousText;
+				let passes = 0;
+				do {
+					previousText = preparedText;
+					preparedText = preparedText.replaceAll(/\[(quote|code|spoiler)]\s*\[\/\1]/gi, '').replaceAll(/\[list(?:=[^\]]+)?](?:\s*\[\*])*\s*\[\/list]/gi, '');
+					++passes;
+				} while (preparedText !== previousText && passes < MAX_EMPTY_BLOCK_PASSES);
+				return preparedText.trim();
 			},
 			focusToEnd() {
 				this.editor?.focus(null, {
@@ -900,29 +1195,46 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			handleClose() {
 				if (this.isEdit) {
+					// Keep the editor open only after an edit leaves it invalid (no text and no completed file).
+					if (this.hasEditorChanges && this.buttonDisabled) {
+						ui_notificationManager.Notifier.notifyViaBrowserProvider({
+							id: 'task-notify-result-empty-close-error',
+							text: this.loc('TASKS_V2_RESULT_EMPTY_CLOSE_ERROR')
+						});
+						return;
+					}
 					this.handleUpdateResult();
 				}
 				this.$emit('close');
 			}
 		},
 		template: `
-		<div class="tasks-result-editor-wrapper" ref="wrapper">
+		<div class="tasks-result-editor-wrapper" ref="wrapper" data-testid="tasks-result-editor">
 			<div class="tasks-result-editor-header" ref="resultHeader">
-				<div class="tasks-result-editor-title">{{ title }}</div>
+				<div class="tasks-result-editor-title" :id="titleId">{{ title }}</div>
 				<div class="tasks-result-editor-field-actions">
-					<BIcon
+					<button
 						v-if="showResize"
+						type="button"
 						class="tasks-result-editor-field-icon"
-						:name="resizeIcon"
-						hoverable
+						:aria-expanded="isResized ? 'true' : 'false'"
+						:aria-label="isResized
+							? loc('TASKS_V2_RESULT_COLLAPSE_LABEL')
+							: loc('TASKS_V2_RESULT_EXPAND_LABEL')"
+						data-testid="tasks-result-editor-resize-btn"
 						@click="$emit('resize')"
-					/>
-					<BIcon
-						:name="Outline.CROSS_L"
-						hoverable
+					>
+						<BIcon :name="resizeIcon" hoverable aria-hidden="true"/>
+					</button>
+					<button
+						type="button"
 						class="tasks-result-editor-field-icon"
+						:aria-label="loc('TASKS_V2_RESULT_CLOSE_LABEL')"
+						data-testid="tasks-result-editor-close-btn"
 						@click="handleClose"
-					/>
+					>
+						<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+					</button>
 				</div>
 			</div>
 			<div class="tasks-result-editor-container">
@@ -933,7 +1245,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					:removeFromServer="!isEdit"
 					ref="resultTextArea"
 					@change="handleEditorChange"
-					@filesChange="hasFilesChanges = true"
+					@filesChange="handleFilesChange"
 				/>
 			</div>
 			<div v-if="!readonly" class="tasks-result-editor-footer" ref="resultActions">
@@ -947,10 +1259,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 				<div class="tasks-result-editor-footer-buttons">
 					<UiButton
+						data-testid="task-result-editor-submit-btn"
 						:text="buttonTitle"
 						:size="ButtonSize.MEDIUM"
 						:color="ButtonColor.PRIMARY"
 						:disabled="buttonDisabled || isSaving"
+						:dataset="{ testid: 'tasks-result-editor-save-btn' }"
 						@click="handleEditButtonClick"
 					/>
 				</div>
@@ -993,7 +1307,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		data() {
 			return {
 				isResized: false,
-				uniqueKey: main_core.Text.getRandom()
+				uniqueKey: main_core.Text.getRandom(),
+				editorTitleId: `tasks-result-editor-title-${main_core.Text.getRandom()}`
 			};
 		},
 		computed: {
@@ -1012,6 +1327,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		mounted() {
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.OpenResultFromChat, this.handleOpenResultFromMessage);
+			void this.$nextTick(this.syncSheetModality);
 		},
 		beforeUnmount() {
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.OpenResultFromChat, this.handleOpenResultFromMessage);
@@ -1024,15 +1340,20 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (this.taskId === taskId) {
 					this.$emit('close');
 				}
+			},
+			syncSheetModality() {
+				tasks_v2_lib_bottomSheetAria.syncBottomSheetModality(this.$refs.bottomSheet);
 			}
 		},
 		template: `
 		<BottomSheet
+			ref="bottomSheet"
 			:sheetBindProps
 			:isExpanded="isResized"
 			:padding="0"
 			:popupPadding="0"
 			:uniqueKey
+			:ariaLabelledBy="editorTitleId"
 			@close="$emit('close')"
 		>
 			<ResultEditor
@@ -1040,6 +1361,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				:isResized
 				:content="result.text || ''"
 				:showResize="shouldShowResize"
+				:titleId="editorTitleId"
 				@close="$emit('close')"
 				@resize="isResized = !isResized"
 			/>
@@ -1126,7 +1448,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			return {
 				editResultId: 0,
 				isResultEditorShown: false,
-				isResized: false
+				isResized: false,
+				editorFocusTrigger: null
 			};
 		},
 		computed: {
@@ -1155,6 +1478,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			if (this.hasUnloadedResults) {
 				void tasks_v2_provider_service_resultService.resultService.getAll(this.taskId);
 			}
+			void this.$nextTick(this.syncSheetModality);
 			this.focusTo(this.resultId);
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.ResultAdded, this.handleResultAdded);
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.ResultUpdated, this.handleResultUpdated);
@@ -1193,23 +1517,33 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			scrollToTarget(targetId, offset, shouldHighlight) {
 				setTimeout(() => {
-					const targetNode = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
+					const targetNode = this.getResultNode(targetId);
 					if (!targetNode) {
 						return;
 					}
 					if (shouldHighlight) {
 						this.highlightResult(targetId);
 					}
+					targetNode.focus({
+						preventScroll: true
+					});
 					this.$refs.scrollContainer.scrollTop = targetNode.offsetTop - offset;
 				}, 0);
 			},
+			syncSheetModality() {
+				tasks_v2_lib_bottomSheetAria.syncBottomSheetModality(this.$refs.bottomSheet);
+			},
+			getResultNode(resultId) {
+				return this.$refs.scrollContainer?.querySelector(`[data-result-id="${CSS.escape(String(resultId))}"]`);
+			},
 			highlightResult(targetId) {
-				const highlightElement = this.$refs.scrollContainer.querySelector(`[data-result-id="${targetId}"]`);
+				const highlightElement = this.getResultNode(targetId);
 				if (highlightElement) {
 					void tasks_v2_lib_highlighter.highlighter.highlight(highlightElement);
 				}
 			},
 			openAddResultSheet() {
+				this.editorFocusTrigger = captureFocusTrigger();
 				this.editResultId = main_core.Text.getRandom();
 				const payload = {
 					id: this.editResultId,
@@ -1220,12 +1554,15 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.isResultEditorShown = true;
 			},
 			openEditResult(resultId) {
+				this.editorFocusTrigger = captureFocusTrigger();
 				this.editResultId = resultId;
 				this.isResultEditorShown = true;
 			},
 			closeResultEditor() {
 				this.isResultEditorShown = false;
 				this.editResultId = 0;
+				restoreFocusTrigger(this.editorFocusTrigger);
+				this.editorFocusTrigger = null;
 			},
 			handleResultAdded(event) {
 				const {
@@ -1259,22 +1596,34 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		},
 		template: `
 		<BottomSheet
+			ref="bottomSheet"
 			:sheetBindProps
 			:isExpanded="isResized"
 			:padding="0"
 			:popupPadding="0"
+			:ariaLabel="loc('TASKS_V2_RESULT_LIST_SHEET_LABEL')"
 			@close="$emit('close')"
 		>
-			<div class="tasks-field-results-result-list" ref="main">
-				<div class="tasks-field-results-result-list-close-icon">
-					<BIcon :name="Outline.CROSS_L" hoverable @click="$emit('close')"/>
-				</div>
+			<div class="tasks-field-results-result-list" ref="main" data-testid="tasks-result-list">
+				<button
+					type="button"
+					class="tasks-field-results-result-list-close-icon"
+					data-testid="tasks-result-list-close-btn"
+					:aria-label="loc('TASKS_V2_RESULT_CLOSE_LABEL')"
+					@click="$emit('close')"
+				>
+					<BIcon :name="Outline.CROSS_L" hoverable aria-hidden="true"/>
+				</button>
 				<div  v-if="isEmptyState" class="tasks-field-results-result-list-header">
 					<HeadlineMd className="tasks-field-results-result-list-title">
 						{{ loc('TASKS_V2_RESULT_LIST_EMPTY_TITLE') }}
 					</HeadlineMd>
 				</div>
-				<div class="tasks-field-results-result-list-content" ref="scrollContainer">
+				<div
+					class="tasks-field-results-result-list-content"
+					ref="scrollContainer"
+					:role="isEmptyState ? null : 'list'"
+				>
 					<ResultListEmpty v-if="isEmptyState" @addResult="openAddResultSheet"/>
 					<div
 						v-else
@@ -1282,6 +1631,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						:key="result"
 						:data-result-id="result"
 						class="tasks-field-results-result-item"
+						role="listitem"
+						tabindex="-1"
 					>
 						<ResultListItem
 							v-if="isResultLoaded(result)"
@@ -1303,6 +1654,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				<UiButton
 					:text="loc('TASKS_V2_RESULT_ADD')"
 					:style="AirButtonStyle.SELECTION"
+					:dataset="{ testid: 'tasks-result-list-add-btn' }"
 					:size="ButtonSize.SMALL"
 					@click="openAddResultSheet"
 				/>
@@ -1350,6 +1702,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				type: Boolean,
 				default: false
 			},
+			isAnySheetShown: {
+				type: Boolean,
+				default: false
+			},
 			sheetBindProps: {
 				type: Object,
 				required: true
@@ -1368,7 +1724,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isLoading: null,
 				showCreatorResultHint: false,
 				showResponsibleResultHint: false,
-				sheetResultId: 0
+				sheetResultId: 0,
+				sheetFocusTrigger: null
 			};
 		},
 		computed: {
@@ -1419,7 +1776,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					bindOptions: {
 						forceBindPosition: true
 					},
-					bindElement: this.$refs.moreIcon.$el,
+					bindElement: this.$refs.moreIcon,
 					targetContainer: document.body,
 					minWidth: 240,
 					offsetLeft: -100,
@@ -1482,6 +1839,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		async created() {
+			this.responsibleHintRequestId = 0;
+			this.responsibleHintRectWait = null;
+			this.responsibleHintTimeoutId = null;
+			this.ownsResponsibleAhaMoment = false;
+			this.isUnmounted = false;
 			if (!this.isEdit || !this.containsResults) {
 				return;
 			}
@@ -1500,6 +1862,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			main_core_events.EventEmitter.subscribe(tasks_v2_const.EventName.OpenResultFromChat, this.handleOpenResultFromMessage);
 		},
 		beforeUnmount() {
+			this.isUnmounted = true;
+			this.responsibleHintRequestId++;
+			clearTimeout(this.responsibleHintTimeoutId);
+			this.cancelResponsibleHintRectWait();
+			this.releaseResponsibleAhaMoment();
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ResultAdded, this.handleHighlightFieldAfterEdit);
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.ResultUpdated, this.handleHighlightFieldAfterEdit);
 			main_core_events.EventEmitter.unsubscribe(tasks_v2_const.EventName.RequiredResultsMissing, this.showResponsibleHint);
@@ -1532,7 +1899,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (this.isLocked) {
 					void tasks_v2_lib_showLimit.showLimit({
 						code: `limit_${this.featureId}`,
-						bindElement: this.$refs.moreIcon.$el,
+						bindElement: this.$refs.moreIcon,
 						analytics: {
 							type: 'limit_tasks_status_summary'
 						}
@@ -1574,13 +1941,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				}
 				if (this.isEdit && this.isResponsible && !this.isCreator && tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup)) {
 					tasks_v2_lib_ahaMoments.ahaMoments.setActive(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup);
-					setTimeout(() => {
+					this.ownsResponsibleAhaMoment = true;
+					this.responsibleHintTimeoutId = setTimeout(async () => {
+						this.responsibleHintTimeoutId = null;
 						const event = new main_core_events.BaseEvent({
 							data: {
 								taskId: this.taskId
 							}
 						});
-						this.showResponsibleHint(event);
+						await this.showResponsibleHint(event);
+						if (!this.showResponsibleResultHint) {
+							this.releaseResponsibleAhaMoment();
+						}
 					}, 2000);
 				}
 			},
@@ -1588,15 +1960,51 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.showCreatorResultHint = true;
 				this.highlightField();
 			},
-			showResponsibleHint(event) {
+			async showResponsibleHint(event) {
 				const {
 					taskId
 				} = event.getData();
-				if (this.taskId !== taskId) {
+				if (this.taskId !== taskId || this.isUnmounted || this.showResponsibleResultHint) {
+					return;
+				}
+				const requestId = ++this.responsibleHintRequestId;
+				this.cancelResponsibleHintRectWait();
+				await this.$nextTick();
+				if (!this.isResponsibleHintRequestAlive(requestId)) {
+					return;
+				}
+				const resultsContainer = this.$refs.resultsContainer;
+				if (!main_core.Type.isElementNode(resultsContainer) || !resultsContainer.isConnected) {
+					return;
+				}
+				const rectWait = waitForStableRect(resultsContainer);
+				this.responsibleHintRectWait = rectWait;
+				const isRectStable = await rectWait.promise;
+				if (this.responsibleHintRectWait === rectWait) {
+					this.responsibleHintRectWait = null;
+				}
+				if (!isRectStable || !this.isResponsibleHintRequestAlive(requestId) || this.$refs.resultsContainer !== resultsContainer) {
 					return;
 				}
 				this.showResponsibleResultHint = true;
 				this.highlightField();
+			},
+			isResponsibleHintRequestAlive(requestId) {
+				return !this.isUnmounted && this.responsibleHintRequestId === requestId;
+			},
+			cancelResponsibleHintRectWait() {
+				const rectWait = this.responsibleHintRectWait;
+				this.responsibleHintRectWait = null;
+				rectWait?.cancel();
+			},
+			releaseResponsibleAhaMoment() {
+				// Only the instance that took the global aha slot may give it back: a stuck slot
+				// suppresses every other aha moment on the page.
+				if (!this.ownsResponsibleAhaMoment) {
+					return;
+				}
+				this.ownsResponsibleAhaMoment = false;
+				tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup);
 			},
 			handleHighlightFieldAfterEdit(event) {
 				const {
@@ -1614,16 +2022,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.showCreatorResultHint = false;
 				tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaRequiredResultCreatorPopup);
 				tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaRequiredResultCreatorPopup);
+				this.focusFieldTrigger();
 			},
 			handleResponsibleHintClose() {
 				if (!this.showResponsibleResultHint) {
 					return;
 				}
 				this.showResponsibleResultHint = false;
+				this.ownsResponsibleAhaMoment = false;
 				tasks_v2_lib_ahaMoments.ahaMoments.setInactive(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup);
 				if (tasks_v2_lib_ahaMoments.ahaMoments.shouldShow(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup)) {
 					tasks_v2_lib_ahaMoments.ahaMoments.setShown(tasks_v2_const.Option.AhaRequiredResultResponsiblePopup);
 				}
+				this.focusFieldTrigger();
+			},
+			focusFieldTrigger() {
+				const candidates = [...(this.$refs.resultsContainer?.querySelectorAll('button, a') ?? [])];
+				candidates.find(node => ui_a11y.InteractivityChecker.isFocusable(node))?.focus();
+			},
+			handleFieldMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.moreIcon?.focus();
 			},
 			handleOpenResultFromMessage(event) {
 				const {
@@ -1642,12 +2061,24 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				return main_core.Type.isNumber(this.$refs?.resultsContainer?.offsetWidth) ? Math.min(this.$refs.resultsContainer.offsetWidth, 530) : 530;
 			},
 			openEditSheet(resultId) {
+				this.sheetFocusTrigger = captureFocusTrigger();
 				this.sheetResultId = resultId;
 				this.setSheetShown(true);
 			},
 			openResultSheet(resultId) {
+				this.sheetFocusTrigger = captureFocusTrigger();
 				this.sheetResultId = resultId;
 				this.setListSheetShown(true);
+			},
+			handleEditSheetClose() {
+				this.setSheetShown(false);
+				restoreFocusTrigger(this.sheetFocusTrigger);
+				this.sheetFocusTrigger = null;
+			},
+			handleListSheetClose() {
+				this.setListSheetShown(false);
+				restoreFocusTrigger(this.sheetFocusTrigger);
+				this.sheetFocusTrigger = null;
 			},
 			setSheetShown(isShown) {
 				this.$emit('update:isSheetShown', isShown);
@@ -1659,22 +2090,27 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		template: `
 		<div
 			class="tasks-field-results print-no-box-shadow"
+			data-testid="tasks-results"
 			:data-task-id="taskId"
+			role="group"
+			:aria-label="resultsMeta.title"
+			ref="resultsContainer"
 		>
 			<template v-if="lastResultId">
-				<div ref="resultsContainer">
-					<ResultCardItem
-						:resultId="lastResultId"
-						@titleClick="openResultSheet"
-						@add="openAddResultSheet"
-						@edit="openEditSheet"
-						@highlightField="highlightField"
-					/>
-				</div>
+				<ResultCardItem
+					:resultId="lastResultId"
+					:isAnySheetShown
+					@titleClick="openResultSheet"
+					@add="openAddResultSheet"
+					@edit="openEditSheet"
+					@highlightField="highlightField"
+				/>
 				<div class="tasks-field-results-more-container">
-					<div
+					<button
 						v-if="showMore"
+						type="button"
 						class="tasks-field-results-more"
+						data-testid="tasks-results-more-btn"
 						@click="openMore"
 					>
 						<div class="tasks-field-results-more-text">{{ moreText }}</div>
@@ -1682,10 +2118,13 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							class="tasks-field-results-title-icon --auto-left print-ignore"
 							:name="Outline.CHEVRON_RIGHT_L"
 							hoverable
+							aria-hidden="true"
 						/>
-					</div>
-					<div
+					</button>
+					<button
+						type="button"
 						class="tasks-field-results-more print-ignore"
+						data-testid="tasks-results-add-more-btn"
 						:class="{ '--border': showMore }"
 						@click="openAddResultSheet"
 					>
@@ -1694,8 +2133,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							class="tasks-field-results-title-icon --auto-left"
 							:name="Outline.PLUS_L"
 							hoverable
+							aria-hidden="true"
 						/>
-					</div>
+					</button>
 				</div>
 			</template>
 			<template v-else>
@@ -1703,56 +2143,74 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					class="tasks-field-results-empty-container"
 					:data-task-field-id="resultsMeta.id"
 					data-field-container
-					ref="resultsContainer"
 				>
 					<div
 						class="tasks-field-results-title"
 						:class="{ '--non-clickable': isTemplate }"
-						@click="handleTitleClick"
 					>
-						<div
-							v-if="isLoading"
+						<button
+							type="button"
 							class="tasks-field-results-title-main"
+							data-testid="tasks-results-title-btn"
+							:disabled="isTemplate"
+							@click="handleTitleClick"
 						>
-							<BIcon :name="Animated.LOADER_WAIT"/>
-							<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>
-						</div>
-						<div
-							v-else
-							class="tasks-field-results-title-main"
-						>
-							<BIcon :name="Outline.WINDOW_FLAG"/>
-							<TextMd accent>{{ emptyResultTitle }}</TextMd>
-						</div>
+							<template v-if="isLoading">
+								<BIcon :name="Animated.LOADER_WAIT" aria-hidden="true"/>
+								<TextMd accent>{{ loc('TASKS_V2_RESULT_TITLE_LOADING') }}</TextMd>
+							</template>
+							<template v-else>
+								<BIcon :name="Outline.WINDOW_FLAG" aria-hidden="true"/>
+								<TextMd accent>{{ emptyResultTitle }}</TextMd>
+							</template>
+						</button>
 						<div class="tasks-field-results-title-actions print-ignore">
-							<BIcon
+							<button
 								v-if="showMoreIcon"
-								class="tasks-field-results-title-icon"
-								:name="Outline.MORE_L"
-								hoverable
+								type="button"
+								class="tasks-field-results-icon-button"
+								aria-haspopup="menu"
+								data-testid="tasks-results-menu-btn"
+								:aria-expanded="isMenuShown ? 'true' : 'false'"
+								:aria-label="loc('TASKS_V2_RESULT_FIELD_MENU_LABEL')"
 								ref="moreIcon"
 								@click.stop="isMenuShown = true"
-							/>
-							<BIcon
+							>
+								<BIcon
+									class="tasks-field-results-title-icon"
+									:name="Outline.MORE_L"
+									hoverable
+									aria-hidden="true"
+								/>
+							</button>
+							<button
 								v-else
-								class="tasks-field-results-title-icon"
-								:name="Outline.PLUS_L"
-								hoverable
+								type="button"
+								class="tasks-field-results-icon-button"
+								:aria-label="loc('TASKS_V2_RESULT_ADD')"
 								:data-task-results-add="resultsMeta.id"
+								data-testid="tasks-results-add-btn"
 								@click.stop="openAddResultSheet"
-							/>
+							>
+								<BIcon
+									class="tasks-field-results-title-icon"
+									:name="Outline.PLUS_L"
+									hoverable
+									aria-hidden="true"
+								/>
+							</button>
 						</div>
 					</div>
 					<BMenu
 						v-if="isMenuShown"
 						:options="menuOptions"
-						@close="isMenuShown = false"
+						@close="handleFieldMenuClose"
 					/>
 				</div>
 				<Hint
 					v-if="showCreatorResultHint"
 					:bindElement="$refs.resultsContainer"
-					:options="{ closeIcon: true }"
+					:options="{ closeIcon: true, ariaLabel: loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }"
 					@close="handleCreatorHintClose"
 				>
 					{{ loc('TASKS_V2_RESULT_AHA_REQUIRE_RESULT_CREATOR') }}
@@ -1771,16 +2229,23 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			v-if="isSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setSheetShown(false)"
+			@close="handleEditSheetClose"
 		/>
 		<ResultListSheet
 			v-if="isListSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setListSheetShown(false)"
+			@close="handleListSheetClose"
 		/>
 	`
 	};
+
+	const ChipAction = Object.freeze({
+		Highlight: 'highlight',
+		RequireResult: 'requireResult',
+		Menu: 'menu',
+		AddResult: 'addResult'
+	});
 
 	// @vue/component
 	const ResultsChip = {
@@ -1793,8 +2258,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			task: {},
 			taskId: {},
 			isEdit: {},
-			analytics: {},
-			cardType: {},
 			isTemplate: {},
 			embedded: {}
 		},
@@ -1818,7 +2281,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		data() {
 			return {
 				isMenuShown: false,
-				sheetResultId: 0
+				sheetResultId: 0,
+				sheetFocusTrigger: null
 			};
 		},
 		computed: {
@@ -1846,7 +2310,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					minWidth: 240,
 					items: this.menuItems,
 					autoHide: true,
-					closeByEsc: false
+					closeByEsc: true
 				};
 			},
 			menuItems() {
@@ -1872,86 +2336,68 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			featureId() {
 				return tasks_v2_core.Core.getParams().restrictions.requiredResult.featureId;
+			},
+			clickAction() {
+				if (this.isSelected) {
+					return ChipAction.Highlight;
+				}
+				if (this.isTemplate || !this.isEdit && !this.isLocked) {
+					return ChipAction.RequireResult;
+				}
+				return this.task.rights.edit ? ChipAction.Menu : ChipAction.AddResult;
+			},
+			shownPopupType() {
+				if (this.isMenuShown) {
+					return 'menu';
+				}
+				return this.isSheetShown ? 'dialog' : null;
+			},
+			popupType() {
+				// A popup this chip opened stays on screen even when the click branch moves on meanwhile
+				// (a result arrives, a result becomes required): keep announcing what is really open.
+				return this.shownPopupType ?? {
+					[ChipAction.Menu]: 'menu',
+					[ChipAction.AddResult]: 'dialog'
+				}[this.clickAction] ?? null;
+			},
+			isPopupShown() {
+				return Boolean(this.shownPopupType);
+			}
+		},
+		watch: {
+			popupType() {
+				this.syncChipAria();
+			},
+			isPopupShown() {
+				this.syncChipAria();
 			}
 		},
 		mounted() {
-			main_core.Event.EventEmitter.subscribe(tasks_v2_const.EventName.AddResultFromChat, this.handleAddResultFromChat);
-			main_core.Event.EventEmitter.subscribe(tasks_v2_const.EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
 			main_core.Event.EventEmitter.subscribe(tasks_v2_const.EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
+			this.syncChipAria();
 		},
 		beforeUnmount() {
-			main_core.Event.EventEmitter.unsubscribe(tasks_v2_const.EventName.AddResultFromChat, this.handleAddResultFromChat);
-			main_core.Event.EventEmitter.unsubscribe(tasks_v2_const.EventName.DeleteResultFromChat, this.handleDeleteResultFromChat);
 			main_core.Event.EventEmitter.unsubscribe(tasks_v2_const.EventName.OpenPrefilledResultForm, this.handleOpenPrefilledResultForm);
 		},
 		methods: {
 			handleClick() {
-				if (this.isSelected) {
-					this.highlightField();
-					return;
+				switch (this.clickAction) {
+					case ChipAction.Highlight:
+						this.highlightField();
+						break;
+					case ChipAction.RequireResult:
+						this.requireResult();
+						break;
+					case ChipAction.Menu:
+						this.isMenuShown = true;
+						break;
+					default:
+						this.openAddResultSheet();
+						break;
 				}
-				if (this.isTemplate || !this.isEdit && !this.isLocked) {
-					this.requireResult();
-					return;
-				}
-				if (this.task.rights.edit) {
-					this.isMenuShown = true;
-				} else {
-					this.openAddResultSheet();
-				}
-			},
-			async handleAddResultFromChat(event) {
-				const {
-					taskId,
-					messageId,
-					text,
-					authorId
-				} = event.data;
-				if (taskId !== this.taskId || event.isDefaultPrevented()) {
-					return;
-				}
-				event.preventDefault();
-				const payload = {
-					text: main_core.Type.isStringFilled(text) ? text : this.loc('TASKS_V2_RESULT_DEFAULT_TITLE_FROM_MESSAGE'),
-					author: this.getUserDto(authorId),
-					id: main_core.Text.getRandom(),
-					taskId: this.taskId,
-					createdAtTs: Date.now() / 1000,
-					updatedAtTs: Date.now() / 1000,
-					rights: {
-						edit: true,
-						remove: true
-					}
-				};
-				const isSuccess = await tasks_v2_provider_service_resultService.resultService.addResultFromMessage(taskId, messageId, payload);
-				this.sendAnalyticsResultFromMessageAdd(isSuccess);
-				if (isSuccess) {
-					main_core.Event.EventEmitter.emit(tasks_v2_const.EventName.ResultFromMessageAdded, {
-						taskId
-					});
-				}
-			},
-			sendAnalyticsResultFromMessageAdd(isSuccess) {
-				tasks_v2_lib_analytics.analytics.sendStatusSummaryAdd(this.analytics, {
-					isSuccess,
-					cardType: this.cardType,
-					taskId: main_core.Type.isNumber(this.taskId) ? this.taskId : 0,
-					element: tasks_v2_const.Analytics.Element.ChatContextMenu,
-					subSection: tasks_v2_const.Analytics.SubSection.Chat
-				});
-			},
-			handleDeleteResultFromChat(event) {
-				const {
-					taskId,
-					resultId
-				} = event.data;
-				if (taskId !== this.taskId || event.isDefaultPrevented()) {
-					return;
-				}
-				event.preventDefault();
-				void tasks_v2_provider_service_resultService.resultService.delete(resultId);
 			},
 			openAddResultSheet(text = null) {
+				this.sheetFocusTrigger = captureFocusTrigger();
 				const id = main_core.Text.getRandom();
 				const payload = {
 					id,
@@ -1962,6 +2408,29 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void this.$store.dispatch(`${tasks_v2_const.Model.Results}/insert`, payload);
 				this.sheetResultId = id;
 				this.setSheetShown(true);
+			},
+			syncChipAria() {
+				const el = this.$refs.chip?.$el;
+				if (!el) {
+					return;
+				}
+				el.setAttribute('role', 'button');
+				if (this.popupType === null) {
+					el.removeAttribute('aria-haspopup');
+					el.removeAttribute('aria-expanded');
+					return;
+				}
+				el.setAttribute('aria-haspopup', this.popupType);
+				el.setAttribute('aria-expanded', String(this.isPopupShown));
+			},
+			handleMenuClose() {
+				this.isMenuShown = false;
+				this.$refs.chip?.$el?.focus();
+			},
+			handleSheetClose() {
+				this.setSheetShown(false);
+				restoreFocusTrigger(this.sheetFocusTrigger);
+				this.sheetFocusTrigger = null;
 			},
 			async requireResult() {
 				if (this.isLocked) {
@@ -1998,9 +2467,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			getUser(userId) {
 				return this.$store.getters[`${tasks_v2_const.Model.Users}/getById`](userId);
 			},
-			getUserDto(userId) {
-				return tasks_v2_provider_service_userService.UserMappers.mapModelToDto(this.getUser(userId));
-			},
 			setSheetShown(isShown) {
 				this.$emit('update:isSheetShown', isShown);
 			},
@@ -2032,15 +2498,16 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			:icon="Outline.WINDOW_FLAG"
 			:data-task-id="taskId"
 			:data-task-chip-id="resultsMeta.id"
+			data-testid="tasks-results-chip"
 			ref="chip"
 			@click="handleClick"
 		/>
-		<BMenu v-if="isMenuShown" :options="menuOptions" @close="isMenuShown = false"/>
+		<BMenu v-if="isMenuShown" :options="menuOptions" @close="handleMenuClose"/>
 		<ResultEditorSheet
 			v-if="isSheetShown"
 			:resultId="sheetResultId"
 			:sheetBindProps
-			@close="setSheetShown(false)"
+			@close="handleSheetClose"
 		/>
 	`
 	};
@@ -2051,5 +2518,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.ResultsChip = ResultsChip;
 	exports.resultsMeta = resultsMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.Tasks.V2.Lib, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.UI.System.Chip.Vue);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.UI.Accessibility, BX.Tasks.V2.Lib, BX.Vue3.Vuex, BX.Vue3.Directives, BX.UI.Vue3.Components, BX.UI.System.Typography.Vue, BX.UI.IconSet, window, window, BX.Tasks.V2, BX.Tasks.V2.Const, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3, BX.Tasks.V2.Component, BX.Tasks.V2.Lib, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Fields, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Lib, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component, BX.UI.Uploader, BX.UI.NotificationManager, BX.Tasks.V2.Lib, BX.UI.System.Chip.Vue);
 //# sourceMappingURL=results.bundle.js.map

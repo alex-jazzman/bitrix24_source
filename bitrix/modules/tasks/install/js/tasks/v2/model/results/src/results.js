@@ -27,6 +27,7 @@ export class Results extends BuilderEntityModel<ResultsModelState, ResultModel>
 				remove: true,
 			},
 			files: [],
+			archiveLink: null,
 		};
 	}
 }

@@ -1,0 +1,317 @@
+/* RepeatSale redesigned body.
+   BitrixGPT blob-gradient banner (segment chip + action headline + reasoning panel),
+   then a compact purchase history + AI disclaimer. Isolated to the RepeatSale card.
+
+   Typography and the chip come from the design system, so this file only carries layout and
+   colour. Colour overrides sit one ancestor deeper than the DS rule they replace, so they win
+   regardless of stylesheet order. */
+.crm-timeline__repeat-sale-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	/* The same token ui.system.typography asks for, so the card keeps the font of the timeline
+	   around it. The portal template defines it (intranet.design-tokens.bitrix24); the fallback
+	   covers standalone surfaces that load ui.design-tokens without the portal one. */
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
+	color: var(--ui-color-base-1);
+}
+
+/* Screen-reader-only text: stays in the accessibility tree, removed from the visual layout. Being out
+   of flow, it claims no slot in the flex rows it sits in and adds no gap. */
+.crm-timeline__repeat-sale-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* BANNER */
+.crm-timeline__repeat-sale-banner {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-xl);
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-lg);
+	color: var(--ui-color-base-white-fixed);
+	background: #40449c;
+}
+
+/* Static blob background in the spirit of the crm.repeat-sale.widget one (no animation): a light
+   blue-violet field plus a green-turquoise glow. The darkest tones are dropped. The green core
+   (--b4) stays in the open bottom area so the blob never lights the ground under the text lines
+   and never drops its contrast - the same gotcha as in the widget. */
+.crm-timeline__repeat-sale-banner-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.crm-timeline__repeat-sale-banner-blob {
+	position: absolute;
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.crm-timeline__repeat-sale-banner-blob.--b1 {
+	width: 104%;
+	height: 82%;
+	left: -8%;
+	top: -40%;
+	filter: blur(46px);
+	background: radial-gradient(circle, #6f5fd6 0%, rgba(111, 95, 214, 0) 60%);
+}
+
+.crm-timeline__repeat-sale-banner-blob.--b2 {
+	width: 126%;
+	height: 112%;
+	left: -24%;
+	top: 6%;
+	filter: blur(46px);
+	background: radial-gradient(circle, #5771e0 0%, #454fbf 46%, rgba(69, 79, 191, 0) 82%);
+}
+
+.crm-timeline__repeat-sale-banner-blob.--b3 {
+	width: 40%;
+	height: 40%;
+	left: 22%;
+	top: 74%;
+	filter: blur(44px);
+	background: radial-gradient(circle, #3ff0d6 0%, #3ab6e6 56%, rgba(58, 182, 230, 0) 74%);
+}
+
+.crm-timeline__repeat-sale-banner-blob.--b4 {
+	width: 58%;
+	height: 58%;
+	left: 54%;
+	top: 72%;
+	filter: blur(34px);
+	background: radial-gradient(circle, #00E86B 0%, #00E86B 20%, rgba(0, 232, 107, .5) 48%, rgba(0, 232, 107, 0) 74%);
+}
+
+/* banner content sits above the blobs */
+.crm-timeline__repeat-sale-banner-top,
+.crm-timeline__repeat-sale-banner-headline,
+.crm-timeline__repeat-sale-panel {
+	position: relative;
+	z-index: 1;
+}
+
+.crm-timeline__repeat-sale-banner-top {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	flex-wrap: nowrap;
+	margin-bottom: var(--ui-space-stack-sm2);
+}
+
+/* The chip keeps the filled design but swaps its fill for translucent white: the banner already
+   carries the accent colour. Those custom properties are the chip's own theming contract. */
+.crm-timeline__repeat-sale-body .crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-segment {
+	--background: rgba(255, 255, 255, .16);
+	--background-hover: rgba(255, 255, 255, .24);
+	--border-color: transparent;
+	--border-color-hover: transparent;
+	flex: 0 0 auto;
+}
+
+/* nothing to open: no segment found, no action on the chip */
+.crm-timeline__repeat-sale-body .crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-segment.--static {
+	--background-hover: rgba(255, 255, 255, .16);
+	--cursor: default;
+}
+
+/* Local mask swap for the chip's DS icon (o-repeat-sales): shape only, colour keeps coming from the
+   DS's own --ui-icon-set__icon-color mechanism untouched. Sized down from the DS default (24px) to
+   the 16px this glyph was designed at - the base size otherwise renders it visibly oversized next to
+   the chip's own text. */
+.crm-timeline__repeat-sale-body .crm-timeline__repeat-sale-segment .ui-icon-set.--o-repeat-sales {
+	--o-ui-icon-set__path_repeat-sales: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNi4wMDIgMTYuMDAyIj48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTguMDAwOTggMEMxMi40MTk3IDAgMTYuMDAyIDMuNTgyMjcgMTYuMDAyIDguMDAwOThDMTYuMDAyIDEyLjQxOTcgMTIuNDE5NyAxNi4wMDIgOC4wMDA5OCAxNi4wMDJDMy41ODIyNyAxNi4wMDIgMCAxMi40MTk3IDAgOC4wMDA5OEMwIDMuNTgyMjcgMy41ODIyNyAwIDguMDAwOTggMFpNMi43MjE2OCAxMS45NjI5QzMuNzkzNjIgMTMuMzg5IDUuNDI5NzMgMTQuMzY1OCA3LjI5ODgzIDE0LjU2MzVWOS4yMzQzOEwyLjcyMTY4IDExLjk2MjlaTTguMDAwOTggMS40MDAzOUM0LjM1NTQ3IDEuNDAwMzkgMS40MDAzOSA0LjM1NTQ3IDEuNDAwMzkgOC4wMDA5OEMxLjQwMDM5IDguOTg2NDggMS42MTc3MSA5LjkyMDg5IDIuMDA0ODggMTAuNzYwN0w3LjY0MDYyIDcuMzk5NDFDNy44NTY4OCA3LjI3MDU3IDguMTI1ODIgNy4yNjgyNSA4LjM0NDczIDcuMzkyNThDOC41NjM2NSA3LjUxNjk4IDguNjk5MjIgNy43NDkxNyA4LjY5OTIyIDguMDAwOThWMTQuNTYzNUMxMi4wMTY0IDE0LjIxNDcgMTQuNjAxNiAxMS40MTA2IDE0LjYwMTYgOC4wMDA5OEMxNC42MDE2IDQuMzU1NDcgMTEuNjQ2NSAxLjQwMDM5IDguMDAwOTggMS40MDAzOVoiLz48L3N2Zz4=");
+	--ui-icon-set__icon-size: 16px;
+}
+
+/* Local mask swap for the timeline marker/logo icon (same o-repeat-sales DS class, different glyph).
+   Two independent renderers share this DS class for this activity type - the rail marker
+   (.crm-timeline__card_icon.--code-repeat-sale, from icon-bicon-map.js) and the card's own logo
+   (.crm-timeline__card-logo_icon.--repeat-sale, from layout/body/logo.js - note the modifier lands on
+   the _icon element, not on .crm-timeline__card-logo itself, which stays --undefined). Scoped to both
+   so the shared components and their ICON_TO_BICON_MAP (used by every other card type) stay untouched. */
+.crm-timeline__card_icon.--code-repeat-sale .ui-icon-set.--o-repeat-sales,
+.crm-timeline__card-logo_icon.--repeat-sale .ui-icon-set.--o-repeat-sales {
+	--o-ui-icon-set__path_repeat-sales: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNi4zMTA2IDE3LjQyMDciPjxwYXRoIGQ9Ik03LjM1MTczIDYuMTc4NTRDNy42MjUyNyA2LjE2ODI3IDcuODg1OTcgNi4zMTk5NyA4LjAwNyA2LjU3Njk4QzguMzEzMyA2LjYyMjE4IDguNTYzMjYgNi44NjQ4OCA4LjU5ODggNy4xODYzNkM4LjY0MDg4IDcuNTY5NjMgOC4zNjMxMiA3LjkxNTggNy45Nzg2OCA3Ljk1OTc5QzcuNzQ3MDMgNy45ODYxMSA3LjU0NzMxIDcuOTM2OTUgNy4zODI5OCA3Ljg1OTIxQzcuMjU3NzYgNy45MjkyOSA3LjExMDY4IDcuOTg1OCA2LjkzOTYyIDguMDA3NjRDNi41NTUzNCA4LjA1NjU0IDYuMjAyMzkgNy43ODU1MyA2LjE1MTUzIDcuNDAzMTVDNi4xMDM5IDcuMDQzMjEgNi4zNDEwOCA2LjcxNTc2IDYuNjg5NjIgNi42Mzc1M0M2Ljc5MTk1IDYuMzUyNzYgNy4wNjMxMSA2LjE3NzI3IDcuMzUxNzMgNi4xNzg1NFoiLz48cGF0aCBkPSJNNC4xNTY0MSA0LjUzNTk2QzQuNzE2NjMgNC4yODY2MiA1LjI0NTgzIDQuMzAzNjUgNS42NzQ5NyA0LjU0MTgyQzYuMDY2MDUgNC43NTkxNiA2LjI4NTk1IDUuMTExOSA2LjM3OTA3IDUuMzgyNjRDNi41MDQ0OSA1Ljc0ODEyIDYuMzA5OTUgNi4xNDY2MyA1Ljk0NDUgNi4yNzIyOUM1LjU3OTEgNi4zOTc2NiA1LjE4MDU4IDYuMjAzMDQgNS4wNTQ4NSA1LjgzNzcyQzUuMDU0ODUgNS44Mzc3MiA1LjA1MjU3IDUuODMyNjQgNS4wNDg5OSA1LjgyNkM1LjA0NDY2IDUuODE3OTkgNS4wMzkyOSA1LjgwODUzIDUuMDMyMzkgNS43OTk2NEM1LjAxODE1IDUuNzgxMzMgNS4wMDQ2OCA1Ljc3MDczIDQuOTk1MjggNS43NjU0NkM0Ljk4OTEzIDUuNzYyMDcgNC45NzYwNyA1Ljc1NjA0IDQuOTQ3NDMgNS43NTU2OUM0LjkxNTY5IDUuNzU1MzggNC44NDQwOCA1Ljc2MTYyIDQuNzI1NzUgNS44MTQyOEM0LjM3MjY0IDUuOTcxMyAzLjk1OTEzIDUuODEyODMgMy44MDE5MiA1LjQ1OTc5QzMuNjQ0ODcgNS4xMDY3OSAzLjgwMzYxIDQuNjkzMzIgNC4xNTY0MSA0LjUzNTk2WiIvPjxwYXRoIGQ9Ik04Ljk1MzI5IDQuNTQxODJDOS4zODI0MSA0LjMwMzU3IDkuOTExNjEgNC4yODY2OCAxMC40NzE4IDQuNTM1OTZDMTAuODI0OCA0LjY5MzI2IDEwLjk4MzUgNS4xMDY2OSAxMC44MjYzIDUuNDU5NzlDMTAuNjY5MSA1LjgxMjg0IDEwLjI1NTYgNS45NzE0NSA5LjkwMjUxIDUuODE0MjhDOS43ODM5NyA1Ljc2MTU2IDkuNzEyNDEgNS43NTUzNCA5LjY4MDgzIDUuNzU1NjlDOS42NTIwNSA1Ljc1NjA4IDkuNjM5MDMgNS43NjIxIDkuNjMyOTggNS43NjU0NkM5LjYyMzU2IDUuNzcwNzggOS42MTAwNCA1Ljc4MTM3IDkuNTk1ODcgNS43OTk2NEM5LjU4ODk4IDUuODA4NTMgOS41ODM1OSA1LjgxOCA5LjU3OTI3IDUuODI2QzkuNTc1NTQgNS44MzI5MiA5LjU3MzQxIDUuODM3NzIgOS41NzM0MSA1LjgzNzcyQzkuNDQ3NjIgNi4yMDMwNyA5LjA0OTIgNi4zOTc4MiA4LjY4Mzc2IDYuMjcyMjlDOC4zMTg0NyA2LjE0NjU2IDguMTIzODUgNS43NDgwMiA4LjI0OTE5IDUuMzgyNjRDOC4zNDIyNyA1LjExMTkzIDguNTYyMjkgNC43NTkxOSA4Ljk1MzI5IDQuNTQxODJaIi8+PHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik05LjMwNTgzIDAuMzk1MzM5QzkuODA1NzMgMC4wOTUwNjI1IDEwLjQ4OTQgLTAuMTQyNzYyIDExLjI0NTMgMC4xMDA0MTdDMTIuMDAyMiAwLjM0Mzk2MyAxMi4zNDA0IDAuOTk5ODY5IDEyLjQ3MTggMS41NjEzNUMxMi41OTg5IDIuMTA0NTIgMTIuNTcyIDIuNjkzMjggMTIuNDg2NSAzLjE1NzA2TDEyLjU3NjMgMy4yODc5MkMxMy4xOTE1IDIuOTM5OTkgMTMuOTk3MSAyLjg0NCAxNC43NTkgMy4xNDA0NkMxNS42MjUyIDMuNDc3ODIgMTYuMTEwNSA0LjE1MjUgMTYuMjU5OSA0Ljg4NTU3QzE2LjQwMTUgNS41ODEwNiAxNi4yMzkgNi4zMTYxIDE1Ljg2NDQgNi44NzE5QzE1Ljg2OTQgNy4zODMwMiAxNS45MDAzIDguMDYwMTEgMTUuODQ4OCA4LjcxOTU2QzE1Ljc5NDMgOS40MTY0MiAxNS42NDUzIDEwLjE3ODcgMTUuMjQ0MyAxMC44ODE3QzE0LjkyODggMTEuNDM0NSAxNC41MzU0IDExLjc4MzEgMTQuMTIzMiAxMS45ODAzQzE0LjAzMTQgMTIuMDI0MiAxMy45NDA3IDEyLjA1ODYgMTMuODUyNyAxMi4wODY3QzEzLjkwNyAxNC4yODI5IDEzLjI0OSAxNS42OTc3IDEyLjAyNDYgMTYuNTEzNUMxMC43NzcyIDE3LjM0NDYgOS4xMDU0NCAxNy40MjA3IDcuNjY4MTMgMTcuNDIwN0M1LjI3MDUzIDE3LjQyMDcgMy41NDUyIDE3LjExNjIgMi40MjMwMSAxNi4yNjU1QzEuMzA0NDYgMTUuNDE3MyAwLjkyOTY0OSAxNC4xNTAyIDAuODgwMDQ2IDEyLjYzNjVDMC42MzE1ODIgMTIuMzI3MiAwLjM2ODkwOSAxMS44Nzk2IDAuMTk3NDI5IDExLjM2MzFDLTAuMDI4NjQxNSAxMC42ODE4IC0wLjEyMjM1NiA5LjgwNDA1IDAuMjU2OTk5IDguOTIwNzNDMC40OTQ2ODMgOC4zNjczNiAwLjk1Mzk3OSA3Ljc4MDI2IDEuNDg4NDQgNy4zODM2MkMxLjQyNzgzIDYuOTE1NzMgMS40MTM2IDYuNDE4MDUgMS40NTYyMiA1LjkzNDRDMS41MTM1IDUuMjg1MDEgMS42NzgxIDQuNjA2MDQgMi4wMjI2MiA0LjA1NTVDMi4wMjM5OCA0LjA1MzMyIDIuMDI2NjEgNC4wNDg2OSAyLjAyNzUxIDQuMDQyOEMyLjAyODE3IDQuMDM4MjcgMi4wMjc1MSA0LjAzNDk5IDIuMDI3NTEgNC4wMzQ5OUMxLjg2MTI0IDMuNDM1MzEgMS44MjQ0IDIuNjI4NyAxLjk5MTM3IDEuOTI4NTRDMi4xNTA4MSAxLjI2MDIgMi41ODU1OCAwLjM5NzY0NiAzLjU3OTI3IDAuMjg0MDExQzQuMDk2NCAwLjIyNTAzMiA0LjYzNDY3IDAuMzU5MjA0IDUuMDc5MjcgMC41NDM3NzdDNS41MjUyOCAwLjcyODk4NSA1Ljk1MzM3IDAuOTk2MDkxIDYuMjY3NzQgMS4yOTE4MkM2LjUxNjYzIDEuMjc0NzIgNi44NjgxNiAxLjI1NDIzIDcuMTUyNTEgMS4yNTA4MUM3LjQ3Nzk1IDEuMjQ2OTIgNy45Mjk4NyAxLjI3MzY4IDguMjI0NzcgMS4yOTM3OEM4LjQ3NTQ5IDEuMDM1NjYgOC44NTIzNiAwLjY2Nzg2NSA5LjMwNTgzIDAuMzk1MzM5Wk0xNC4yNTAyIDQuNDQ0MTdDMTMuNzE4NCA0LjIzNzU3IDEzLjIwMjYgNC40NjI2MiAxMy4wMTI5IDQuNzI1NDJDMTIuOTIwMSA0Ljg1NDEgMTIuODM1NiA1LjA5MjU2IDEyLjgyODMgNS4zNjk5NUMxMi44MjExIDUuNjQ1NjUgMTIuODkyMyA1Ljg2MjI3IDEyLjk5MjQgNS45ODgxMUMxMy4wMDc0IDYuMDA3MDEgMTMuMDE4NiA2LjAyODc2IDEzLjAzMTQgNi4wNDg2NkMxMy4wNDA5IDYuMDYyNzggMTMuMDUwMyA2LjA3Njc3IDEzLjA1ODggNi4wOTE2M0MxMy4wNjc2IDYuMTA3OSAxMy4wNzQ4IDYuMTI0NzEgMTMuMDgyMiA2LjE0MTQzQzEzLjExMDkgNi4yMDI5NCAxMy4xMzQ4IDYuMjY4MDEgMTMuMTQ0NyA2LjMzODdDMTMuMjgxOSA3LjMyMDc4IDEzLjAxNyA4LjQ0OTE3IDExLjg4OTggOS41NTU1QzExLjI0NzIgMTAuMTg2MSAxMC4yODgyIDEwLjU2MzggOS4yOTUwOSAxMC43NjE1QzkuMDU0NDcgMTAuODA5NCA4LjgwNjcgMTAuODQ3IDguNTU0ODUgMTAuODc1OEM4LjY1MDc1IDExLjA1IDguNzA2MjIgMTEuMjQ5OCA4LjcwNjIyIDExLjQ2MjdDOC43MDYyMiAxMi4xMzYzIDguMTYwMDcgMTIuNjgyMiA3LjQ4NjQ5IDEyLjY4MjRDNi44MTI3IDEyLjY4MjQgNi4yNjU3OSAxMi4xMzY0IDYuMjY1NzkgMTEuNDYyN0M2LjI2NTc5IDExLjI1ODIgNi4zMTY1MSAxMS4wNjU2IDYuNDA1NDQgMTAuODk2M0M2LjI5ODg4IDEwLjg4NjYgNi4xOTI2MiAxMC44NzY5IDYuMDg3MDggMTAuODY0MUM1LjAyMzc2IDEwLjczNDYgMy45NzI4NSAxMC40Mzk2IDMuMTQ2NjUgOS45NDgwN0MyLjY3NDMyIDkuNjY3MDQgMi4yNDk1IDkuMzAzNjcgMS45NTEzNCA4Ljg1MjM3QzEuNzgwODIgOS4wNDQ2OCAxLjYzMjk1IDkuMjYzNTkgMS41NDMxMyA5LjQ3MjQ5QzEuMzM3NDggOS45NTEyOCAxLjM3Mjg3IDEwLjQ1OTcgMS41MjY1MyAxMC45MjI3QzEuNjg0NTYgMTEuMzk4NiAxLjk0Mjc5IDExLjc0ODMgMi4wNTk3MyAxMS44NjAyTDIuMjY3NzQgMTIuMDU5NEMyLjY5Mjg0IDEyLjM5NDggMy4zNzE3OSAxMi42NjI5IDMuOTgzNTYgMTIuNjYyOUM0LjM3MDAxIDEyLjY2MzEgNC42ODM3NiAxMi45NzY2IDQuNjgzNzYgMTMuMzYzMUM0LjY4MzQ0IDEzLjc0OTMgNC4zNjk4MSAxNC4wNjIyIDMuOTgzNTYgMTQuMDYyM0MzLjQ2NDczIDE0LjA2MjMgMi45MTgxNiAxMy45NDM5IDIuNDE2MTggMTMuNzQxQzIuNTY5MjUgMTQuMzkxMyAyLjg0OTU3IDE0LjgzMTMgMy4yNjg3MiAxNS4xNDkyQzMuOTk1MjIgMTUuNyA1LjMwMzExIDE2LjAyMDMgNy42NjgxMyAxNi4wMjAzQzkuMTQzMzIgMTYuMDIwMyAxMC4zOTcyIDE1LjkxNDUgMTEuMjQ3MiAxNS4zNDg1QzEyLjAwNDYgMTQuODQzOSAxMi42MTA4IDEzLjg0MTkgMTIuNDI1IDExLjU1NjVDMTIuNDIzNSAxMS41Mzc4IDEyLjQyNiAxMS41MTkyIDEyLjQyNTkgMTEuNTAwOEMxMi40MjU1IDExLjQ4MDUgMTIuNDIyNyAxMS40NiAxMi40MjQgMTEuNDM5M0MxMi40NDkyIDExLjA1MzcgMTIuNzgyNiAxMC43NjEgMTMuMTY4MSAxMC43ODZDMTMuMjU0NiAxMC43OTE2IDEzLjM4MTggMTAuNzgzNiAxMy41MTk3IDEwLjcxNzZDMTMuNjUxMyAxMC42NTQ2IDEzLjg0MDggMTAuNTE2MiAxNC4wMjg1IDEwLjE4NzNDMTQuMjg3OCA5LjczMjU3IDE0LjQwNzMgOS4xOTg1NSAxNC40NTMzIDguNjEwMThDMTQuNTAwNCA4LjAwNjYxIDE0LjQ2NzcgNy40Mjk4MyAxNC40NjQgNi44Mjc5NkMxNC40NjI0IDYuNTI1MDIgMTQuNTc4NSA2LjI3NDMgMTQuNjk5NCA2LjA5ODQ2TDE0Ljc1OTkgNS45OTg4NkMxNC44OTA3IDUuNzU2NTMgMTQuOTQ2MSA1LjQ0NjQgMTQuODg4OCA1LjE2NDg3QzE0LjgyOTMgNC44NzI3MSAxNC42NDk3IDQuNTk5NjQgMTQuMjUwMiA0LjQ0NDE3Wk0xMC44MTY2IDEuNDMzNDNDMTAuNTkzNiAxLjM2MTcxIDEwLjM0MDYgMS40MDYyMSAxMC4wMjU2IDEuNTk1NTNDOS43MDU2OCAxLjc4NzkxIDkuNDE1MDIgMi4wNzYwOCA5LjE2ODEzIDIuMzMyODRDOC45MTgxNCAyLjU5MjUxIDguNTY3OCAyLjcyMTIyIDguMjE1OTggMi42OTYxMkM3LjkyNjQzIDIuNjc1NDcgNy40NjUxOSAyLjY0NzcgNy4xNzAwOSAyLjY1MTJDNi45MDY4MSAyLjY1NDM2IDYuNTU1NTcgMi42NzU3MyA2LjMwODc2IDIuNjkzMTlDNS44ODk0NSAyLjcyMjc5IDUuNTQwMTYgMi41MzIzNiA1LjMxMzY0IDIuMzE3MjFDNS4xNDA2MSAyLjE1Mjc2IDQuODU5NTIgMS45Njg1MSA0LjU0MjE2IDEuODM2NzVDNC4yMTgzIDEuNzAyMzIgMy45MzE1OCAxLjY1MzYgMy43Mzg0NCAxLjY3NTYxQzMuNjQ5MDcgMS42ODU5NSAzLjQ2OTE2IDEuNzY1NDcgMy4zNTI3IDIuMjUzNzRDMy4yNDM3OCAyLjcxMDY5IDMuMjcwNDkgMy4yNzYzOCAzLjM3NzEyIDMuNjYwOTZDMy40ODQ1NSA0LjA0ODM4IDMuNDE4NzggNC40NjM4OCAzLjIxMDEyIDQuNzk3NjhDMy4wMjQwNSA1LjA5NDk5IDIuODk1ODkgNS41MzQ1MiAyLjg0OTc3IDYuMDU3NDVDMi44MDQzOCA2LjU3MjUzIDIuODQyMzUgNy4xMTczMiAyLjk0MDU5IDcuNTg2NzVMMi45OTA0IDcuODI0MDVDMy4xMTI5NyA4LjE1MTQ1IDMuMzkwNjggOC40NjQyMiAzLjg2MjQ3IDguNzQ0OTVDNC40NzAyNSA5LjEwNjU1IDUuMzE2NDkgOS4zNjAwMSA2LjI1NjAyIDkuNDc0NDRDNy4xOTAwOCA5LjU4ODE4IDguMTcwMDIgOS41NTgwMSA5LjAyMTY1IDkuMzg1QzkuODg5MjMgOS4yMTU3OCAxMC41NDM0IDguOTE1NTMgMTAuOTA5MyA4LjU1NjQ3QzExLjY1NTQgNy44MjQyNSAxMS44MDQ2IDcuMTg4NDUgMTEuNzcxNiA2LjY4NDRDMTEuNTA2MiA2LjI2MjkyIDExLjQxNjQgNS43Njk1MSAxMS40Mjc5IDUuMzMxODZDMTEuNDM2NSA1LjAwODI0IDExLjUwMjEgNC42NzM2NyAxMS42MjUyIDQuMzY4OTdDMTEuNjE2MSA0LjM1NzQ0IDExLjYwNTMgNC4zNDcwMyAxMS41OTY4IDQuMzM0NzlMMTEuMjkyMiAzLjg5MjQxQzExLjA4NTkgMy41OTI0IDExLjA0NDcgMy4yNDA4OSAxMS4xMDQ3IDIuOTM4MzFMMTEuMTQyNyAyLjY3NjU5QzExLjE3MDkgMi40MDY5MyAxMS4xNjQ1IDIuMTIwMDEgMTEuMTA4NiAxLjg4MDY5QzExLjAzMzMgMS41NTkwOCAxMC45MTE5IDEuNDY0MTIgMTAuODE2NiAxLjQzMzQzWiIvPjwvc3ZnPg==");
+}
+
+/* DS default renders these at the parent-set size (24px badge glyph / 48px card glyph), which
+   nearly fills the circle underneath with almost no margin. Sized down so the glyph sits centred
+   with visible breathing room to the circle edge, per design feedback. */
+.crm-timeline__card_icon.--code-repeat-sale .ui-icon-set.--o-repeat-sales {
+	width: 18px;
+	height: 18px;
+}
+
+.crm-timeline__card-logo_icon.--repeat-sale .ui-icon-set.--o-repeat-sales {
+	width: 32px;
+	height: 32px;
+}
+
+/* Headline: two font sizes down from the DS's HeadlineSm default (17px/23px), per design review.
+   margin-bottom only when the suggestion panel follows - without it the headline is the banner's
+   last child and its own bottom margin would double up with the banner's padding-bottom. */
+.crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-banner-headline {
+	color: var(--ui-color-base-white-fixed);
+	font-size: 15px;
+	line-height: 20px;
+}
+
+.crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-banner-headline:not(:last-child) {
+	margin-bottom: var(--ui-space-stack-sm2);
+}
+
+.crm-timeline__repeat-sale-panel {
+	border-radius: var(--ui-border-radius-md);
+	background: rgba(255, 255, 255, .12);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md);
+}
+
+.crm-timeline__repeat-sale-panel-head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.crm-timeline__repeat-sale-panel-logo {
+	width: 27px;
+	height: 27px;
+	flex-shrink: 0;
+}
+
+/* The BitrixGPT avatar art sits high inside its own viewBox (~7 empty units below against ~4
+   above), so centring the box leaves the visible icon above the text. Nudge it down. */
+.crm-timeline__repeat-sale-panel-logo svg {
+	width: 27px;
+	height: 27px;
+	display: block;
+	transform: translateY(1.5px);
+}
+
+.crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-panel-title {
+	color: var(--ui-color-base-white-fixed);
+}
+
+.crm-timeline__repeat-sale-banner .crm-timeline__repeat-sale-panel-body {
+	color: rgba(255, 255, 255, .94);
+}
+
+/* HISTORY (own white area) */
+.crm-timeline__repeat-sale-history {
+	margin-top: var(--ui-space-stack-2xs2);
+	padding: var(--ui-space-inset-md2) var(--ui-space-inset-lg);
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-head {
+	color: var(--ui-color-base-2);
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.crm-timeline__repeat-sale-history-row {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs2);
+	padding: 5px 0;
+}
+
+/* Three columns. The name column is shown in full and wraps over as many lines as it needs; the free
+   space of the row is its own, so the date and the sum stay pressed to the right next to each other.
+   'anywhere' also lowers the content floor of the column, so a single unbroken word breaks instead
+   of pushing the date and the sum out of the row. Baseline alignment keeps the date and the sum on
+   the first line of a wrapped name. The link, the counter and the unfolded rest all flow inline
+   inside the column, so the rest wraps along with the name and never claims a column of its own. */
+.crm-timeline__repeat-sale-history-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-product {
+	color: var(--ui-color-accent-main-primary);
+	text-decoration: none;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-product:hover {
+	text-decoration: underline;
+}
+
+/* One switch in two places: folded it is the counter right after the visible part of the name,
+   unfolded it is the collapse caption closing the composition. Both are controls of their own,
+   outside the link - the deal opens from the name alone. The unfolded rest between them is plain
+   text for the same reason: a multiline clickable block is impossible to miss by accident. */
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-rest-toggle {
+	margin-left: var(--ui-space-inline-2xs);
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-rest-toggle:hover {
+	color: var(--ui-color-base-2);
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-rest {
+	color: var(--ui-color-base-1);
+}
+
+/* Date and sum are sized by their content and never wrap. */
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-date {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-sum {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-more {
+	margin-top: var(--ui-space-stack-xs);
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-more:hover {
+	color: var(--ui-color-base-2);
+}
+
+.crm-timeline__repeat-sale-history .crm-timeline__repeat-sale-history-total {
+	margin-top: var(--ui-space-stack-2xs);
+	color: var(--ui-color-base-3);
+}
+
+.crm-timeline__repeat-sale-history-product:focus-visible,
+.crm-timeline__repeat-sale-history-rest-toggle:focus-visible,
+.crm-timeline__repeat-sale-history-more:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/* Bottom: AI disclaimer + scenario note, both in the same light grey */
+.crm-timeline__repeat-sale-body .crm-timeline__repeat-sale-note,
+.crm-timeline__repeat-sale-body .crm-timeline__repeat-sale-scenario {
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs) 0;
+	color: var(--ui-color-base-4);
+}

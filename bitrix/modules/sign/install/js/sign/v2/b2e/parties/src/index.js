@@ -3,10 +3,12 @@ import { EventEmitter } from 'main.core.events';
 import { CompanySelector, type ProviderSelectedEvent, type CompanySelectedEvent } from 'sign.v2.b2e.company-selector';
 import { DocumentValidation, maxReviewersCount } from 'sign.v2.b2e.document-validation';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
+import { SigningMethod, SigningMethodSelector } from 'sign.v2.b2e.signing-method-selector';
 import type { BlankSelectorConfig } from 'sign.v2.blank-selector';
 import type { Provider, SetupMember } from 'sign.v2.api';
+import { Api } from 'sign.v2.api';
 import type { DocumentInitiatedType, MemberRoleType, DocumentModeType } from 'sign.type';
-import { DocumentMode, MemberRole, EntityType } from 'sign.type';
+import { DocumentMode, MemberRole, EntityType, ProviderCode } from 'sign.type';
 import { Helpdesk, Hint } from 'sign.v2.helper';
 import { isTemplateMode } from 'sign.v2.sign-settings';
 
@@ -14,7 +16,12 @@ import './style.css';
 
 const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
 
-export type PartiesData = { entityType: string, entityId: ?number, role?: MemberRoleType };
+export type PartiesData = {
+	entityType: string,
+	entityId: ?number,
+	role?: MemberRoleType,
+	signingMethod?: ?string,
+};
 type Options = BlankSelectorConfig & { documentInitiatedType?: DocumentInitiatedType, documentMode?: DocumentModeType };
 
 const currentUserId = Extension.getSettings('sign.v2.b2e.parties').get('currentUserId');
@@ -26,8 +33,10 @@ const HelpdeskCodes = Object.freeze({
 
 export class Parties extends EventEmitter
 {
+	#api: Api = new Api();
 	#companySelector: CompanySelector = null;
 	#representativeSelector: RepresentativeSelector = null;
+	#signingMethodSelector: SigningMethodSelector = null;
 	#documentValidation: DocumentValidation = null;
 	#addReviewerButton: ?HTMLElement = null;
 	#ui = {
@@ -58,11 +67,15 @@ export class Parties extends EventEmitter
 			needOpenCrmSaveAndEditCompanySliders: isTemplate,
 		});
 
+		this.#signingMethodSelector = new SigningMethodSelector();
+
 		this.#companySelector.subscribe('onSelect', (event: CompanySelectedEvent) => {
+			this.#refreshSigningMethodAvailability();
 			this.emit('onCompanySelect', event);
 		});
 
 		this.#companySelector.subscribe('onProviderSelect', (event: ProviderSelectedEvent) => {
+			this.#refreshSigningMethodAvailability();
 			this.emit('onProviderSelect', event);
 		});
 
@@ -110,9 +123,14 @@ export class Parties extends EventEmitter
 		this.#companySelector.loadFirstCompany();
 	}
 
-	loadRepresentative(representativeId: number, entityType: string = EntityType.USER): void
+	loadRepresentative(
+		representativeId: number,
+		entityType: string = EntityType.USER,
+		signingMethod: ?string = null,
+	): void
 	{
 		this.#representativeSelector.load(representativeId, entityType);
+		this.#signingMethodSelector.setSelectedMethod(signingMethod);
 	}
 
 	loadFirstRepresentative(): void
@@ -155,6 +173,8 @@ export class Parties extends EventEmitter
 				${this.#representativeSelector.getLayout()}
 			</div>
 		`;
+		const signingMethodLayout = this.#signingMethodSelector.getLayout();
+		this.#refreshSigningMethodAvailability();
 		const providerLayout = Tag.render`
 			<div class="sign-b2e-settings__item">
 				<p class="sign-b2e-settings__item_title">
@@ -197,12 +217,26 @@ export class Parties extends EventEmitter
 				${this.#ui.blocks.companyContent}
 				${providerLayout}
 				${this.#ui.blocks.representativeContent}
+				${signingMethodLayout}
 				${validationReviewerLayout}
 				${this.#ui.blocks.validationEditorLayout}
 			</div>
 		`;
 
 		return this.#ui.container;
+	}
+
+	/**
+	 * The server decides whether the method may be offered for this company; the wizard adds the only
+	 * thing the server cannot know — which of the company providers the document goes through.
+	 */
+	#refreshSigningMethodAvailability(): void
+	{
+		const isGoskeyLiteSelected = this.#companySelector.getSelectedCompanyProvider()?.code === ProviderCode.goskeyLite;
+
+		this.#signingMethodSelector.setAvailable(
+			isGoskeyLiteSelected && this.#companySelector.isRepresentativeSigningAvailable(),
+		);
 	}
 
 	#createAddReviewerButton(): HTMLElement
@@ -269,6 +303,36 @@ export class Parties extends EventEmitter
 		}
 	}
 
+	/**
+	 * The method of the head is offered by the capability of the company, while the right to use it
+	 * belongs to the person - so the person is checked here, on the step where he is chosen, and his
+	 * block carries the refusal. The document must already know its company: the provider is a part of
+	 * the answer, and it is stored by `save()`.
+	 */
+	async validateRepresentativeSigningMethod(documentId: string): Promise<void>
+	{
+		const { representative } = this.getParties();
+		if (representative.signingMethod !== SigningMethod.goskey)
+		{
+			return;
+		}
+
+		try
+		{
+			await this.#api.checkRepresentativeSigningMethod(
+				documentId,
+				representative.entityId,
+				representative.signingMethod,
+				representative.entityType,
+			);
+		}
+		catch (e)
+		{
+			this.#setWarning(this.#ui.blocks.representativeContent);
+			throw e;
+		}
+	}
+
 	getSelectedProvider(): Provider | null
 	{
 		return this.#companySelector.getSelectedCompanyProvider();
@@ -290,6 +354,7 @@ export class Parties extends EventEmitter
 			representative: {
 				entityType: this.#representativeSelector.getRepresentativeItemType(),
 				entityId: this.#representativeSelector.getRepresentativeId(),
+				signingMethod: this.#signingMethodSelector.getSelectedMethod(),
 			},
 			company: {
 				entityType: 'company',

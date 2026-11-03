@@ -24,3 +24,10 @@ $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_TAG_SELECTOR_ADD_BUTTON_CAPTION'] = 'Вы�
 
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_MESSAGE'] = 'Сохраните рабочее место, чтобы перейти к созданию смарт-процесса';
 $MESS['CRM_AUTOMATED_SOLUTION_DETAILS_NEED_SAVE_POPUP_YES_CAPTION'] = 'Сохранить';
+
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_ENABLE_VIBE'] = 'Включить главную страницу';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_NOT_AVAILABLE'] = 'Главная страница недоступна';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOADING'] = 'Настройки главной страницы загружаются';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOADED'] = 'Настройки главной страницы загружены';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_EMPTY'] = 'Настройки главной страницы пока недоступны';
+$MESS['CRM_AUTOMATED_SOLUTION_DETAILS_VIBE_SETTINGS_LOAD_ERROR'] = 'Не удалось загрузить настройки главной страницы, попробуйте ещё раз';

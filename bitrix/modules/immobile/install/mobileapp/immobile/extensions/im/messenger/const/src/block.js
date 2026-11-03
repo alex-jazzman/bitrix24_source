@@ -13,9 +13,12 @@ jn.define('im/messenger/const/block', (require, exports, module) => {
 		unorderedList: 'unorderedList',
 		orderedList: 'orderedList',
 		gallery: 'gallery',
+		file: 'file',
+		audio: 'audio',
 		table: 'table',
 		card: 'card',
 		aiAssistantSearch: 'aiAssistantSearch',
+		form: 'form',
 	});
 
 	const BlockButtonType = Object.freeze({

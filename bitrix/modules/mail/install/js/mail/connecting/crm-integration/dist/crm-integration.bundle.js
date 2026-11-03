@@ -90,6 +90,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 	function resolvePopupTargetContainer(element) {
 		return element?.closest('.side-panel-content-container, .ui-slider-content-box') ?? document.body;
 	}
+	function getResponsibleQueueSelectorItems(items) {
+		return items.map(item => ({
+			id: item.id,
+			entityId: item.entityId,
+			title: item.name,
+			hidden: true
+		}));
+	}
 	const UserSelector = ui_vue3.defineComponent({
 		name: 'crm-user-selector',
 		props: {
@@ -143,6 +151,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			this.selectorInstance = ui_vue3.markRaw(new ui_entitySelector.TagSelector({
 				multiple: true,
 				dialogOptions: {
+					items: getResponsibleQueueSelectorItems(this.modelValue),
 					width: 425,
 					height: 320,
 					targetNode: selectorContainer,
@@ -175,7 +184,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				},
 				events: {
 					onAfterTagAdd: this.onUpdate,
-					onAfterTagRemove: this.onUpdate
+					onAfterTagRemove: this.handleTagRemove
 				}
 			}));
 			this.selectorInstance.renderTo(selectorContainer);
@@ -195,6 +204,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			}
 		},
 		methods: {
+			handleTagRemove(event) {
+				const tag = event.getData().tag;
+				const dialog = this.selectorInstance?.getDialog();
+				const item = dialog?.getItem({
+					id: tag.getId(),
+					entityId: tag.getEntityId()
+				});
+				if (item?.isHidden()) {
+					dialog?.removeItem(item);
+				}
+				this.onUpdate();
+			},
 			onUpdate() {
 				if (!this.selectorInstance || this.disabled) {
 					return;

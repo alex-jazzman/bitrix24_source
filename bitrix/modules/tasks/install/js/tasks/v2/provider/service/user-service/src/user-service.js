@@ -12,6 +12,8 @@ import type { UserDto } from './types';
 
 class UserService
 {
+	#loadingPromises: Map<number, Promise<void>> = new Map();
+
 	getUrl(id: number): string
 	{
 		const settings = Extension.getSettings('tasks.v2.application.task-card');
@@ -28,14 +30,42 @@ class UserService
 	async list(ids: number[]): Promise<void>
 	{
 		const unloadedIds = this.#getUnloadedIds(ids);
-		if (unloadedIds.length === 0)
+		const loadingPromises: Set<Promise<void>> = new Set();
+		const idsToLoad = unloadedIds.filter((id) => {
+			const loadingPromise = this.#loadingPromises.get(id);
+			if (loadingPromise)
+			{
+				loadingPromises.add(loadingPromise);
+
+				return false;
+			}
+
+			return true;
+		});
+
+		if (idsToLoad.length > 0)
 		{
-			return;
+			const loadingPromise = this.#load(idsToLoad);
+			idsToLoad.forEach((id) => this.#loadingPromises.set(id, loadingPromise));
+			void loadingPromise.finally(() => {
+				idsToLoad.forEach((id) => {
+					if (this.#loadingPromises.get(id) === loadingPromise)
+					{
+						this.#loadingPromises.delete(id);
+					}
+				});
+			});
+			loadingPromises.add(loadingPromise);
 		}
 
+		await Promise.all(loadingPromises);
+	}
+
+	async #load(ids: number[]): Promise<void>
+	{
 		try
 		{
-			const data = await apiClient.post(Endpoint.UserList, { ids: unloadedIds });
+			const data = await apiClient.post(Endpoint.UserList, { ids });
 
 			const users = data.map((user: UserDto) => mapDtoToModel(user));
 

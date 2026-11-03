@@ -99,7 +99,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		}) {
 			return new Promise(resolve => {
 				if (!projectId && !scrumId) {
-					resolve(false);
+					resolve(null);
 					return;
 				}
 				const cancelButton = new ui_buttons.CancelButton({
@@ -110,7 +110,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					onclick: () => {
 						this.#messageBox?.close();
 						this.#messageBox = null;
-						resolve(false);
+						resolve(null);
 					},
 					useAirDesign: true
 				});

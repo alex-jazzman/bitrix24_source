@@ -1,0 +1,3 @@
+<?php
+$MESS['LNDBLCK_STOREMENUV3_1_PANEL_CLOSE_LABEL'] = 'Close';
+$MESS['LNDBLCK_STOREMENUV3_1_PANEL_LABEL'] = 'Store slide-out menu';

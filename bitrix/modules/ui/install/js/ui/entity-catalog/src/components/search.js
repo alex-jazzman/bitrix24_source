@@ -11,6 +11,10 @@ export const Search = {
 			debounceSearchHandler: null,
 			queryString: '',
 			showClearSearch: false,
+			searchOpenLabel: Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_OPEN_ARIA'),
+			searchClearLabel: Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_CLEAR_ARIA'),
+			searchInputLabel: Loc.getMessage('UI_JS_ENTITY_CATALOG_SEARCH_INPUT_ARIA'),
+			searchPlaceholder: Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUP_LIST_SEARCH_PLACEHOLDER'),
 		};
 	},
 	watch:{
@@ -47,23 +51,34 @@ export const Search = {
 			{
 				this.$refs['search-input'].value = '';
 				this.onSearch('');
+				this.$refs['search-input'].focus();
 			}
 		}
 	},
 	template: `
-		<div class="ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-round" @click.once="openSearch">
-			<a 
-				:class="{
-					'ui-ctl-after': true,
-					'ui-ctl-icon-search': !showClearSearch,
-					'ui-ctl-icon-clear': showClearSearch
-				}"
+		<div class="ui-ctl ui-ctl-after-icon ui-ctl-w100 ui-ctl-round">
+			<button
+				v-if="!opened"
+				type="button"
+				class="ui-ctl-after ui-ctl-icon-search"
+				data-testid="entity-catalog-search-open"
+				:aria-label="searchOpenLabel"
+				@click="openSearch"
+			></button>
+			<button
+				v-if="showClearSearch"
+				type="button"
+				class="ui-ctl-after ui-ctl-icon-clear"
+				data-testid="entity-catalog-search-clear"
+				:aria-label="searchClearLabel"
 				@click="clearSearch"
-			/>
+			></button>
 			<input
 				type="text"
 				class="ui-ctl-element ui-ctl-textbox"
-				placeholder="${Loc.getMessage('UI_JS_ENTITY_CATALOG_GROUP_LIST_SEARCH_PLACEHOLDER')}"
+				data-testid="entity-catalog-search-input"
+				:placeholder="searchPlaceholder"
+				:aria-label="searchInputLabel"
 				ref="search-input"
 				v-if="opened"
 				@input="debounceSearchHandler"

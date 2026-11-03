@@ -1,3 +1,8 @@
+/**
+ * A native button, so the browser defaults are dropped: the face, the outset frame and the padding
+ * of a button squeeze the card inside and its own font replaces the one of the widget. The card
+ * itself draws everything visible, the button only carries the click and the focus.
+ */
 .ui-uploader-stack-preview {
 	display: block;
 	width: 100%;
@@ -5,6 +10,41 @@
 	position: absolute;
 	left: 0;
 	top: 0;
+	padding: 0;
+	border: 0;
+	background-color: transparent;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+/**
+ * The ring belongs to the card and not to the button: the card is opaque, positioned above the button
+ * and covers it completely, so a ring of the button is painted underneath the card and nobody ever
+ * sees it. The button drops the ring of the browser for the same reason it must not draw one itself -
+ * left in place, that ring would be drawn around the outside of the button, past the bounds of the
+ * widget.
+ */
+.ui-uploader-stack-preview:focus-visible {
+	outline: none;
+}
+
+/** the ring goes inside: the card fills the item, and an outer ring would leave the widget */
+.ui-uploader-stack-preview:focus-visible .ui-uploader-stack-preview-box {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: -2px;
+}
+
+/**
+ * A card showing a picture keeps its ring one pixel further out. The picture is a positioned child of
+ * the card and it is stretched over the whole of it, so it paints over the inner line of a ring set
+ * flush inside - in the two small sizes the card has no padding left to keep them apart, and the ring
+ * comes out a single line thick on the sides. Moved out by a pixel, the ring clears the picture at the
+ * price of leaning one line past the edge of the card.
+ */
+.ui-uploader-stack-preview.--image:focus-visible .ui-uploader-stack-preview-box {
+	outline-offset: -1px;
 }
 
 .ui-uploader-stack-preview-box {

@@ -120,7 +120,7 @@ body div.bx-interface-form div.bx-buttons input[name=save] {
 	text-shadow: #799a16 0 1px 1px !important;
 	cursor: pointer;
 	outline: none;
-	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/buttons-sprite.png) repeat-x left -356px;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/buttons-sprite.webp) repeat-x left -356px;
 }
 
 body div.bx-interface-form div.bx-buttons input[name=save]:hover {
@@ -164,7 +164,7 @@ body div.bx-interface-form div.bx-buttons input[name=apply] {
 	cursor: pointer;
 	outline: none;
 	overflow: visible;
-	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/buttons-sprite.png) repeat-x left -585px;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/buttons-sprite.webp) repeat-x left -585px;
 }
 
 body tr.bx-bottom td.bx-field-value input[type=submit]:hover,
@@ -432,14 +432,14 @@ body table.bx-edit-tabs a.bx-form-menu {
 	border: 0;
 	width: 42px;
 	height: 28px;
-	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-form-menu.png) no-repeat left top;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-form-menu.webp) no-repeat left top;
 }
 
 body table.bx-edit-tabs a.bx-form-menu.pressed,
 body table.bx-edit-tabs a.bx-form-menu:hover {
 	margin: -5px 0 0 5px;
 	border: 0;
-	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-form-menu-hover.png) no-repeat left top;
+	background: url(/bitrix/js/intranet/old-interface/grid/images/interface/grid/bx-form-menu-hover.webp) no-repeat left top;
 }
 
 body table.bx-edit-tabs a.bx-form-menu span {

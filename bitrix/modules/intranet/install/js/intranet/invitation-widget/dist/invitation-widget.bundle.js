@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core_events, main_core, ui_analytics, ui_popupcomponentsmaker, main_popup, ui_cnt, main_loader) {
+(function (exports, main_core_events, main_core, ui_analytics, ui_popupcomponentsmaker, ui_a11y, main_popup, ui_cnt, intranet_invitationWidgetCounter, main_loader) {
 	'use strict';
 
 	class Analytics {
@@ -71,6 +71,8 @@ this.BX = this.BX || {};
 			return this.cache.remember(type, () => {
 				return new main_popup.Popup(`bx-hint-${main_core.Text.getRandom()}`, element, {
 					content: text,
+					ariaLabel: text,
+					focusTrap: false,
 					className: 'bx-invitation-warning',
 					zIndex: 15000,
 					angle: true,
@@ -83,6 +85,7 @@ this.BX = this.BX || {};
 					maxWidth: 300,
 					events: {
 						onShow: event => {
+							ui_a11y.LiveAnnouncer.announce(text);
 							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.InvitationWidget.HintPopup:show', new main_core_events.BaseEvent({
 								data: {
 									popup: event.target
@@ -120,7 +123,10 @@ this.BX = this.BX || {};
 			BX.SidePanel.Instance.open(link, {
 				cacheable: false,
 				allowChangeHistory: false,
-				width: 1100
+				width: 1100,
+				focusTrap: {
+					restoreFocus: this.getOptions().button
+				}
 			});
 		}
 		getConfig() {
@@ -144,19 +150,26 @@ this.BX = this.BX || {};
 		}
 		getLayout() {
 			return this.cache.remember('layout', () => {
-				const showInvitationSlider = e => {
-					e.stopPropagation();
-					this.showInvitationPlace(main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'), e.target, 'default-invitation');
+				const showInvitationSlider = event => {
+					event.stopPropagation();
+					this.showInvitationPlace(main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'), event.currentTarget, 'default-invitation');
 				};
 				const showInvitationHelper = () => {
 					this.showInfoHelper('limit_why_team_invites');
 				};
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-invitation" class="intranet-invitation-widget-invite">
+				<div
+					data-id="bx-invitation-widget-content-invitation"
+					class="intranet-invitation-widget-invite"
+					data-testid="intranet-invitation-widget-invitation"
+				>
 					<div class="intranet-invitation-widget-invite-main">
 						<div class="intranet-invitation-widget-inner">
 							<div class="intranet-invitation-widget-content">
-								<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--invite"></div>
+								<div
+									class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--invite"
+									aria-hidden="true"
+								></div>
 								<div class="intranet-invitation-widget-item-content">
 									<div class="intranet-invitation-widget-item-name">
 										<span>
@@ -164,15 +177,25 @@ this.BX = this.BX || {};
 										</span>
 									</div>
 									<div class="intranet-invitation-widget-item-link">
-										<span onclick="${showInvitationHelper}" class="intranet-invitation-widget-item-link-text">
+										<button
+											class="intranet-invitation-widget-item-link-text intranet-invitation-widget-item-link-button"
+											type="button"
+											onclick="${showInvitationHelper}"
+											data-testid="intranet-invitation-widget-invitation-details"
+										>
 											${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_DESC')}
-										</span>
+										</button>
 									</div>
 								</div>
 							</div>
-							<a onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--invite"> 
+							<button
+								class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--invite"
+								type="button"
+								onclick="${showInvitationSlider}"
+								data-testid="intranet-invitation-widget-invitation-invite"
+							>
 								${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
-							</a>
+							</button>
 						</div>
 					</div>
 				</div>
@@ -201,17 +224,30 @@ this.BX = this.BX || {};
 				const onclick = () => {
 					Analytics.send(Analytics.EVENT_OPEN_STRUCTURE);
 				};
+				const structureActionLabelledBy = ['intranet-invitation-widget-structure-name', 'intranet-invitation-widget-structure-counter', 'intranet-invitation-widget-structure-action'].join(' ');
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-structure" class="intranet-invitation-widget-item intranet-invitation-widget-item--company intranet-invitation-widget-item--active">
-					<div class="intranet-invitation-widget-item-logo"></div>
+				<div
+					data-id="bx-invitation-widget-content-structure"
+					class="intranet-invitation-widget-item intranet-invitation-widget-item--company intranet-invitation-widget-item--active"
+					data-testid="intranet-invitation-widget-structure"
+				>
+					<div class="intranet-invitation-widget-item-logo" aria-hidden="true"></div>
 					<div class="intranet-invitation-widget-item-content">
 						<div class="intranet-invitation-widget-item-name">
-							<span>
+							<span id="intranet-invitation-widget-structure-name">
 								${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_STRUCTURE')}
 							</span>
 						</div>
-						<a onclick="${onclick}" href="${this.getOptions().structureLink}" class="intranet-invitation-widget-item-btn"> 
-							${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EDIT')}
+						<a
+							onclick="${onclick}"
+							href="${this.getOptions().structureLink}"
+							class="intranet-invitation-widget-item-btn"
+							aria-labelledby="${structureActionLabelledBy}"
+							data-testid="intranet-invitation-widget-structure-configure"
+						>
+							<span id="intranet-invitation-widget-structure-action">
+								${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EDIT')}
+							</span>
 						</a>
 					</div>
 				</div>
@@ -225,16 +261,21 @@ this.BX = this.BX || {};
 		}
 		#showCounter() {
 			if (this.#getCounterValue() > 0) {
-				main_core.Dom.addClass(this.#getCounter().getContainer(), 'invitation-structure-counter');
-				this.#getCounter().renderTo(this.#getCounterWrapper());
+				const counter = this.#getCounter();
+				main_core.Dom.addClass(counter.getContainer(), 'invitation-structure-counter');
+				counter.renderTo(this.#getCounterWrapper());
 			}
 		}
 		#getCounter() {
 			return this.cache.remember('counter', () => {
-				return new ui_cnt.Counter({
-					value: this.#getCounterValue(),
-					color: ui_cnt.Counter.Color.DANGER
+				const value = this.#getCounterValue();
+				const counter = new ui_cnt.Counter({
+					value,
+					color: ui_cnt.Counter.Color.DANGER,
+					id: 'intranet-invitation-widget-structure-counter'
 				});
+				intranet_invitationWidgetCounter.updateCounterAccessibleName(counter, value, 'INTRANET_INVITATION_WIDGET_STRUCTURE_COUNTER');
+				return counter;
 			});
 		}
 		#getCounterValue() {
@@ -249,7 +290,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.getOptions().shouldShowStructureCounter = false;
-			this.#getCounter().destroy();
+			intranet_invitationWidgetCounter.destroyAccessibleCounter(this.#getCounter());
 			this.cache.delete('counter');
 		}
 	}
@@ -271,29 +312,45 @@ this.BX = this.BX || {};
 		getLayout() {
 			return this.cache.remember('layout', () => {
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-employees" class="intranet-invitation-widget-item intranet-invitation-widget-item--emp ${this.getOptions().isLimit ? 'intranet-invitation-widget-item--emp-alert' : null}">
+				<div
+					data-id="bx-invitation-widget-content-employees"
+					class="intranet-invitation-widget-item intranet-invitation-widget-item--emp ${this.getOptions().isLimit ? 'intranet-invitation-widget-item--emp-alert' : null}"
+					data-testid="intranet-invitation-widget-employees"
+				>
 					<div class="intranet-invitation-widget-inner">
 						<div class="intranet-invitation-widget-content">
-							<div class="intranet-invitation-widget-item-content">
-								<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
-								<div class="intranet-invitation-widget-employees">
-									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-name">
-										<span style="margin-right: 2px;">
-											${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EMPLOYEES')}
-										</span>
-									</div>
-									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-num">
-										${this.getOptions().users.currentUserCountMessage}
+							<a
+								class="intranet-invitation-widget-employees-link"
+								href="${this.getOptions().userListLink}"
+								onclick="${this.showUserList()}"
+								onfocus="${() => this.#setFocusHighlight(true)}"
+								onblur="${() => this.#setFocusHighlight(false)}"
+								data-testid="intranet-invitation-widget-employees-list"
+							>
+								<div class="intranet-invitation-widget-item-content">
+									<div class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
+									<div class="intranet-invitation-widget-employees">
+										<div class="intranet-invitation-widget-item-name">
+											<span style="margin-right: 2px;">
+												${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EMPLOYEES')}
+											</span>
+										</div>
+										<div class="intranet-invitation-widget-item-num">
+											${this.getOptions().users.currentUserCountMessage}
+										</div>
 									</div>
 								</div>
-							</div>
-							${this.getDetail()}
+								${this.getDetail()}
+							</a>
 							${this.getOptions().isAdmin ? this.getSelectorRights() : null}
 						</div>
 					</div>
 				</div>
 			`;
 			});
+		}
+		#setFocusHighlight(focused) {
+			main_core.Dom.toggleClass(this.getLayout().parentElement, 'intranet-invitation-widget-employees-focus', focused);
 		}
 		#showCounter() {
 			if (this.getOptions().invitationCounter > 0) {
@@ -308,22 +365,27 @@ this.BX = this.BX || {};
 				if (!main_core.Type.isNumber(value)) {
 					return;
 				}
-				this.#getCounter().update(value);
+				const counter = this.#getCounter();
+				counter.update(value);
+				intranet_invitationWidgetCounter.updateCounterAccessibleName(counter, value);
 				this.getOptions().invitationCounter = value;
 				if (value > 0) {
 					this.#getCounter().renderTo(this.#getCounterWrapper());
 				} else {
-					this.#getCounter().destroy();
+					intranet_invitationWidgetCounter.destroyAccessibleCounter(counter);
 					this.cache.delete('counter');
 				}
 			}
 		}
 		#getCounter() {
 			return this.cache.remember('counter', () => {
-				return new ui_cnt.Counter({
-					value: Number(this.getOptions().invitationCounter),
+				const value = Number(this.getOptions().invitationCounter);
+				const counter = new ui_cnt.Counter({
+					value,
 					color: ui_cnt.Counter.Color.DANGER
 				});
+				intranet_invitationWidgetCounter.updateCounterAccessibleName(counter, value);
+				return counter;
 			});
 		}
 		#getCounterWrapper() {
@@ -342,7 +404,7 @@ this.BX = this.BX || {};
 					content = this.getOptions().users.leftCountMessage;
 				}
 				return main_core.Tag.render`
-				<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-detail">
+				<div class="intranet-invitation-widget-item-detail">
 					<span class="intranet-invitation-widget-item-link-text">
 						${content}
 					</span>
@@ -354,7 +416,6 @@ this.BX = this.BX || {};
 			return this.cache.remember('showUserList', () => {
 				return () => {
 					Analytics.send(Analytics.EVENT_OPEN_USER_LIST);
-					document.location.href = '/company/';
 				};
 			});
 		}
@@ -362,10 +423,18 @@ this.BX = this.BX || {};
 			return this.cache.remember('selector-rights', () => {
 				const showMenu = e => {
 					e.stopPropagation();
-					this.getRightsMenu(e.target).toggle();
+					this.getRightsMenu(e.currentTarget).toggle();
 				};
 				const button = main_core.Tag.render`
-				<div onclick="${showMenu}" class="intranet-invitation-widget-item-menu"></div>
+				<button
+					class="intranet-invitation-widget-item-menu"
+					type="button"
+					aria-label="${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_SETTING_BUTTON_LABEL')}"
+					aria-haspopup="menu"
+					aria-expanded="false"
+					onclick="${showMenu}"
+					data-testid="intranet-invitation-widget-employees-settings"
+				></button>
 			`;
 				this.subscribe('right-selected', event => {
 					const menu = this.getRightsMenu(button);
@@ -389,6 +458,7 @@ this.BX = this.BX || {};
 					className: 'license-right-popup-men',
 					events: {
 						onPopupShow: popup => {
+							element.setAttribute('aria-expanded', 'true');
 							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, this.getEventNamespace() + ':showRightMenu', new main_core_events.BaseEvent({
 								data: {
 									popup: popup
@@ -396,6 +466,7 @@ this.BX = this.BX || {};
 							}));
 						},
 						onPopupClose: popup => {
+							element.setAttribute('aria-expanded', 'false');
 							main_core_events.EventEmitter.emit(main_core_events.EventEmitter.GLOBAL_TARGET, this.getEventNamespace() + ':closeRightMenu', new main_core_events.BaseEvent({
 								data: {
 									popup: popup
@@ -467,34 +538,55 @@ this.BX = this.BX || {};
 		}
 		getLayout() {
 			return this.cache.remember('layout', () => {
-				const showInvitationSlider = e => {
-					e.stopPropagation();
-					this.showInvitationPlace(main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'), e.target, 'extranet');
+				const showInvitationSlider = event => {
+					event.stopPropagation();
+					this.showInvitationPlace(main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_DISABLED_TEXT_MSGVER_1'), event.currentTarget, 'extranet');
 				};
 				const showExtranetHelper = () => {
 					BX.Helper.show(`redirect=detail&code=${this.articleCode}`);
 					this.sendAnalytics(this.articleCode);
 				};
+				const inviteActionLabelledBy = ['intranet-invitation-widget-extranet-name', 'intranet-invitation-widget-extranet-invite-action'].join(' ');
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-extranet" class="${this.getWrapperClass()}">
+				<div
+					data-id="bx-invitation-widget-content-extranet"
+					class="${this.getWrapperClass()}"
+					data-testid="intranet-invitation-widget-extranet"
+				>
 					<div class="intranet-invitation-widget-content">
-						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--ext"></div>
+						<div
+							class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--ext"
+							aria-hidden="true"
+						></div>
 						<div class="intranet-invitation-widget-item-content">
 							<div class="intranet-invitation-widget-item-name">
-								<span>
+								<span id="intranet-invitation-widget-extranet-name">
 									${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EXTRANET')}
 								</span>
 							</div>
 							<div class="intranet-invitation-widget-item-link">
-								<span onclick="${showExtranetHelper}" class="intranet-invitation-widget-item-link-text">
+								<button
+									class="intranet-invitation-widget-item-link-text intranet-invitation-widget-item-link-button"
+									type="button"
+									onclick="${showExtranetHelper}"
+									data-testid="intranet-invitation-widget-extranet-details"
+								>
 									${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_EXTRANET_DESC')}
-								</span>
+								</button>
 							</div>
 							${this.getCountUserMessage()}
 						</div>
 					</div>
-					<button onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn">
-						${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
+					<button
+						class="intranet-invitation-widget-item-btn"
+						type="button"
+						onclick="${showInvitationSlider}"
+						aria-labelledby="${inviteActionLabelledBy}"
+						data-testid="intranet-invitation-widget-extranet-invite"
+					>
+						<span id="intranet-invitation-widget-extranet-invite-action">
+							${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_INVITE')}
+						</span>
 					</button>
 				</div>
 			`;
@@ -564,27 +656,50 @@ this.BX = this.BX || {};
 					this.sendAnalytics(this.articleCode);
 				};
 				const itemNameMessage = this.isNewProjectsAvailable ? main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT') : main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB');
+				const createActionLabelledBy = ['intranet-invitation-widget-collab-name', 'intranet-invitation-widget-collab-create-action'].join(' ');
 				return main_core.Tag.render`
-				<div data-id="bx-invitation-widget-content-collab" class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}">
+				<div
+					data-id="bx-invitation-widget-content-collab"
+					class="${this.getWrapperClass()} ${this.isNewProjectsAvailable ? '--project' : ''}"
+					data-testid="intranet-invitation-widget-collab"
+				>
 					<div class="intranet-invitation-widget-content">
-						<div class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab">
+						<div
+							class="intranet-invitation-widget-item-icon intranet-invitation-widget-item-icon--collab"
+							aria-hidden="true"
+						>
 							<div class="ui-icon-set --collab"></div>
 						</div>
 						<div class="intranet-invitation-widget-item-content">
 							<div class="intranet-invitation-widget-item-name">
-								<span>
+								<span id="intranet-invitation-widget-collab-name">
 									${itemNameMessage}
 								</span>
 							</div>
 							<div class="intranet-invitation-widget-item-link">
-								<span onclick="${showCollabHelper}" class="intranet-invitation-widget-item-link-text">
-									${this.isNewProjectsAvailable ? main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC') : main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')}
-								</span>
+								<button
+									class="intranet-invitation-widget-item-link-button"
+									type="button"
+									onclick="${showCollabHelper}"
+									data-testid="intranet-invitation-widget-collab-details"
+								>
+									<span class="intranet-invitation-widget-item-link-text">
+										${this.isNewProjectsAvailable ? main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_PROJECT_DESC') : main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_DESC')}
+									</span>
+								</button>
 							</div>
 						</div>
 					</div>
-					<button onclick="${showInvitationSlider}" class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--collab">
-						${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_CREATE')}
+					<button
+						class="intranet-invitation-widget-item-btn intranet-invitation-widget-item-btn--collab"
+						type="button"
+						onclick="${showInvitationSlider}"
+						aria-labelledby="${createActionLabelledBy}"
+						data-testid="intranet-invitation-widget-collab-create"
+					>
+						<span id="intranet-invitation-widget-collab-create-action">
+							${main_core.Loc.getMessage('INTRANET_INVITATION_WIDGET_COLLAB_CREATE')}
+						</span>
 					</button>
 				</div>
 			`;
@@ -610,22 +725,29 @@ this.BX = this.BX || {};
 				const contentContainer = main_core.Tag.render`
 				<div data-role="invitation-widget-ustat-online" class="invitation-widget-ustat-online"/>
 			`;
+				main_core.Dom.attr(contentContainer, 'aria-busy', 'true');
 				this.getLoader().show(contentContainer);
-				main_core.ajax.runAction("intranet.invitationwidget.getUserOnlineComponent").then(response => {
-					this.getLoader().hide();
-					const assets = response.data.assets;
-					BX.load([...assets['css'], ...assets['js']], () => {
-						main_core.Runtime.html(null, [...assets['string']].join('\n'), {
-							useAdjacentHTML: true
-						}).then(() => {
-							main_core.Runtime.html(contentContainer, response.data.html).then(() => {
-								this.getLoader().destroy();
-							});
-						});
-					});
-				});
+				this.#loadComponentContent(contentContainer).catch(() => main_core.Dom.clean(contentContainer));
 				return contentContainer;
 			});
+		}
+		async #loadComponentContent(contentContainer) {
+			try {
+				const response = await main_core.ajax.runAction('intranet.invitationwidget.getUserOnlineComponent');
+				const assets = response.data.assets;
+				await new Promise(resolve => {
+					BX.load([...assets.css, ...assets.js], resolve);
+				});
+				await main_core.Runtime.html(null, [...assets.string].join('\n'), {
+					useAdjacentHTML: true
+				});
+				await main_core.Runtime.html(contentContainer, response.data.html);
+			} finally {
+				main_core.Dom.attr(contentContainer, 'aria-busy', 'false');
+				this.getLoader().hide();
+				this.getLoader().destroy();
+				this.cache.delete('loader');
+			}
 		}
 		getLayout() {
 			return this.cache.remember('layout', () => {
@@ -638,6 +760,9 @@ this.BX = this.BX || {};
 		}
 	}
 
+	const POPUP_WIDTH = 350;
+	const POPUP_HORIZONTAL_OFFSET = 40;
+	const OFFICES_TILE_HEIGHT = 66;
 	class InvitationPopup extends main_core_events.EventEmitter {
 		#cache = new main_core.Cache.MemoryCache();
 		constructor(options) {
@@ -653,7 +778,13 @@ this.BX = this.BX || {};
 			return this.#cache.get('options', {});
 		}
 		show() {
-			this.getPopup().show();
+			const popup = this.getPopup();
+			this.#syncPopupPosition(popup.getPopup());
+			const wasShown = popup.isShown();
+			popup.show();
+			if (wasShown) {
+				this.#applyPopupInitialFocus();
+			}
 		}
 		close() {
 			this.getPopup().close();
@@ -672,13 +803,17 @@ this.BX = this.BX || {};
 		}
 		getPopup() {
 			return this.#cache.remember('popup', () => {
-				return new ui_popupcomponentsmaker.PopupComponentsMaker({
+				const popup = new ui_popupcomponentsmaker.PopupComponentsMaker({
 					id: 'invitation-popup',
 					target: this.getOptions().target,
-					width: 350,
+					width: POPUP_WIDTH,
 					content: this.#getContent(),
 					popupLoader: this.getOptions().loader
 				});
+				const popupWindow = popup.getPopup();
+				popupWindow.subscribe('onShow', () => this.#applyPopupInitialFocus());
+				this.#observeTargetResize(popupWindow);
+				return popup;
 			});
 		}
 
@@ -686,9 +821,22 @@ this.BX = this.BX || {};
 		#getContent() {
 			return this.#cache.remember('content', () => {
 				return [this.#getInvitationContent().getConfig(), {
-					html: [this.#getStructureContent().getConfig(), this.#getEmployeesContent().getConfig()],
-					marginBottom: 24
-				}, this.getOptions().isExtranetAvailable ? this.#getExtranetContent().getConfig() : null, this.getOptions().isCollabAvailable ? this.#getCollabContent().getConfig() : null, this.#getUserOnlineContent().getConfig()];
+					html: [{
+						...this.#getStructureContent().getConfig(),
+						attrs: {
+							role: 'listitem'
+						}
+					}, {
+						...this.#getEmployeesContent().getConfig(),
+						attrs: {
+							role: 'listitem'
+						}
+					}],
+					marginBottom: 24,
+					attrs: {
+						role: 'list'
+					}
+				}, this.#getOfficesTileConfig(), this.getOptions().isExtranetAvailable ? this.#getExtranetContent().getConfig() : null, this.getOptions().isCollabAvailable ? this.#getCollabContent().getConfig() : null, this.#getUserOnlineContent().getConfig()];
 			});
 		}
 
@@ -713,6 +861,27 @@ this.BX = this.BX || {};
 					...this.getOptions()
 				});
 			});
+		}
+		#getOfficesTileConfig() {
+			const offices = this.getOptions().offices;
+			if (!offices) {
+				return null;
+			}
+			const {
+				count,
+				url
+			} = offices;
+			const renderTilePlaceholder = () => main_core.Tag.render`<div></div>`;
+			return {
+				html: main_core.Runtime.loadExtension('stafftrack.offices-tile').then(({
+					OfficesTile
+				}) => OfficesTile.create({
+					count,
+					url
+				})?.getLayout() ?? renderTilePlaceholder()).catch(renderTilePlaceholder),
+				minHeight: `${OFFICES_TILE_HEIGHT}px`,
+				marginBottom: 24
+			};
 		}
 		#getExtranetContent() {
 			return this.#cache.remember('extranet-content', () => {
@@ -740,6 +909,39 @@ this.BX = this.BX || {};
 			return this.#cache.remember('popup-container', () => {
 				return this.getPopup().getPopup().getPopupContainer();
 			});
+		}
+		#applyPopupInitialFocus() {
+			const focusTrap = this.getPopup().getPopup().getFocusTrap();
+			const activeElement = ui_a11y.FocusNavigator.getActiveElement();
+			if (focusTrap && (activeElement === this.getOptions().button || activeElement && focusTrap.contains(activeElement))) {
+				ui_a11y.FocusNavigator.focusContainer(this.#getPopupContainer(), {
+					preventScroll: true
+				});
+			}
+		}
+		#syncPopupPosition(popup) {
+			const target = this.getOptions().target;
+			if (!target) {
+				return;
+			}
+			popup.setOffset({
+				offsetTop: 0,
+				offsetLeft: -175 + target.offsetWidth / 2 + POPUP_HORIZONTAL_OFFSET
+			});
+			if (popup.isShown()) {
+				popup.adjustPosition({
+					forceBindPosition: true
+				});
+			}
+		}
+		#observeTargetResize(popup) {
+			const target = this.getOptions().target;
+			if (!target) {
+				return;
+			}
+			const resizeObserver = new ResizeObserver(() => this.#syncPopupPosition(popup));
+			resizeObserver.observe(target);
+			popup.subscribeOnce('onDestroy', () => resizeObserver.disconnect());
 		}
 		#setEventHandler() {
 			const autoHideHandler = event => {
@@ -775,20 +977,21 @@ this.BX = this.BX || {};
 			return this.#instance;
 		}
 		show() {
-			if (this.#getPopup().getPopup().isShown()) {
-				return;
-			}
 			this.#getPopup().show();
 		}
 		setOptions(options) {
 			this.#cache.set('options', options);
 			Analytics.isAdmin = this.getOptions().isCurrentUserAdmin;
 			main_core.Event.bind(this.getOptions().button, 'click', () => {
-				Analytics.send(Analytics.EVENT_SHOW);
-				this.#getPopup().show();
+				const popup = this.#getPopup();
+				const wasShown = popup.getPopup().isShown();
+				popup.show();
+				if (!wasShown && popup.getPopup().isShown()) {
+					Analytics.send(Analytics.EVENT_SHOW);
+				}
 			});
 			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Bitrix24.NotifyPanel:showInvitationWidget', () => {
-				this.#getPopup().show();
+				this.show();
 			});
 			return this;
 		}
@@ -806,5 +1009,5 @@ this.BX = this.BX || {};
 
 	exports.InvitationWidget = InvitationWidget;
 
-})(this.BX.Intranet = this.BX.Intranet || {}, BX.Event, BX, BX.UI.Analytics, BX.UI, BX.Main, BX.UI, BX);
+})(this.BX.Intranet = this.BX.Intranet || {}, BX.Event, BX, BX.UI.Analytics, BX.UI, BX.UI.Accessibility, BX.Main, BX.UI, BX.Intranet, BX);
 //# sourceMappingURL=invitation-widget.bundle.js.map

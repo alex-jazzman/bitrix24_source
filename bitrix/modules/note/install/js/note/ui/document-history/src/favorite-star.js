@@ -11,9 +11,9 @@ const FAVORITE_CHANGED_EVENT = 'Note:favoriteChanged';
 import { extractErrorMessage } from './error-message';
 import { showErrorToast } from './show-error-toast';
 
-// [P4.T3] Star of the activity line: adds the open document to the personal favorites list and takes
+// Star of the activity line: adds the open document to the personal favorites list and takes
 // it back out. Unlike the bell it is NOT gated by the notifications setting - the list exists on its
-// own - and it needs document VIEW, not edit (AC-001), the same right the bell needs.
+// own - and it needs document VIEW, not edit, the same right the bell needs.
 //
 // State is one and the same as the sidebar's: when the sidebar is on the page its store is the owner
 // of the flag (optimistic toggles, EVENT-01 pushes, the loaded pages of the block all land there), so
@@ -144,7 +144,7 @@ export const FavoriteStarComponent = {
 				},
 			}));
 		},
-		// [DTO-01] Second announcement of the same press, this one with the server's answer behind it -
+		// Second announcement of the same press, this one with the server's answer behind it -
 		// including the refusal that rolls the press back, which settles the state just as well. Until it
 		// arrives the sidebar holds the press against a page read of its own; `confirmed` is what releases
 		// it, the same convention the bell of the line follows. `item` is the finished row of the block: it

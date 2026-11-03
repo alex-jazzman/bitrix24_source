@@ -8,6 +8,7 @@ import { Core } from 'im.v2.application.core';
 import { CallManager } from 'im.v2.lib.call';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { Logger } from 'im.v2.lib.logger';
+import { CallPriority } from 'im.v2.lib.playback';
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { type ImModelUser } from 'im.v2.model';
 
@@ -114,6 +115,7 @@ export class PhoneManager
 		// }
 
 		this.closeKeyPad();
+		CallPriority.getInstanceIfCreated()?.handleOutgoingPhoneCall();
 		this.#controller.phoneCall(number, params);
 	}
 
@@ -130,6 +132,7 @@ export class PhoneManager
 			return;
 		}
 
+		CallPriority.getInstanceIfCreated()?.handleOutgoingPhoneCall();
 		this.#controller.startCallList(callListId, params);
 	}
 
@@ -213,6 +216,8 @@ export class PhoneManager
 
 	#onCallCreated()
 	{
+		CallPriority.getInstanceIfCreated()?.handlePhoneCallCreated();
+
 		if (!DesktopApi.isDesktop())
 		{
 			return;
@@ -223,6 +228,8 @@ export class PhoneManager
 
 	#onCallDestroyed()
 	{
+		CallPriority.getInstanceIfCreated()?.handlePhoneCallDestroyed();
+
 		if (!DesktopApi.isDesktop())
 		{
 			return;
@@ -246,6 +253,9 @@ export class PhoneManager
 	#onCallConnected(event: BaseEvent<CallConnectedEvent>)
 	{
 		const { isIncoming, isDeviceCall } = event.getData();
+
+		CallPriority.getInstanceIfCreated()?.handlePhoneCallConnected(isIncoming);
+
 		if (!DesktopApi.isDesktop() || isIncoming || isDeviceCall)
 		{
 			return;

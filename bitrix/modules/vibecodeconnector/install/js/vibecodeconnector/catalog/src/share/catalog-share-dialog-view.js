@@ -40,7 +40,8 @@ type EntityTagSelector = {
 export type EntitySelectorFactory = (options: Object) => EntityTagSelector;
 
 export type CatalogShareDialogViewCallbacks = {
-	onRetry: () => void,
+	onRetryShare: () => void,
+	onRetryLink: () => void,
 	onSelectAudience: (audience: AudienceValue) => void,
 	onSetMembers: (users: CatalogShareParticipant[], departments: CatalogShareParticipant[]) => void,
 	onSaveShare: () => void,
@@ -52,6 +53,7 @@ export type CatalogShareDialogViewCallbacks = {
 	onSetLinkRequireB24Auth: (requireB24Auth: boolean) => void,
 	onSaveAndCopyLink: () => void,
 	onRequestPortalLinkRevoke: () => void,
+	onSetChatWriting: (allowed: boolean) => void,
 };
 
 type CatalogShareDialogViewOptions = {
@@ -109,11 +111,16 @@ export class CatalogShareDialogView
 	#switchers: Map<string, Switcher> = new Map();
 	#datePicker: DatePicker | null = null;
 	#boundNodes: HTMLElement[] = [];
+	#chatWritingAllowed: ?boolean = null;
+	#chatWritingPending: boolean = false;
 
 	constructor(options: CatalogShareDialogViewOptions)
 	{
 		this.#application = options.application;
 		this.#callbacks = options.callbacks;
+		this.#chatWritingAllowed = Type.isBoolean(options.application.appChatWritingAllowed)
+			? options.application.appChatWritingAllowed
+			: null;
 		this.#now = options.now ?? (() => new Date());
 		this.#selectorFactory = options.selectorFactory ?? ((selectorOptions) => {
 			return new TagSelector(selectorOptions);
@@ -130,15 +137,6 @@ export class CatalogShareDialogView
 		{
 			return {
 				content: this.#renderLoading(),
-				leftButtons: [],
-				rightButtons: [],
-			};
-		}
-
-		if (snapshot.status === CatalogShareViewState.LoadError)
-		{
-			return {
-				content: this.#renderLoadError(),
 				leftButtons: [],
 				rightButtons: [],
 			};
@@ -173,6 +171,12 @@ export class CatalogShareDialogView
 		this.#snapshot = null;
 	}
 
+	setChatWriting(allowed: ?boolean, pending: boolean): void
+	{
+		this.#chatWritingAllowed = Type.isBoolean(allowed) ? allowed : null;
+		this.#chatWritingPending = pending;
+	}
+
 	updateShareButton(snapshot: CatalogShareSnapshot): void
 	{
 		const isDisabled = this.#isShareButtonDisabled(snapshot);
@@ -198,23 +202,6 @@ export class CatalogShareDialogView
 				aria-busy="true"
 			>
 				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOADING')}
-			</div>
-		`;
-	}
-
-	#renderLoadError(): HTMLElement
-	{
-		const retryButton = this.#createButton({
-			text: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_RETRY'),
-			style: AirButtonStyle.FILLED,
-			dataset: { testid: 'vibecode-catalog-share-retry' },
-			onclick: this.#callbacks.onRetry,
-		});
-
-		return Tag.render`
-			<div class="vibecode-catalog__share-dialog-error" data-state="loadError">
-				<p class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOAD_ERROR')}</p>
-				${retryButton.render()}
 			</div>
 		`;
 	}
@@ -307,7 +294,7 @@ export class CatalogShareDialogView
 		switchLabel.className = 'vibecode-catalog__share-link-switch-row';
 		Dom.append(expirySwitcher.getNode(), switchLabel);
 		Dom.append(Tag.render`
-			<span>${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_EXPIRY')}</span>
+			<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_EXPIRY')}</span>
 		`, switchLabel);
 		Dom.append(switchLabel, section);
 
@@ -390,7 +377,10 @@ export class CatalogShareDialogView
 			onToggle: this.#callbacks.onSetLinkRequireB24Auth,
 		});
 		Dom.append(switcher.getNode(), label);
-		Dom.append(Tag.render`<span>${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_REQUIRE_AUTH')}</span>`, label);
+		Dom.append(
+			Tag.render`<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_REQUIRE_AUTH')}</span>`,
+			label,
+		);
 
 		return label;
 	}
@@ -512,22 +502,23 @@ export class CatalogShareDialogView
 			</p>
 		`, root);
 		Dom.append(this.#renderApplication(), root);
-		Dom.append(Tag.render`
-			<h3 class="vibecode-catalog__share-audience-title ui-text --sm">
-				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_AUDIENCE_TITLE')}
-			</h3>
-		`, root);
-		Dom.append(this.#renderAudience(snapshot), root);
 
-		if (snapshot.status === CatalogShareViewState.MemberDraft)
+		const chatWriting = this.#renderChatWriting(snapshot);
+		if (chatWriting !== null)
 		{
-			Dom.append(this.#renderMembers(snapshot), root);
+			Dom.append(chatWriting, root);
 		}
 
-		const linkSettingsHint = this.#renderLinkSettingsHint(snapshot);
-		if (linkSettingsHint !== null)
+		const hasMergedError = this.#hasMergedLoadError(snapshot);
+		Dom.append(this.#renderAudienceSection(snapshot, hasMergedError), root);
+
+		if (!hasMergedError)
 		{
-			Dom.append(linkSettingsHint, root);
+			const linkSection = this.#renderLinkSection(snapshot);
+			if (linkSection !== null)
+			{
+				Dom.append(linkSection, root);
+			}
 		}
 
 		if (snapshot.errorCode !== null)
@@ -541,6 +532,177 @@ export class CatalogShareDialogView
 		}
 
 		return root;
+	}
+
+	#hasMergedLoadError(snapshot: CatalogShareSnapshot): boolean
+	{
+		return !snapshot.isShareLoading
+			&& !snapshot.isLinkLoading
+			&& snapshot.shareErrorCode !== null
+			&& snapshot.linkErrorCode !== null
+			&& snapshot.shareErrorCode === snapshot.linkErrorCode;
+	}
+
+	#renderAudienceSection(snapshot: CatalogShareSnapshot, hasMergedError: boolean = false): HTMLElement
+	{
+		const section = document.createElement('div');
+		section.className = 'vibecode-catalog__share-audience-section';
+		section.dataset.testid = 'vibecode-catalog-share-audience-section';
+		Dom.append(Tag.render`
+			<h3 class="vibecode-catalog__share-audience-title ui-text --sm">
+				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_AUDIENCE_TITLE')}
+			</h3>
+		`, section);
+
+		if (snapshot.isShareLoading)
+		{
+			Dom.append(this.#renderSectionLoading('vibecode-catalog-share-audience-loading'), section);
+
+			return section;
+		}
+
+		if (hasMergedError)
+		{
+			Dom.append(this.#renderSectionError({
+				message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_ALL_LOAD_ERROR'),
+				errorTestId: 'vibecode-catalog-share-all-error',
+				retryTestId: 'vibecode-catalog-share-all-retry',
+				onRetry: () => {
+					this.#callbacks.onRetryShare();
+					this.#callbacks.onRetryLink();
+				},
+			}), section);
+
+			return section;
+		}
+
+		if (snapshot.shareErrorCode !== null)
+		{
+			Dom.append(this.#renderSectionError({
+				message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOAD_ERROR'),
+				errorTestId: 'vibecode-catalog-share-audience-error',
+				retryTestId: 'vibecode-catalog-share-audience-retry',
+				onRetry: this.#callbacks.onRetryShare,
+			}), section);
+
+			return section;
+		}
+
+		Dom.append(this.#renderAudience(snapshot), section);
+		if (snapshot.status === CatalogShareViewState.MemberDraft)
+		{
+			Dom.append(this.#renderMembers(snapshot), section);
+		}
+
+		return section;
+	}
+
+	#renderLinkSection(snapshot: CatalogShareSnapshot): HTMLElement | null
+	{
+		const content = this.#renderLinkSectionContent(snapshot);
+		if (content === null)
+		{
+			return null;
+		}
+
+		const section = document.createElement('div');
+		section.className = 'vibecode-catalog__share-link-section';
+		section.dataset.testid = 'vibecode-catalog-share-link-section';
+		Dom.append(Tag.render`
+			<h3 class="vibecode-catalog__share-link-title ui-text --sm">
+				${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_TITLE')}
+			</h3>
+		`, section);
+		Dom.append(content, section);
+
+		return section;
+	}
+
+	#renderLinkSectionContent(snapshot: CatalogShareSnapshot): HTMLElement | null
+	{
+		if (snapshot.isLinkLoading)
+		{
+			return this.#renderSectionLoading('vibecode-catalog-share-link-loading');
+		}
+
+		if (snapshot.linkErrorCode !== null)
+		{
+			return this.#renderSectionError({
+				message: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LINK_LOAD_ERROR'),
+				errorTestId: 'vibecode-catalog-share-link-error',
+				retryTestId: 'vibecode-catalog-share-link-retry',
+				onRetry: this.#callbacks.onRetryLink,
+			});
+		}
+
+		return this.#renderLinkSettingsHint(snapshot);
+	}
+
+	#renderSectionLoading(testId: string): HTMLElement
+	{
+		const node = document.createElement('p');
+		node.className = 'vibecode-catalog__share-section-loading ui-text --sm';
+		node.dataset.testid = testId;
+		node.setAttribute('aria-busy', 'true');
+		node.textContent = getMessage('VIBECODECONNECTOR_CATALOG_SHARE_LOADING');
+
+		return node;
+	}
+
+	#renderSectionError(options: {
+		message: string,
+		errorTestId: string,
+		retryTestId: string,
+		onRetry: () => void,
+	}): HTMLElement
+	{
+		const section = document.createElement('div');
+		section.className = 'vibecode-catalog__share-section-error';
+		section.dataset.testid = options.errorTestId;
+		section.setAttribute('role', 'alert');
+
+		const message = document.createElement('span');
+		message.className = 'ui-text --sm';
+		message.textContent = options.message;
+		Dom.append(message, section);
+
+		const retryButton = this.#createButton({
+			text: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_RETRY'),
+			style: AirButtonStyle.OUTLINE,
+			dataset: { testid: options.retryTestId },
+			onclick: options.onRetry,
+		});
+		Dom.append(retryButton.render(), section);
+
+		return section;
+	}
+
+	#renderChatWriting(snapshot: CatalogShareSnapshot): HTMLElement | null
+	{
+		if (!Type.isBoolean(this.#chatWritingAllowed))
+		{
+			return null;
+		}
+
+		const isEditable = snapshot.status === CatalogShareViewState.Audience
+			|| snapshot.status === CatalogShareViewState.MemberDraft;
+		const switcher = this.#createSwitcher({
+			id: `vibecode-catalog-share-chat-writing-${this.#application.id}`,
+			checked: this.#chatWritingAllowed === true,
+			disabled: this.#chatWritingPending || !isEditable,
+			testId: 'vibecode-catalog-share-chat-writing',
+			ariaLabel: getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING'),
+			onToggle: this.#callbacks.onSetChatWriting,
+		});
+		const row = document.createElement('div');
+		row.className = 'vibecode-catalog__share-link-switch-row vibecode-catalog__share-chat-writing';
+		row.dataset.testid = 'vibecode-catalog-share-chat-writing-row';
+		Dom.append(switcher.getNode(), row);
+		Dom.append(Tag.render`
+			<span class="ui-text --sm">${getMessage('VIBECODECONNECTOR_CATALOG_SHARE_CHAT_WRITING')}</span>
+		`, row);
+
+		return row;
 	}
 
 	#renderLinkSettingsHint(snapshot: CatalogShareSnapshot): HTMLElement | null
@@ -559,8 +721,11 @@ export class CatalogShareDialogView
 		linkSettings.type = 'button';
 		linkSettings.className = 'vibecode-catalog__share-link-action';
 		linkSettings.dataset.testid = 'vibecode-catalog-share-link-settings';
-		linkSettings.disabled = snapshot.status !== CatalogShareViewState.Audience
-			&& snapshot.status !== CatalogShareViewState.MemberDraft;
+		linkSettings.disabled = snapshot.draftShare === null
+			|| (
+				snapshot.status !== CatalogShareViewState.Audience
+				&& snapshot.status !== CatalogShareViewState.MemberDraft
+			);
 		Event.bind(linkSettings, 'click', this.#callbacks.onOpenLinkSettings);
 		this.#boundNodes.push(linkSettings);
 

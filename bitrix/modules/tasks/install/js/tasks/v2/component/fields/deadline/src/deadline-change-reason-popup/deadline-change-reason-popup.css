@@ -10,6 +10,24 @@
 	font-weight: var(--ui-font-weight-medium);
 }
 
+/* change-reason close button reset */
+.tasks-deadline-change-reason-popup-close {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	line-height: 0;
+	cursor: pointer;
+}
+/* change-reason close button reset end */
+
+.tasks-deadline-change-reason-popup-close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
 .tasks-deadline-change-reason-popup-close-icon {
 	--ui-icon-set__icon-size: 24px;
 	--ui-icon-set__icon-color: var(--ui-color-base-4);

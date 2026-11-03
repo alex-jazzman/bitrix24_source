@@ -4,6 +4,7 @@ import { Input, InputDesign } from 'ui.system.input';
 import { AirButtonStyle, Button, ButtonState } from 'ui.buttons';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { ChipDesign } from 'ui.system.chip';
+import { FocusNavigator, LiveAnnouncer } from 'ui.a11y';
 
 export class LinkOptionsSection
 {
@@ -72,27 +73,58 @@ export class LinkOptionsSection
 			return this.#section;
 		}
 
+		const allowInviteWithLinkSwitcher = this.#getAllowInviteWithLinkSwitcher().getNode();
+		this.#makeSwitcherAccessible(this.#getAllowInviteWithLinkSwitcher());
+		Dom.attr(allowInviteWithLinkSwitcher, {
+			'aria-labelledby': 'invitation-link-options-allow-link-title',
+			'aria-describedby': 'invitation-link-options-allow-link-description',
+			'data-testid': 'invitation-link-options-allow-link-switcher',
+		});
 		const allowInviteWithLinkSwitcherContainer = Tag.render`
-			<div class="intranet-invitation-link-options__switcher">
+			<div
+				class="intranet-invitation-link-options__switcher"
+				data-testid="invitation-link-options-allow-link-control"
+			>
 				<div class="intranet-invitation-link-options__switcher-header">
-					${this.#getAllowInviteWithLinkSwitcher().getNode()}
-					<span class="intranet-invitation-link-options__switcher-title">${Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
+					${allowInviteWithLinkSwitcher}
+					<span
+						id="invitation-link-options-allow-link-title"
+						class="intranet-invitation-link-options__switcher-title"
+					>${Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK')}</span>
 				</div>
-				<div class="intranet-invitation-link-options__switcher-description">${Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT_MSGVER_1')}</div>
+				<div
+					id="invitation-link-options-allow-link-description"
+					class="intranet-invitation-link-options__switcher-description"
+				>${Loc.getMessage('INTRANET_INVITE_ALLOW_INVITATION_LINK_HINT_MSGVER_1')}</div>
 			</div>
 		`;
 
+		const confirmRegistrationSwitcher = this.#getConfirmRegistrationSwitcher().getNode();
+		this.#makeSwitcherAccessible(this.#getConfirmRegistrationSwitcher());
+		Dom.attr(confirmRegistrationSwitcher, {
+			'aria-labelledby': 'invitation-link-options-confirm-registration-title',
+			'data-testid': 'invitation-link-options-confirm-registration-switcher',
+		});
 		const confirmRegistrationSwitcherContainer = Tag.render`
-			<div class="intranet-invitation-link-options__switcher">
+			<div
+				class="intranet-invitation-link-options__switcher"
+				data-testid="invitation-link-options-confirm-registration-control"
+			>
 				<div class="intranet-invitation-link-options__switcher-header">
-					${this.#getConfirmRegistrationSwitcher().getNode()}
-					<span class="intranet-invitation-link-options__switcher-title">${Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
+					${confirmRegistrationSwitcher}
+					<span
+						id="invitation-link-options-confirm-registration-title"
+						class="intranet-invitation-link-options__switcher-title"
+					>${Loc.getMessage('INTRANET_INVITE_DIALOG_FAST_REG_TYPE')}</span>
 				</div>
 			</div>
 		`;
 
 		const body = Tag.render`
-			<div class="intranet-invitation-link-options__body --divided">
+			<div
+				class="intranet-invitation-link-options__body --divided"
+				data-testid="invitation-link-options-form"
+			>
 				<div class="intranet-invitation-link-options__item">
 					${allowInviteWithLinkSwitcherContainer}
 				</div>
@@ -104,13 +136,16 @@ export class LinkOptionsSection
 			Dom.append(Tag.render`
 				<div class="intranet-invitation-link-options__item">
 					${confirmRegistrationSwitcherContainer}
-					${this.#getAllowRegisterWhiteList().render()}
+					${this.#renderAllowRegisterWhiteList()}
 				</div>
 			`, body);
 		}
 
 		this.#section = Tag.render`
-			<div class="intranet-invitation-block__options-section intranet-invitation-link-options">
+			<div
+				class="intranet-invitation-block__options-section intranet-invitation-link-options"
+				data-testid="invitation-link-options-root"
+			>
 				${body}
 				<div class="intranet-invitation-link-options__footer">
 					${this.#renderRegenerateSecretButton()}
@@ -118,10 +153,43 @@ export class LinkOptionsSection
 			</div>
 		`;
 		Dom.addClass(this.#section, '--collapsed');
+		this.#section.inert = true;
 		this.#refreshSectionHeight();
 		this.#bindAllowRegisterWhiteListEnterHandler();
 
 		return this.#section;
+	}
+
+	#makeSwitcherAccessible(switcher: Switcher): void
+	{
+		const node = switcher.getNode();
+		Dom.attr(node, {
+			role: 'switch',
+			tabindex: '0',
+		});
+		this.#syncSwitcherAccessibilityState(switcher);
+
+		Event.bind(node, 'click', () => this.#syncSwitcherAccessibilityState(switcher));
+		Event.bind(node, 'keydown', (event) => {
+			if (event.target !== node || (event.key !== 'Enter' && event.key !== ' '))
+			{
+				return;
+			}
+
+			event.preventDefault();
+			switcher.toggle(event);
+			this.#syncSwitcherAccessibilityState(switcher);
+		});
+	}
+
+	#syncSwitcherAccessibilityState(switcher: Switcher): void
+	{
+		const isUnavailable = switcher.isDisabled() || switcher.isLoading();
+		Dom.attr(switcher.getNode(), {
+			'aria-checked': switcher.isChecked() ? 'true' : 'false',
+			'aria-disabled': isUnavailable ? 'true' : 'false',
+			'aria-busy': switcher.isLoading() ? 'true' : null,
+		});
 	}
 
 	toggleSection(): void
@@ -145,6 +213,7 @@ export class LinkOptionsSection
 
 		this.#optionsExpanded = true;
 		this.#onExpandedChange?.(true);
+		this.#section.inert = false;
 		this.#refreshSectionHeight();
 		requestAnimationFrame(() => {
 			Dom.removeClass(this.#section, '--collapsed');
@@ -160,10 +229,29 @@ export class LinkOptionsSection
 
 		this.#optionsExpanded = false;
 		this.#onExpandedChange?.(false);
+		this.#restoreFocusToDisclosureButton();
+		this.#section.inert = true;
 		this.#refreshSectionHeight();
 		requestAnimationFrame(() => {
-			this.#section?.classList.add('--collapsed');
+			Dom.addClass(this.#section, '--collapsed');
 		});
+	}
+
+	#restoreFocusToDisclosureButton(): void
+	{
+		const activeElement = FocusNavigator.getActiveElement();
+		if (!Type.isDomNode(activeElement) || !this.#section.contains(activeElement))
+		{
+			return;
+		}
+
+		const disclosureButton = this.#section.parentElement?.querySelector(
+			'[data-testid="invitation-link-page-options-action"]',
+		);
+		if (Type.isDomNode(disclosureButton))
+		{
+			FocusNavigator.focusTarget(disclosureButton);
+		}
 	}
 
 	#refreshSectionHeight(): void
@@ -173,7 +261,7 @@ export class LinkOptionsSection
 			return;
 		}
 
-		this.#section.style.setProperty('--link-options-section-height', `${this.#section.scrollHeight}px`);
+		Dom.style(this.#section, '--link-options-section-height', `${this.#section.scrollHeight}px`);
 	}
 
 	#renderRegenerateSecretButton(): HTMLElement
@@ -185,6 +273,9 @@ export class LinkOptionsSection
 			icon: BX.UI.IconSet.Outline.REFRESH,
 			props: {
 				id: 'invite-link-options-inline-regenerate-button',
+			},
+			dataset: {
+				testid: 'invitation-link-options-regenerate-button',
 			},
 			onclick: this.#regenerateSecret.bind(this),
 		});
@@ -205,10 +296,12 @@ export class LinkOptionsSection
 						this.#getConfirmRegistrationSwitcher().isChecked() ? InputDesign.Grey : InputDesign.Disabled,
 					);
 					this.#getConfirmRegistrationSwitcher().disable(false);
+					this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 				},
 				checked: () => {
 					this.#getAllowRegisterWhiteList().setDesign(InputDesign.Disabled);
 					this.#getConfirmRegistrationSwitcher().disable(true);
+					this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 				},
 				toggled: this.#saveOptions.bind(this),
 			},
@@ -217,13 +310,34 @@ export class LinkOptionsSection
 		return this.#allowInviteWithLinkSwitcher;
 	}
 
+	#renderAllowRegisterWhiteList(): HTMLElement
+	{
+		const inputContainer = this.#getAllowRegisterWhiteList().render();
+		const input = inputContainer.querySelector('.ui-system-input-value');
+
+		if (input)
+		{
+			Dom.attr(input, {
+				id: 'invitation-link-options-whitelist-input',
+				type: 'text',
+				autocomplete: 'off',
+				'aria-label': Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
+				'data-testid': 'invitation-link-options-whitelist-input',
+			});
+		}
+
+		return inputContainer;
+	}
+
 	#getAllowRegisterWhiteList(): Input
 	{
 		if (!this.#allowRegisterWhiteList)
 		{
 			this.#allowRegisterWhiteList = new Input({
 				label: Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
+				ariaLabel: Loc.getMessage('BX24_INVITE_DIALOG_REGISTER_TYPE_DOMAINS_MSGVER_1'),
 				placeholder: 'example.com',
+				type: 'text',
 				design: this.#needConfirmRegistration && this.#linkRegisterEnabled ? InputDesign.Grey : InputDesign.Disabled,
 				onInput: this.#onAllowRegisterWhiteListInput.bind(this),
 				onBlur: this.#onAllowRegisterWhiteListBlur.bind(this),
@@ -269,7 +383,7 @@ export class LinkOptionsSection
 			return;
 		}
 
-		const input = this.#getAllowRegisterWhiteList().render().querySelector('.ui-system-input-value');
+		const input = this.#renderAllowRegisterWhiteList().querySelector('.ui-system-input-value');
 		if (!input)
 		{
 			return;
@@ -298,25 +412,26 @@ export class LinkOptionsSection
 					data: { allow_register_secret: Text.getRandom(8) },
 				},
 				(reject) => {
-					this.#transport.onError(reject);
 					throw reject;
 				},
 			);
 
-			top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
-				autoHideDelay: 2500,
-			});
+			this.#showResultNotification(
+				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
+				'polite',
+				'invitation-link-options-regenerate-success-notification',
+			);
 			this.#analytics.sendRegenerateLink();
 			await this.#onRegenerate?.();
 		}
 		catch
 		{
 			this.#onRegenerateError?.();
-			top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
-				autoHideDelay: 2500,
-			});
+			this.#showResultNotification(
+				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
+				'assertive',
+				'invitation-link-options-regenerate-error-notification',
+			);
 		}
 		finally
 		{
@@ -425,7 +540,7 @@ export class LinkOptionsSection
 		const input = this.#getAllowRegisterWhiteList();
 		const normalizedValue = input
 			.getValue()
-			.replace(/[,\s]+$/g, '')
+			.replaceAll(/[\s,]+$/g, '')
 			.trim()
 		;
 
@@ -447,7 +562,7 @@ export class LinkOptionsSection
 		const allowRegister = this.#getAllowInviteWithLinkSwitcher().isChecked();
 		const needConfirmRegistration = this.#getConfirmRegistrationSwitcher().isChecked();
 		const whiteList = this.#getWhiteListValue();
-		const isNeedConfirmRegistrationChanged = needConfirmRegistration === this.#needConfirmRegistration;
+		const isNeedConfirmRegistrationChanged = needConfirmRegistration !== this.#needConfirmRegistration;
 
 		if (
 			allowRegister === this.#linkRegisterEnabled
@@ -491,7 +606,6 @@ export class LinkOptionsSection
 					},
 				},
 				(reject) => {
-					this.#transport.onError(reject);
 					throw reject;
 				},
 			);
@@ -506,7 +620,15 @@ export class LinkOptionsSection
 				EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.Invitation:selfChange', {
 					selfEnabled: false,
 				});
+				this.#announceDisabledStatusAndFocusEnableButton();
 			}
+
+			this.#showResultNotification(
+				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_SUCCESS'),
+				'polite',
+				'invitation-link-options-save-success-notification',
+				this.#linkRegisterEnabled,
+			);
 		}
 		catch (reject)
 		{
@@ -516,8 +638,15 @@ export class LinkOptionsSection
 			this.#getAllowInviteWithLinkSwitcher().check(this.#linkRegisterEnabled, false);
 			this.#getConfirmRegistrationSwitcher().check(this.#needConfirmRegistration, false);
 			this.#getConfirmRegistrationSwitcher().disable(!this.#linkRegisterEnabled, false);
+			this.#syncSwitcherAccessibilityState(this.#getAllowInviteWithLinkSwitcher());
+			this.#syncSwitcherAccessibilityState(this.#getConfirmRegistrationSwitcher());
 			this.#addDefaultChips();
 			console.error(reject);
+			this.#showResultNotification(
+				Loc.getMessage('INTRANET_INVITE_DIALOG_LINK_UPDATE_ERROR'),
+				'assertive',
+				'invitation-link-options-save-error-notification',
+			);
 		}
 		finally
 		{
@@ -543,10 +672,60 @@ export class LinkOptionsSection
 		});
 	}
 
+	#announceDisabledStatusAndFocusEnableButton(): void
+	{
+		const statusTitle = document.querySelector(
+			'[data-testid="invitation-link-disabled-page-status"] h2',
+		);
+		const enableButton = document.querySelector('[data-test-id="invite-link-page-enable-button"]');
+		if (!Type.isDomNode(statusTitle) || !Type.isDomNode(enableButton))
+		{
+			return;
+		}
+
+		LiveAnnouncer.announce(statusTitle.textContent ?? '', 'polite');
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				FocusNavigator.focusTarget(enableButton);
+			});
+		});
+	}
+
+	#showResultNotification(
+		message: string,
+		politeness: 'polite' | 'assertive',
+		testId: string,
+		shouldAnnounce: boolean = true,
+	): void
+	{
+		const content = Tag.render`
+			<div data-testid="${testId}">${message}</div>
+		`;
+
+		top.BX.UI.Notification.Center.notify({
+			content,
+			autoHideDelay: 2500,
+		});
+		if (shouldAnnounce)
+		{
+			LiveAnnouncer.announce(content.textContent ?? '', politeness);
+		}
+	}
+
 	#setSavingState(isSaving: boolean): void
 	{
 		this.#allowInviteWithLinkSwitcher?.setLoading(isSaving);
 		this.#confirmRegistrationSwitcher?.setLoading(isSaving);
+		if (this.#allowInviteWithLinkSwitcher)
+		{
+			this.#syncSwitcherAccessibilityState(this.#allowInviteWithLinkSwitcher);
+		}
+
+		if (this.#confirmRegistrationSwitcher)
+		{
+			this.#syncSwitcherAccessibilityState(this.#confirmRegistrationSwitcher);
+		}
+
 		this.#getAllowRegisterWhiteList().setDesign(
 			isSaving
 				? InputDesign.Disabled

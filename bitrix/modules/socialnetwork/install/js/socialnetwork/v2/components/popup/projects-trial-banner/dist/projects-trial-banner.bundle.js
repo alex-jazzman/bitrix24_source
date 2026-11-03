@@ -122,10 +122,10 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				return 'var(--ui-color-accent-main-primary)';
 			},
 			bgSrc() {
-				return `${ASSETS_BASE_URL}/images/bg.png`;
+				return `${ASSETS_BASE_URL}/images/bg.webp`;
 			},
 			characterSrc() {
-				return `${ASSETS_BASE_URL}/images/zephyr.png`;
+				return `${ASSETS_BASE_URL}/images/zephyr.webp`;
 			},
 			videoSrc() {
 				return `${ASSETS_BASE_URL}/videos/projects-trial.mp4`;

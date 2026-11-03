@@ -7,6 +7,8 @@ module.exports = {
 		'main.core',
 		'ui.system.dialog',
 		'ui.system.typography',
+		'ui.notification',
+		'biconnector.error-message',
 	],
 	minification: false,
 };

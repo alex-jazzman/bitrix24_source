@@ -8,18 +8,45 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 	const { createPromiseWithResolvers } = require('im/messenger/lib/utils');
 	const { runAction } = require('im/messenger/lib/rest');
 	const {
+		AppStatus,
 		RestMethod,
 		RefreshMode,
 	} = require('im/messenger/const');
 	const { isOnline } = require('device/connection');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { RecentEventType } = require('im/messenger/controller/recent/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	/**
+	 * Coalescing scopes of the tab startup. They overlap in time, so the render service keeps them
+	 * as a set: closing one does not lift the others.
+	 */
+	const CoalescingScope = Object.freeze({
+		tabInit: 'tab-init',
+		startupRefresh: 'startup-refresh',
+		primarySync: 'primary-sync',
+	});
 
 	/**
 	 * @class RecentController
 	 */
 	class RecentController
 	{
+		#isSubscribedToAppStatus = false;
+
+		/**
+		 * Ticket of the refresh handler created last and not yet paired with a request. The refresher
+		 * asks for the handler first and for the request options right after, so the options build
+		 * writes the filter of its own request into this ticket and the handler carries it further.
+		 *
+		 * A workaround for a dispatch defect: a refresh handler can be called with the response of
+		 * another request, because the initialization event hands one response to every accumulated
+		 * subscriber. The ticket and the doubled context build go away with the fix of that defect.
+		 *
+		 * @type {{context: ServerLoadRequestContext}|null}
+		 */
+		#pendingRefreshRequest = null;
+
 		/**
 		 * @param {RecentLocator} locator
 		 */
@@ -62,37 +89,48 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 				this.recentInitPerfPoint.endPoint('quick-recent');
 			}
 
-			if (this.locator.has('database-load'))
-			{
-				try
-				{
-					this.recentInitPerfPoint.startPoint('database-load');
-					await this.locator.get('database-load').loadFirstPage();
-					this.recentInitPerfPoint.endPoint('database-load');
-				}
-				catch (error)
-				{
-					this.logger.error('init with load first page from db error', error);
-					this.recentInitPerfPoint.endPoint('database-load', { error });
-				}
-			}
+			// the snapshot pass is over, so it stays the first full update; the first page from the
+			// local database leaves with the final pass of this scope
+			this.#beginCoalescingScope(CoalescingScope.tabInit);
 
-			if (!applicationStartUp && this.locator.has('server-load'))
+			try
 			{
-				try
+				if (this.locator.has('database-load'))
 				{
-					this.recentInitPerfPoint.startPoint('server-load');
-					await this.#loadFirstPageFromServer(RefreshMode.startUp);
-					this.recentInitPerfPoint.endPoint('server-load');
+					try
+					{
+						this.recentInitPerfPoint.startPoint('database-load');
+						await this.locator.get('database-load').loadFirstPage();
+						this.recentInitPerfPoint.endPoint('database-load');
+					}
+					catch (error)
+					{
+						this.logger.error('init with load first page from db error', error);
+						this.recentInitPerfPoint.endPoint('database-load', { error });
+					}
 				}
-				catch (error)
-				{
-					this.logger.error('init with load first page from server error', error);
-					this.recentInitPerfPoint.endPoint('server-load', { error });
-				}
-			}
 
-			this.markAsActive();
+				if (!applicationStartUp && this.locator.has('server-load'))
+				{
+					try
+					{
+						this.recentInitPerfPoint.startPoint('server-load');
+						await this.#loadFirstPageFromServer(RefreshMode.startUp);
+						this.recentInitPerfPoint.endPoint('server-load');
+					}
+					catch (error)
+					{
+						this.logger.error('init with load first page from server error', error);
+						this.recentInitPerfPoint.endPoint('server-load', { error });
+					}
+				}
+
+				this.markAsActive();
+			}
+			finally
+			{
+				this.#endCoalescingScope(CoalescingScope.tabInit);
+			}
 
 			initPerfPoint?.endPoint('recent-init');
 			this.recentInitPerfPoint.end();
@@ -173,6 +211,11 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		{
 			this.logger.log('destroy');
 
+			// the controller itself is not registered in the subscription manager, and folder and
+			// nested project tabs are created and destroyed: a left handler would close the scope
+			// of an already destroyed service
+			this.#endPrimarySyncScope();
+
 			const subscriptionManager = serviceLocator.get('subscription-manager');
 			this.locator.forEach((service) => {
 				subscriptionManager.remove(service);
@@ -207,7 +250,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		{
 			if (this.isSupportedFilter())
 			{
-				await this.locator.get('filter').applyFilter(filterId);
+				await this.locator.get('filter').applyFilter(filterId, { bySelf: true });
 
 				if (isOnline())
 				{
@@ -236,7 +279,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		{
 			if (this.isSupportedFilter())
 			{
-				await this.locator.get('filter').resetFilter();
+				await this.locator.get('filter').resetFilter({ bySelf: true });
 
 				if (isOnline())
 				{
@@ -278,7 +321,14 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 				return {};
 			}
 
-			return this.#getRequestOptions(mode);
+			const requestContext = this.#buildInitRequestContext();
+			if (this.#pendingRefreshRequest)
+			{
+				this.#pendingRefreshRequest.context = requestContext;
+				this.#pendingRefreshRequest = null;
+			}
+
+			return this.locator.get('server-load').getInitRequestOptions(mode, requestContext);
 		}
 
 		/**
@@ -287,40 +337,199 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 		 */
 		getRefreshHandler(mode)
 		{
+			// the refresher asks for this handler and builds the request options in the same synchronous
+			// step, so the ticket belongs to one request: the options build writes the filter that
+			// request carries into it, and the response below is processed with that filter.
+			// The context built here is the fallback of that workaround, see #pendingRefreshRequest
+			const refreshRequest = { context: this.#buildInitRequestContext() };
+			this.#pendingRefreshRequest = refreshRequest;
+
 			return async (refreshResult) => {
-				await this.initPromise;
+				const refreshPerfPoint = new PerfPoint('recent-refresh', `${this.id} ${mode}`).start();
+				const isStartUp = mode === RefreshMode.startUp;
 
-				if (this.locator.has('database-load'))
+				// raised in the handler and not in the factory: the factory runs before the bootstrap
+				// request, and on its failure the handler never runs - the scope would stay ownerless
+				if (isStartUp)
 				{
-					try
-					{
-						await this.locator.get('database-load').loadFirstPage();
-					}
-					catch (error)
-					{
-						this.logger.error(`refresh database-load.loadFirstPage error`, error);
-					}
+					this.#beginCoalescingScope(CoalescingScope.startupRefresh);
+					this.#beginPrimarySyncScope();
 				}
 
-				if (this.locator.has('server-load'))
+				try
 				{
-					try
+					await this.initPromise;
+
+					// on start up the first page is already read by init()
+					if (mode !== RefreshMode.startUp && this.locator.has('database-load'))
 					{
-						if (mode === RefreshMode.startUp)
+						try
 						{
-							this.#afterFirstServerPageLoad();
+							refreshPerfPoint.startPoint('database-load');
+							await this.locator.get('database-load').loadFirstPage();
+							refreshPerfPoint.endPoint('database-load');
 						}
-
-						await this.locator.get('server-load').handleInitResult(mode, refreshResult);
+						catch (error)
+						{
+							this.logger.error(`refresh database-load.loadFirstPage error`, error);
+							refreshPerfPoint.endPoint('database-load', { error: error?.message });
+						}
 					}
-					catch (error)
+
+					if (this.locator.has('server-load'))
 					{
-						this.logger.error(`refresh by mode ${mode} error`, error);
-					}
-				}
+						try
+						{
+							refreshPerfPoint.startPoint('server-load');
+							if (mode === RefreshMode.startUp)
+							{
+								this.#afterFirstServerPageLoad();
+							}
 
-				this.markAsActive();
+							const serverLoad = this.locator.get('server-load');
+							serverLoad.bindInitResultContext?.(refreshResult, refreshRequest.context);
+							await serverLoad.handleInitResult(mode, refreshResult);
+							refreshPerfPoint.endPoint('server-load');
+						}
+						catch (error)
+						{
+							this.logger.error(`refresh by mode ${mode} error`, error);
+							refreshPerfPoint.endPoint('server-load', { error: error?.message });
+						}
+					}
+
+					this.markAsActive();
+				}
+				finally
+				{
+					if (isStartUp)
+					{
+						this.#endCoalescingScope(CoalescingScope.startupRefresh);
+					}
+					refreshPerfPoint.end();
+				}
 			};
+		}
+
+		// region coalescing scopes
+
+		/**
+		 * @param {string} scopeId
+		 */
+		#beginCoalescingScope(scopeId)
+		{
+			this.locator.get('render')?.beginCoalescingScope(scopeId);
+		}
+
+		/**
+		 * @param {string} scopeId
+		 */
+		#endCoalescingScope(scopeId)
+		{
+			this.locator.get('render')?.endCoalescingScope(scopeId);
+		}
+
+		/**
+		 * @desc The scope of the primary synchronization is not raised at all when there will be no
+		 * synchronization status to close it by: the local storage is disabled, or a background
+		 * synchronization is already running and its status carries another name. In both cases the
+		 * order is held by the refresh scope.
+		 */
+		#beginPrimarySyncScope()
+		{
+			if (!Feature.isLocalStorageEnabled || this.#isBackgroundSyncInProgress())
+			{
+				return;
+			}
+
+			this.#beginCoalescingScope(CoalescingScope.primarySync);
+			this.#subscribeAppStatusMutation();
+
+			// safety net on the subscription race: nothing will signal the end if the startup is over
+			if (serviceLocator.get('core').getAppStatus() === AppStatus.running)
+			{
+				this.#endPrimarySyncScope();
+			}
+		}
+
+		#endPrimarySyncScope()
+		{
+			this.#unsubscribeAppStatusMutation();
+			this.#endCoalescingScope(CoalescingScope.primarySync);
+		}
+
+		/**
+		 * @param {MutationPayload<ApplicationSetStatusData, ApplicationSetStatusActions>} payload
+		 */
+		#appStatusChangeHandler = ({ payload }) => {
+			const status = payload?.data?.status;
+			if (status?.name !== AppStatus.sync || status?.value !== false)
+			{
+				return;
+			}
+
+			this.logger.log('primary synchronization is over, closing the coalescing scope');
+			this.#endPrimarySyncScope();
+		};
+
+		#subscribeAppStatusMutation()
+		{
+			if (this.#isSubscribedToAppStatus)
+			{
+				return;
+			}
+
+			this.#isSubscribedToAppStatus = true;
+			serviceLocator.get('core').getStoreManager()
+				.on('applicationModel/setStatus', this.#appStatusChangeHandler)
+			;
+		}
+
+		#unsubscribeAppStatusMutation()
+		{
+			if (!this.#isSubscribedToAppStatus)
+			{
+				return;
+			}
+
+			this.#isSubscribedToAppStatus = false;
+			serviceLocator.get('core').getStoreManager()
+				.off('applicationModel/setStatus', this.#appStatusChangeHandler)
+			;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#isBackgroundSyncInProgress()
+		{
+			const syncService = serviceLocator.get('sync-service');
+
+			return syncService?.syncInProgress === true && syncService?.appStatus === AppStatus.backgroundSync;
+		}
+
+		// endregion coalescing scopes
+		/**
+		 * Requests the first page from the server again the same way the initial load does.
+		 * The reason to start the list over belongs to the caller; without a connection nothing
+		 * happens and no error is raised. The caller may hold the controller of a tab that is
+		 * still starting up, so the initial load is awaited first and goes uncrossed.
+		 *
+		 * @returns {Promise<void>}
+		 */
+		async reloadFirstPage()
+		{
+			await this.initPromise;
+
+			if (!this.locator.has('server-load'))
+			{
+				return;
+			}
+
+			if (isOnline())
+			{
+				await this.#loadFirstPageFromServer(RefreshMode.startUp);
+			}
 		}
 
 		async #loadFirstPageFromServer(mode)
@@ -340,7 +549,8 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 					return;
 				}
 
-				const options = this.#getRequestOptions(mode);
+				const requestContext = this.#buildInitRequestContext();
+				const options = this.locator.get('server-load').getInitRequestOptions(mode, requestContext);
 				const result = await runAction(RestMethod.immobileMessengerLoad, {
 					data: {
 						methodList: [method],
@@ -353,6 +563,7 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 					this.#afterFirstServerPageLoad();
 				}
 
+				this.locator.get('server-load').bindInitResultContext?.(result, requestContext);
 				await this.locator.get('server-load').handleInitResult(mode, result);
 			}
 			catch (error)
@@ -383,11 +594,16 @@ jn.define('im/messenger/controller/recent/controller', (require, exports, module
 			});
 		}
 
-		#getRequestOptions(mode)
+		/**
+		 * The filter a request goes out with belongs to that request: the response is handed over bound
+		 * to this context, so a filter switched while the request flew is never read as the filter of
+		 * the page it brings back.
+		 *
+		 * @return {ServerLoadRequestContext}
+		 */
+		#buildInitRequestContext()
 		{
-			const currentFilterId = this.locator.get('filter')?.getCurrentFilterId();
-
-			return this.locator.get('server-load').getInitRequestOptions(mode, { currentFilterId });
+			return { currentFilterId: this.locator.get('filter')?.getCurrentFilterId() };
 		}
 	}
 

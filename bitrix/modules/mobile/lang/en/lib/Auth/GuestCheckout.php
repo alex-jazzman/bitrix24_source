@@ -2,6 +2,7 @@
 $MESS["ERROR_AUTHORIZE_ERROR"] = "Could not join the chat. Please try following the link again.";
 $MESS["ERROR_CHAT_TYPE_NOT_ALLOWED"] = "Cannot use link to join this chat.";
 $MESS["ERROR_DIFFERENT_GUEST"] = "This link was issued to a different person. Ask the chat members to send you your personal link.";
+$MESS['ERROR_FOREIGN_CONTOUR'] = 'This link is unavailable in the current session. End this session or open the link in another browser.';
 $MESS["ERROR_GUEST_FEATURE_DISABLED"] = "Guest chat access is disabled in this Bitrix24.";
 $MESS["ERROR_GUEST_INVALID_NAME"] = "Name is empty. Enter your name and try again.";
 $MESS["ERROR_GUEST_METHOD_NOT_ALLOWED"] = "This action is not available in guest mode.";

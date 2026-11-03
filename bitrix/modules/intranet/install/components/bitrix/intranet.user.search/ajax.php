@@ -34,7 +34,8 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 
 	$arFilter = array(
 		'ACTIVE' => 'Y',
-		'CONFIRM_CODE' => false
+		'CONFIRM_CODE' => false,
+		'!EXTERNAL_AUTH_ID' => \Bitrix\Intranet\Entity\User::EXTERNAL_AUTH_ID_SYSTEM
 	);
 
 	if ($SECTION_ID == 'last')
@@ -189,7 +190,8 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 			"ACTIVE" => "Y",
 			"CONFIRM_CODE" => false,
 			"NAME_SEARCH" => $search,
-			"!UF_DEPARTMENT" => false
+			"!UF_DEPARTMENT" => false,
+			"!EXTERNAL_AUTH_ID" => \Bitrix\Intranet\Entity\User::EXTERNAL_AUTH_ID_SYSTEM
 		);
 		if ($bExtranet)
 			unset($arFilter["!UF_DEPARTMENT"]);

@@ -538,10 +538,16 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityT
 
 if($mode === 'UPDATE')
 {
-	$ID = isset($_POST['OWNER_ID']) ? $_POST['OWNER_ID'] : 0;
+	$ID = isset($_POST['OWNER_ID']) ? (int)$_POST['OWNER_ID'] : 0;
 	if($ID <= 0)
 	{
 		__CrmLeadShowEndJsonResonse(array('ERROR'=>'ID IS INVALID OR NOT DEFINED!'));
+	}
+
+	// the type level check above is a coarse prefilter, the write must be authorized per item
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->item()->canUpdate(CCrmOwnerType::Lead, $ID))
+	{
+		__CrmLeadShowEndJsonResonse(array('ERROR'=>'PERMISSION DENIED!'));
 	}
 
 	$fieldNames = array();

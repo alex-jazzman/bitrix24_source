@@ -76,42 +76,50 @@ if($mode === '')
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if($mode === 'SAVE_PDF')
 {
-	if (!($fileID = \CCrmQuote::savePdf($_POST['QUOTE_ID'], $_POST['PAY_SYSTEM_ID'], $err)))
-		__CrmQuoteShowEndJsonResonse(array('ERROR' => $err));
-
-	$fileArray = CFile::GetFileArray($fileID);
-
-	$storageTypeID = \Bitrix\Crm\Integration\StorageType::getDefaultTypeID();
-	if($storageTypeID !== \Bitrix\Crm\Integration\StorageType::File)
-	{
-		$storageFileID = \Bitrix\Crm\Integration\StorageManager::saveEmailAttachment($fileArray, $storageTypeID);
-		$fileInfo = $storageFileID > 0 ? \Bitrix\Crm\Integration\StorageManager::getFileInfo($storageFileID, $storageTypeID) : null;
-		if(is_array($fileInfo))
+	$operation = new \Bitrix\Crm\V2\Internal\Service\PaySystem\PrintOperation(
+		'quote', 'email_attachment', 'quote_show_attachment',
+	);
+	$response = $operation->run(static function () use ($operation): array {
+		$err = null;
+		$fileID = \CCrmQuote::savePdf($_POST['QUOTE_ID'], $_POST['PAY_SYSTEM_ID'], $err);
+		$fileArray = $fileID > 0 ? CFile::GetFileArray($fileID) : false;
+		if (!is_array($fileArray) || (int)($fileArray['ID'] ?? 0) <= 0)
 		{
-			\Bitrix\Crm\Integration\StorageManager::registerInterRequestFile($storageFileID, $storageTypeID);
-			if($storageTypeID === \Bitrix\Crm\Integration\StorageType::WebDav)
-			{
-				__CrmQuoteShowEndJsonResonse(array('webdavelement' => $fileInfo));
-			}
-			elseif($storageTypeID === \Bitrix\Crm\Integration\StorageType::Disk)
-			{
-				__CrmQuoteShowEndJsonResonse(array('diskfile' => $fileInfo));
-			}
+			return array('ERROR' => $err ?: 'COULD NOT SAVE FILE!');
 		}
-	}
-	else
-	{
-		__CrmQuoteShowEndJsonResonse(
-			array('file' =>
-				array(
-					"fileName" => $fileArray['FILE_NAME'],
-					"fileID" => $fileID,
-					"fileSize" => CFile::FormatSize($fileArray['FILE_SIZE']),
-					"src" => $fileArray['SRC']
-				)
-			)
-		);
-	}
+
+		$storageTypeID = \Bitrix\Crm\Integration\StorageType::getDefaultTypeID();
+		if ($storageTypeID === \Bitrix\Crm\Integration\StorageType::File)
+		{
+			$response = array('file' => array(
+				'fileName' => $fileArray['FILE_NAME'],
+				'fileID' => $fileID,
+				'fileSize' => CFile::FormatSize($fileArray['FILE_SIZE']),
+				'src' => $fileArray['SRC'],
+			));
+		}
+		else
+		{
+			$storageFileID = \Bitrix\Crm\Integration\StorageManager::saveEmailAttachment($fileArray, $storageTypeID);
+			$fileInfo = $storageFileID > 0
+				? \Bitrix\Crm\Integration\StorageManager::getFileInfo($storageFileID, $storageTypeID)
+				: null;
+			if (!is_array($fileInfo) || (int)($fileInfo['ID'] ?? 0) <= 0)
+			{
+				return array('ERROR' => 'COULD NOT SAVE FILE!');
+			}
+
+			\Bitrix\Crm\Integration\StorageManager::registerInterRequestFile($storageFileID, $storageTypeID);
+			$response = $storageTypeID === \Bitrix\Crm\Integration\StorageType::WebDav
+				? array('webdavelement' => $fileInfo)
+				: array('diskfile' => $fileInfo);
+		}
+
+		$operation->complete();
+
+		return $response;
+	});
+	__CrmQuoteShowEndJsonResonse($response);
 }
 if($mode === 'GET_USER_INFO')
 {

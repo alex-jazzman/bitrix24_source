@@ -491,13 +491,14 @@
 	bottom: 0;
 	left: 0;
 	border-radius: var(--ui-border-radius-circle);
-	background-image: url('./images/tasks-flow-guide-avatar.svg');
+	background-image: url('./images/tasks-flow-guide-avatar.webp');
 	background-repeat: no-repeat;
 	background-position: center;
+	background-size: cover;
 }
 
 .tasks-flow__guide-btn_icon-avatar.--en::after {
-	background-image: url('./images/tasks-flow-guide-avatar-en.svg');
+	background-image: url('./images/tasks-flow-guide-avatar-en.webp');
 }
 
 .tasks-flow__guide-btn_icon {

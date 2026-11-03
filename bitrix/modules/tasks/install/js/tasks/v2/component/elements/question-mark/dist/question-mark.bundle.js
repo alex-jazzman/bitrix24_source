@@ -3,11 +3,10 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, ui_vue3_directives_hint, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_hint) {
+(function (exports, ui_vue3, ui_vue3_directives_hint, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_component_elements_hint) {
 	'use strict';
 
-	// @vue/component
-	const QuestionMark = {
+	const QuestionMark = ui_vue3.defineComponent({
 		name: 'UiQuestionMark',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon
@@ -50,11 +49,18 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			}
 		},
 		template: `
-		<BIcon v-hint="tooltip" class="b24-question-mark" :name="Outline.QUESTION" :size/>
+		<BIcon
+			v-hint="tooltip"
+			class="b24-question-mark"
+			:name="Outline.QUESTION"
+			:size
+			:role="hintText ? 'img' : null"
+			:aria-label="hintText || null"
+		/>
 	`
-	};
+	});
 
 	exports.QuestionMark = QuestionMark;
 
-})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX.Vue3.Directives, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements);
+})(this.BX.Tasks.V2.Component.Elements = this.BX.Tasks.V2.Component.Elements || {}, BX.Vue3, BX.Vue3.Directives, BX.UI.IconSet, window, BX.Tasks.V2.Component.Elements);
 //# sourceMappingURL=question-mark.bundle.js.map

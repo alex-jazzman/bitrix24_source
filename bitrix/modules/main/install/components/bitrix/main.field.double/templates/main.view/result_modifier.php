@@ -16,15 +16,19 @@ $component = $this->getComponent();
 CJSCore::init(['uf']);
 $i = 0;
 
+$precision = (int)($arResult['userField']['SETTINGS']['PRECISION'] ?? 0);
+$decimalSeparator = $component->getDecimalSeparator();
+
 foreach($arResult['value'] as $key => $value)
 {
-	$value = (double) $value;
+	$numericValue = (float)$value;
+	$value = $component->formatValue($value, $precision, $decimalSeparator);
 
 	if (!empty($arResult['userField']['PROPERTY_VALUE_LINK']))
 	{
 		$tag = 'a';
 		$href = HtmlFilter::encode(
-			str_replace('#VALUE#', (int)$value, $arResult['userField']['PROPERTY_VALUE_LINK'])
+			str_replace('#VALUE#', (int)$numericValue, $arResult['userField']['PROPERTY_VALUE_LINK'])
 		);
 	}
 	else

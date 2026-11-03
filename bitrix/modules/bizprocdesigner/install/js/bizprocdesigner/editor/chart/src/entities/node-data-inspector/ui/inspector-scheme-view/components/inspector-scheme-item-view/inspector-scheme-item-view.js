@@ -4,11 +4,15 @@ import { InspectorViewItemTypeDict } from '../../../../constants';
 import type { InspectorViewItemBase } from '../../../../types';
 import { InspectorSchemeCollapsibleItemView } from '../inspector-scheme-collapsible-item-view/inspector-scheme-collapsible-item-view';
 import { InspectorSchemeDataItemView } from '../inspector-scheme-data-item-view/inspector-scheme-data-item-view';
+// deep path on purpose: the public index of the slice re-exports every feature of the panel, and this
+// entity is imported by one of them
+import { FoundItemsView } from '../../../../../../features/node-data-inspector/ui/found-items-view/found-items-view';
 
 // @vue/component
 export const InspectorSchemeItemView = {
 	name: 'InspectorSchemeItemView',
 	components: {
+		FoundItemsView,
 		InspectorSchemeCollapsibleItemView,
 		InspectorSchemeDataItemView,
 	},
@@ -21,6 +25,7 @@ export const InspectorSchemeItemView = {
 	},
 	data(): { isCollapsed: boolean }
 	{
+		// document nodes are the only level collapsed by default; the found items node stays open
 		return {
 			isCollapsed: this.item.type === 'document',
 		};
@@ -42,9 +47,13 @@ export const InspectorSchemeItemView = {
 		{
 			return this.itemType === 'document';
 		},
+		isFoundItems(): boolean
+		{
+			return this.itemType === InspectorViewItemTypeDict.FOUND_ITEMS;
+		},
 		hasChildren(): boolean
 		{
-			if (this.isDocumentType)
+			if (this.isDocumentType || this.item.hasChildren === true)
 			{
 				return true;
 			}
@@ -78,7 +87,13 @@ export const InspectorSchemeItemView = {
 	},
 	template: `
 		<li :class="rootClasses">
-			<InspectorSchemeDataItemView v-if="isData" :item="item"/>
+			<FoundItemsView
+				v-if="isFoundItems"
+				:item="item"
+				:collapsed="isCollapsed"
+				@toggle="toggle"
+			/>
+			<InspectorSchemeDataItemView v-else-if="isData" :item="item"/>
 			<template v-else>
 				<InspectorSchemeCollapsibleItemView
 					:item="item"

@@ -200,7 +200,8 @@
 			if (result)
 			{
 				this.navParams.NavPageNomer++;
-				this.processItems(result.items);
+				var appendedCount = this.processItems(result.items);
+				this.announceAppendedItems(appendedCount);
 				this.processPagination(result.pagination);
 				this.processEpilogue(result.epilogue);
 				this.processNavParams(result.navParams);
@@ -215,15 +216,16 @@
 		processItems: function(itemsHtml, position)
 		{
 			if (!itemsHtml)
-				return;
+				return 0;
 
 			var processed = BX.processHTML(itemsHtml, false),
 				temporaryNode = BX.create('DIV');
 
-			var items, k, origRows;
+			var items, k, origRows, listItemsCount;
 
 			temporaryNode.innerHTML = processed.HTML;
 			items = temporaryNode.querySelectorAll('[data-entity="items-row"]');
+			listItemsCount = temporaryNode.querySelectorAll('[data-entity="items-row"] > [role="listitem"]').length;
 
 			if (items.length)
 			{
@@ -274,6 +276,22 @@
 			}
 
 			BX.ajax.processScripts(processed.SCRIPT);
+
+			return listItemsCount;
+		},
+
+		announceAppendedItems: function(count)
+		{
+			var accessibility = (BX.UI && BX.UI.Accessibility) || null;
+			if (count <= 0 || !accessibility)
+			{
+				return;
+			}
+
+			accessibility.LiveAnnouncer.announce(
+				BX.Loc.getMessagePlural('CT_BCS_CATALOG_COMPILATION_APPENDED', count, {'#COUNT#': count}),
+				'polite'
+			);
 		},
 
 		processPagination: function(paginationHtml)

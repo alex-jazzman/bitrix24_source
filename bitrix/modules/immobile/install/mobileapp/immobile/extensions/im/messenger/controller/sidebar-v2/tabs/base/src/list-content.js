@@ -43,6 +43,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 			this.subscribeStoreEvents();
 		}
 
+		getListViewRef()
+		{
+			return this.listViewRef;
+		}
+
 		/**
 		 * @protected
 		 * @abstract
@@ -239,6 +244,15 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 		}
 
 		/**
+		 * @param {SidebarTabListItemModel} item
+		 * @returns {Promise<*>}
+		 */
+		async updateRowByKey(item)
+		{
+			return this.listViewRef.updateRowByKey(item.getKey(), item.toListView());
+		}
+
+		/**
 		 * @protected
 		 * @return {SidebarTabListItemModel[]}
 		 */
@@ -409,6 +423,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/base/src/list-content', (requ
 					onOverscrollBottom,
 					onScrollBeginDrag,
 					onScrollEndDrag,
+					onViewableItemsChanged: this.onViewableItemsChanged,
 					testId: `${testId}-items-container-grid`,
 					ref: (ref) => {
 						this.listViewRef = ref;

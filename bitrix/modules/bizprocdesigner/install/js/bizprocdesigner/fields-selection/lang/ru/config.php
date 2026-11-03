@@ -1,0 +1,2 @@
+<?php
+$MESS['BIZPROCDESIGNER_FIELDS_SELECTION_INSERT_VALUE'] = 'Вставить значение';

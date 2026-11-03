@@ -53,6 +53,15 @@ export class BaseMenu extends EventEmitter
 		this.#bindBlurEvent();
 	}
 
+	// public
+	// Keyboard path: anchor the menu to the focused element itself (not cursor coordinates)
+	// and return focus to it once the menu closes.
+	openMenuFromKeyboard(context: Object, anchor: HTMLElement)
+	{
+		this.openMenu(context, anchor);
+		this.#restoreFocusOnClose(anchor);
+	}
+
 	getMenuOptions(): MenuOptions
 	{
 		return {
@@ -127,6 +136,25 @@ export class BaseMenu extends EventEmitter
 	{
 		Event.bindOnce(window, 'blur', () => {
 			this.destroy();
+		});
+	}
+
+	#restoreFocusOnClose(anchor: HTMLElement): void
+	{
+		// This subscription is a fallback for a subclass that opts out of the trap via
+		// focusTrap: false. When a trap is present — and for menus built on ui.system.menu
+		// it always is — the popup already restores focus to this same anchor on its own,
+		// so subscribing here too would move it twice.
+		const focusTrap = this.menuInstance?.getPopup()?.getFocusTrap() ?? null;
+		if (focusTrap !== null)
+		{
+			return;
+		}
+
+		// subscribeOnce auto-removes the listener after the first close, so repeated keyboard
+		// opens never accumulate subscriptions (both re-open and unmount emit close).
+		this.subscribeOnce(BaseMenu.events.close, () => {
+			anchor.focus();
 		});
 	}
 }

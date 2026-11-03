@@ -187,6 +187,21 @@ export const EditableDescription = {
 		{
 			return !(this.isReadOnly || this.isEdit);
 		},
+
+		copyButtonLabel(): string
+		{
+			return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPY');
+		},
+
+		clearButtonLabel(): string
+		{
+			return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CLEAR');
+		},
+
+		editButtonLabel(): string
+		{
+			return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_EDIT');
+		},
 	},
 
 	methods: {
@@ -513,6 +528,7 @@ export const EditableDescription = {
 					v-if="this.isCopied"
 					ref="copyTextBtn"
 					@click="copyText"
+					:aria-label="copyButtonLabel"
 					class="crm-timeline__text_copy-btn"
 				>
 					<i class="crm-timeline__editable-text_fixed-icon --copy"></i>
@@ -521,6 +537,7 @@ export const EditableDescription = {
 					v-if="isEdit && isEditable"
 					:disabled="isSaving"
 					@click="clearText"
+					:aria-label="clearButtonLabel"
 					class="crm-timeline__editable-text_clear-btn"
 				>
 					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
@@ -529,6 +546,7 @@ export const EditableDescription = {
 					v-if="!isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
+					:aria-label="editButtonLabel"
 					class="crm-timeline__editable-text_edit-btn"
 				>
 					<i class="crm-timeline__editable-text_edit-icon"></i>
@@ -580,6 +598,7 @@ export const EditableDescription = {
 				<button
 					v-if="isLongText && !isEdit"
 					@click="toggleIsCollapsed"
+					:aria-expanded="isCollapsed ? 'true' : 'false'"
 					class="crm-timeline__editable-text_collapse-btn"
 				>
 					{{ expandButtonText }}

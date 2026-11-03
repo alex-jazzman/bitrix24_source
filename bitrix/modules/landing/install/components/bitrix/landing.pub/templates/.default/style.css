@@ -154,6 +154,41 @@ body {
 	width: 1px;
 }
 
+/*
+The exhausted view limit of a knowledge base. The message is printed through `AfterBodyOpen`,
+because the branch runs after `$landing->view()` and would otherwise land inside the dimmed area.
+*/
+.landing-pub-view-limit {
+	padding: 16px 20px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-bottom: 1px solid var(--ui-color-divider-default, #dfe0e3);
+	color: var(--ui-color-base-2, #525c69);
+	font-family: var(--ui-font-family-open-sans, 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif);
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	font-weight: var(--ui-font-weight-regular, 400);
+	text-align: center;
+}
+
+/* The template marks what the limit takes away as inert, and the message is left out of it. */
+.landing-mode-view-limit > [inert] {
+	opacity: .1;
+}
+
+/* A label out of sight, but inside the accessible name of the control that holds it. */
+.landing-pub-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
 .landing-pub-top-panel,
 .landing-pub-top-panel-left,
 .landing-pub-top-panel-right {
@@ -261,6 +296,26 @@ body {
 .landing-pub-top-panel-total-view {
 	display: flex;
 	align-items: center;
+	gap: 4px;
+}
+
+.landing-pub-top-panel-total-view {
+	margin-left: 16px;
+}
+
+.landing-pub-top-panel-unique-view {
+	appearance: none;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.landing-pub-top-panel-unique-view:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
 }
 
 .landing-pub-top-panel-actions {
@@ -307,13 +362,12 @@ body {
 	will-change: opacity;
 }
 
+/* The only state of the popup. The pointer opens it through the same script the button does, so that
+   the class stays the one source of truth about the state the counter declares. */
 .landing-pub-top-panel-unique-view-popup.hide {
 	display: none;
 }
 
-.landing-pub-top-panel-unique-view:hover .landing-pub-top-panel-unique-view-popup {
-	display: flex;
-}
 .landing-pub-top-panel-unique-view .ui-btn-icon-eye-opened:hover {
 	border-color: transparent !important;
 	background-color: transparent !important;

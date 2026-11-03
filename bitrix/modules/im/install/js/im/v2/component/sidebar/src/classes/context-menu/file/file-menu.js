@@ -43,7 +43,7 @@ export class FileMenu extends SidebarMenu
 
 	getDownloadFileItem(): ?MenuItemOptions
 	{
-		if (!this.context.file.urlDownload)
+		if (this.#isVideoNote() || !this.context.file.urlDownload)
 		{
 			return null;
 		}
@@ -59,7 +59,7 @@ export class FileMenu extends SidebarMenu
 
 	getSaveFileOnDiskItem(): ?MenuItemOptions
 	{
-		if (!this.context.sidebarFile.fileId)
+		if (this.#isVideoNote() || !this.context.sidebarFile.fileId)
 		{
 			return null;
 		}
@@ -88,5 +88,12 @@ export class FileMenu extends SidebarMenu
 				this.menuInstance.close();
 			}.bind(this),
 		};
+	}
+
+	// A video note has no download policy yet: both ways out stay closed until task 734392 brings one.
+	// A record outliving its Disk object has no file model behind it, and it is no video note either.
+	#isVideoNote(): boolean
+	{
+		return Boolean(this.context.file?.isVideoNote);
 	}
 }

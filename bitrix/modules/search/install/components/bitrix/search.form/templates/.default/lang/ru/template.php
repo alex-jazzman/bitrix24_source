@@ -1,3 +1,2 @@
-<?
-$MESS ['BSF_T_SEARCH_BUTTON'] = "Поиск";
-?>
+<?php
+$MESS['BSF_T_SEARCH_BUTTON'] = "Поиск";

@@ -7,4 +7,11 @@ $MESS["CT_BCSF_DEL_FILTER"] = "Reset";
 $MESS["CT_BCSF_FILTER_COUNT"] = "Selected: #ELEMENT_COUNT#";
 $MESS["CT_BCSF_FILTER_SHOW"] = "Show";
 $MESS["CT_BCSF_FILTER_ALL"] = "All";
+$MESS['CT_BCSF_FILTER_ANNOUNCE'] = 'Products found: #ELEMENT_COUNT#';
+$MESS['CT_BCSF_FILTER_ANNOUNCE_AVAILABILITY'] = 'available filter values updated';
+$MESS['CT_BCSF_FILTER_FROM_FOR'] = '#NAME#, from';
+$MESS['CT_BCSF_FILTER_SHOW_FOUND'] = 'Show matching products';
+$MESS['CT_BCSF_FILTER_TO_FOR'] = '#NAME#, to';
+$MESS['CT_BCSF_PROP_FALLBACK_ARIA'] = 'Parameter #ID#';
+$MESS['CT_BCSF_VALUE_FALLBACK_ARIA'] = 'Value #NUM#';
 ?>

@@ -45,10 +45,6 @@ export const RoleMasterMainStep = {
 		{
 			this.$emit('removeAvatarFile');
 		},
-		handleAvatarFileLoad(file: UploaderFile): void
-		{
-			this.$emit('loadAvatarFile', file);
-		},
 	},
 	mounted() {
 		requestAnimationFrame(() => {
@@ -76,7 +72,6 @@ export const RoleMasterMainStep = {
 											:avatar-url="avatar"
 											@upload-avatar-file="handleAvatarFileUpload"
 											@remove-avatar-file="handleAvatarFileRemove"
-											@load-avatar-file="handleAvatarFileLoad"
 										/>
 									</div>
 									<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">

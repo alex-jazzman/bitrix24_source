@@ -11,3 +11,4 @@ $agent->add('Bitrix\Bizproc\Infrastructure\Agent\ClearStuckPauseWorkflowAgent::r
 $option->set('bizproc', 'clear_stuck_pause_agent_active', 'Y');
 // ManagedSystemAiAgentCleanupAgent::PERIOD_SECONDS; the literal keeps the class out of the migration hit
 $agent->add([\Bitrix\Bizproc\Infrastructure\Agent\ManagedSystemAiAgentCleanupAgent::class, 'runAgent'], 300);
+$agent->add([\Bitrix\Bizproc\Infrastructure\Agent\TemplateChangeCleanupAgent::class, 'runAgent'], 86400);

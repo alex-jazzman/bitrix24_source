@@ -15,6 +15,7 @@ import {CallAI} from '../call_ai';
 import { BroadcastRequestChannel } from 'call.infrastructure.broadcast-channel';
 import { CallCloudRecord } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
+import { shouldRaiseRinger } from '../utils/should-raise-ringer';
 
 import {
 	CallState,
@@ -67,7 +68,8 @@ const ajaxActions = {
 	createCall: 'call.CallManager.create',
 	createChatForChildCall: 'call.Call.createChatForChildCall',
 	getPublicChannels: 'pull.channel.public.list',
-	getCall: 'call.CallManager.get'
+	getCall: 'call.CallManager.get',
+	registerRingingDevice: 'call.Call.registerRingingDevice',
 };
 
 class Engine
@@ -218,7 +220,7 @@ class Engine
 					provider: callProvider,
 					isVideo: config.videoEnabled,
 					callUuid: config.roomId,
-				}, chatId, !config.joinExisting);
+				}, chatId, !config.joinExisting, true);
 			}
 			catch(error)
 			{
@@ -345,7 +347,7 @@ class Engine
 						provider: newProvider,
 						isVideo: config.videoEnabled,
 						parentUuid: parentCall.uuid,
-					}, chatId)
+					}, chatId, true, true)
 						.then((data) => {
 							if (!data?.result?.mediaServerUrl || !data?.result?.roomData)
 							{
@@ -505,6 +507,9 @@ class Engine
 				{
 					stuckCallFinishTracker.cancelPending(finishedCallId, finishedCallUuid);
 				}
+				this.finishedCalls.add(finishedCallUuid);
+				// Bounded by the CallStub lifetime so the set does not grow for the whole session.
+				setTimeout(() => this.finishedCalls.delete(finishedCallUuid), 120 * 1000);
 			}
 		}
 
@@ -545,11 +550,17 @@ class Engine
 			{
 				this.log(callUuid, 'Got "Call::finish" before "Call::incoming"');
 				this.finishedCalls.add(callUuid);
+				setTimeout(() => this.finishedCalls.delete(callUuid), 120 * 1000);
 
 				return;
 			}
 
-			if (call && !this.#callHasAssociatedEntity(call) && command === 'Call::usersInvited' && !this.finishedCalls.has(callUuid))
+			if (call
+				&& !this.#callHasAssociatedEntity(call)
+				&& command === 'Call::usersInvited'
+				&& !this.finishedCalls.has(callUuid)
+				&& !(call instanceof CallStub)
+			)
 			{
 				call.addDialogInfo(params.call.ASSOCIATED_ENTITY);
 				this.onCallCreated(call);
@@ -568,17 +579,18 @@ class Engine
 
 	async #onPullIncomingCall(params, extra)
 	{
-		if (extra.server_time_ago > 30)
-		{
-			console.error('Call was started too long time ago');
-
-			return;
-		}
-
 		const logToken = params.logToken;
 		const callFields = params.call;
 		const uuid = callFields.uuid;
 		let call = null;
+
+		const isStale = extra.server_time_ago > 30;
+		const isCardOnly = extra.cardOnly === true;
+		const isManualInvite = extra.manualInvite === true;
+		if (isStale && !isManualInvite)
+		{
+			this.log(uuid, 'Call::incoming is stale (server_time_ago > 30); ringer suppressed');
+		}
 
 		CallAI.setup(params.aiSettings);
 
@@ -634,12 +646,25 @@ class Engine
 			this.onCallCreated(call);
 		}
 
-		const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, { timeout: 100 });
-		const hasActiveCalls = broadcastResponse.some((res) => res);
 		const canProcessEvent = !params.isAlreadyInCall
 			|| (params.activeCallPlatform !== 'any' && ClientPlatform === params.activeCallPlatform);
-		if (call && !hasActiveCalls && canProcessEvent)
+
+		// Ringing is possible only for a fresh (or manually invited) non-card event we can
+		// process. For card-only/stale/foreign-platform events the ringer never rings, so we
+		// skip the up-to-100ms cross-tab broadcast -- its result could not change the outcome.
+		const canRing = !isCardOnly && (!isStale || isManualInvite) && canProcessEvent;
+
+		let hasActiveCalls = false;
+		if (canRing)
 		{
+			const broadcastResponse = await this.multiBroadcastClient.broadcastRequest(uuid, { timeout: 100 });
+			hasActiveCalls = broadcastResponse.some((res) => res);
+		}
+
+		if (call && shouldRaiseRinger(isStale, isCardOnly, isManualInvite, hasActiveCalls, canProcessEvent))
+		{
+			this.#registerRingingDevice(call);
+
 			BX.onCustomEvent(window, 'CallEvents::incomingCall', [{
 				call,
 				video: params.video === true,
@@ -650,10 +675,39 @@ class Engine
 		this.log(call.uuid, `Incoming call ${call.uuid}`);
 	}
 
+	// Register this device as a ringing callee so the backend keeps it in the
+	// call when the same user declines on another device (device-scoped decline).
+	// Best-effort: a failure must not block showing the incoming call.
+	//
+	// Scope is private 1-1 calls only (group calls never use the registry), and
+	// registration runs once per call instance — repeated Call::incoming events
+	// (redial fires roughly every 5s) reuse the same call object, so the flag
+	// suppresses redundant requests. A failed attempt clears the flag to retry.
+	#registerRingingDevice(call)
+	{
+		if (call.associatedEntity?.isDeviceScoped !== true || call.ringingDeviceRegistered)
+		{
+			return;
+		}
+
+		call.ringingDeviceRegistered = true;
+		BX.ajax.runAction(ajaxActions.registerRingingDevice, {
+			data: {
+				callUuid: call.uuid,
+				callInstanceId: call.instanceId,
+			},
+		}).catch(() => {
+			call.ringingDeviceRegistered = false;
+		});
+	}
+
 	#onLogTokenUpdate(params): void
 	{
 		const call = this.calls[params.uuid];
-		call?.addLogToken(params.logToken);
+		if (call && !(call instanceof CallStub))
+		{
+			call.addLogToken?.(params.logToken);
+		}
 	}
 
 	#onCallTokenUpdate(params, extra)

@@ -7,6 +7,8 @@ jn.define('mail/message-grid/src/list-sync', (require, exports, module) => {
 		constructor()
 		{
 			this.listRef = null;
+			// Row ids of the grid are numeric for a message and prefixed for a draft or a
+			// conversation, so the set of removed rows is keyed by their string form.
 			this.markedAsRemovedIds = new Set();
 		}
 
@@ -50,14 +52,10 @@ jn.define('mail/message-grid/src/list-sync', (require, exports, module) => {
 			}
 
 			const removedIds = items.map(({ id }) => id);
-			const markedAsRemovedIds = items
-				.filter((item) => item.isRemoved)
-				.map(({ id }) => id);
 
-			if (markedAsRemovedIds.length > 0)
-			{
-				markedAsRemovedIds.forEach((id) => this.markedAsRemovedIds.add(id));
-			}
+			items
+				.filter((item) => item.isRemoved)
+				.forEach(({ id }) => this.markedAsRemovedIds.add(String(id)));
 
 			return this.listRef.deleteItem(removedIds);
 		}
@@ -79,11 +77,12 @@ jn.define('mail/message-grid/src/list-sync', (require, exports, module) => {
 				return null;
 			}
 
+			const uniqueItems = [...new Map(items.map((item) => [String(item.id), item])).values()];
 			const restoredItems = [];
 			const addedItems = [];
 
-			items.forEach((item) => {
-				if (this.markedAsRemovedIds.has(item.id))
+			uniqueItems.forEach((item) => {
+				if (this.markedAsRemovedIds.has(String(item.id)))
 				{
 					restoredItems.push(item);
 				}
@@ -98,14 +97,25 @@ jn.define('mail/message-grid/src/list-sync', (require, exports, module) => {
 				await this.listRef.updateItemsData(restoredItems);
 			}
 
-			if (addedItems.length > 0)
-			{
-				await this.listRef.updateItemsData(addedItems);
-			}
+			await this.prependUnseenItems(addedItems);
 
-			items.forEach(({ id }) => this.markedAsRemovedIds.delete(id));
+			uniqueItems.forEach(({ id }) => this.markedAsRemovedIds.delete(String(id)));
 
 			return null;
+		}
+
+		/**
+		 * @param {Array<{id: number|string}>} items rows the list has not shown yet
+		 * @return {Promise}
+		 */
+		prependUnseenItems(items = [])
+		{
+			if (items.length === 0 || !this.listRef)
+			{
+				return Promise.resolve(null);
+			}
+
+			return this.listRef.updateItemsData(items);
 		}
 	}
 

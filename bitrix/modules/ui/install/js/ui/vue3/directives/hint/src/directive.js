@@ -23,6 +23,9 @@ import { tooltip, type HintParams } from './tooltip';
 export type { HintParams };
 
 const handlersMap = new WeakMap();
+let activeElement = null;
+let showTimeout = null;
+let pendingElement = null;
 
 export const hint = {
 	mounted(element: HTMLElement, { value }: { value: HintParams | Function }): void
@@ -39,19 +42,56 @@ export const hint = {
 	},
 };
 
-let showTimeout = null;
-
 function updateEvents(element: HTMLElement, params: HintParams | Function): void
 {
-	unbindEvents(element);
+	const binding = handlersMap.get(element);
+	if (binding?.params === params)
+	{
+		return;
+	}
+
+	if (binding && params)
+	{
+		binding.params = params;
+		binding.state.params = params;
+
+		return;
+	}
+
+	if (binding)
+	{
+		unbindEvents(element);
+	}
+
 	if (params)
 	{
+		const state = { params, hovered: false, focused: false };
 		const handlers = {
-			mouseenter: () => onMouseEnter(element, getParams(params)),
-			mouseleave: () => hideTooltip(getParams(params).interactivity ?? false),
-			click: () => hideTooltip(),
+			mouseenter: () => {
+				state.hovered = true;
+				scheduleTooltip(element, getParams(state.params));
+			},
+			mouseleave: () => {
+				state.hovered = false;
+				if (!state.focused)
+				{
+					hideTooltip(element, getParams(state.params).interactivity ?? false);
+				}
+			},
+			focus: () => {
+				state.focused = true;
+				scheduleTooltip(element, getParams(state.params));
+			},
+			blur: () => {
+				state.focused = false;
+				if (!state.hovered)
+				{
+					hideTooltip(element);
+				}
+			},
+			click: () => hideTooltip(element),
 		};
-		handlersMap.set(element, handlers);
+		handlersMap.set(element, { params, handlers, state });
 
 		Object.entries(handlers).forEach(([event, handler]) => Event.bind(element, event, handler));
 	}
@@ -59,32 +99,71 @@ function updateEvents(element: HTMLElement, params: HintParams | Function): void
 
 function unbindEvents(element: HTMLElement): void
 {
-	clearTimeouts();
-	Object.entries(handlersMap.get(element) ?? {}).forEach(([event, handler]) => Event.unbind(element, event, handler));
+	if (pendingElement === element)
+	{
+		clearTimeouts();
+	}
+
+	if (activeElement === element)
+	{
+		hideTooltip(element);
+	}
+
+	Object.entries(handlersMap.get(element)?.handlers ?? {})
+		.forEach(([event, handler]) => Event.unbind(element, event, handler));
 	handlersMap.delete(element);
 }
 
-function onMouseEnter(element: HTMLElement, params: HintParams): void
+function scheduleTooltip(element: HTMLElement, params: HintParams): void
 {
+	if (activeElement === element || pendingElement === element)
+	{
+		return;
+	}
+
 	clearTimeouts();
-	showTimeout = setTimeout(() => showTooltip(element, params), params.timeout ?? 0);
+	pendingElement = element;
+	showTimeout = setTimeout(() => {
+		if (pendingElement === element && handlersMap.has(element))
+		{
+			showTooltip(element, params);
+		}
+	}, params.timeout ?? 0);
 }
 
 function showTooltip(element: HTMLElement, params: HintParams): void
 {
 	clearTimeouts();
-	tooltip.show(element, params);
+	activeElement = element;
+	tooltip.show(element, params, () => {
+		if (activeElement === element)
+		{
+			activeElement = null;
+		}
+	});
 }
 
-function hideTooltip(isInteractive): void
+function hideTooltip(element: HTMLElement, isInteractive: boolean = false): void
 {
-	clearTimeouts();
+	if (pendingElement === element)
+	{
+		clearTimeouts();
+	}
+
+	if (activeElement !== element)
+	{
+		return;
+	}
+
+	activeElement = null;
 	tooltip.hide(isInteractive);
 }
 
 function clearTimeouts(): void
 {
 	clearTimeout(showTimeout);
+	showTimeout = null;
+	pendingElement = null;
 }
 
 function getParams(value: HintParams | Function): HintParams

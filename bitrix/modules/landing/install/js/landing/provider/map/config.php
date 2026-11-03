@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/map.bundle.css',
 	'js' => 'dist/map.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'landing.collection.basecollection',
 		'main.core',
+		'main.core.events',
 		'ui.fonts.opensans',
 	],
 	'skip_core' => false,

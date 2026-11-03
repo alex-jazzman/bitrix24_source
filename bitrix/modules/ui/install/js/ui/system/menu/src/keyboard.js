@@ -26,6 +26,7 @@ export type MenuKeyboardOptions = {
 	onOpenSubMenu: (itemAction: HTMLElement) => void,
 	onItemFocusMoved: () => void,
 	isFocusInsideMenu: () => boolean,
+	finishShowAnimation?: () => void,
 };
 
 /**
@@ -45,6 +46,7 @@ export class MenuKeyboard
 	#onOpenSubMenu: (itemAction: HTMLElement) => void;
 	#onItemFocusMoved: () => void;
 	#isFocusInsideMenu: () => boolean;
+	#finishShowAnimation: (() => void) | null;
 	#focusZone: FocusZone;
 
 	#lastPointerPosition: { left: number, top: number } | null = null;
@@ -76,6 +78,7 @@ export class MenuKeyboard
 		this.#onOpenSubMenu = options.onOpenSubMenu;
 		this.#onItemFocusMoved = options.onItemFocusMoved;
 		this.#isFocusInsideMenu = options.isFocusInsideMenu;
+		this.#finishShowAnimation = options.finishShowAnimation ?? null;
 
 		this.#focusZone = new FocusZone(this.#itemsContainer, {
 			bindKeys: FocusKeys.ArrowVertical | FocusKeys.HomeAndEnd | FocusKeys.PageUpDown,
@@ -275,6 +278,10 @@ export class MenuKeyboard
 		// The key belongs to the menu either way: an empty menu must not scroll the
 		// page (and the popup along with the bind element) behind itself.
 		event.preventDefault();
+
+		// A popup still fading in is transparent, and a transparent item is invisible to
+		// the lookup below: the menu is asked to end its opening animation first.
+		this.#finishShowAnimation?.();
 
 		const target = (event.key === 'ArrowUp' || event.key === 'End' || event.key === 'PageDown')
 			? this.#getLastItem()
@@ -510,6 +517,11 @@ export class MenuKeyboard
 
 		this.#typeaheadBuffer += char;
 		this.#restartTypeaheadTimer();
+
+		// The letter is already in the buffer, and the buffer outlives the fade: a search
+		// over the transparent (hence invisible) items would lose this letter and the
+		// next one with it, as a prefix nothing matches.
+		this.#finishShowAnimation?.();
 
 		const match = this.#findTypeaheadMatch();
 		if (match)

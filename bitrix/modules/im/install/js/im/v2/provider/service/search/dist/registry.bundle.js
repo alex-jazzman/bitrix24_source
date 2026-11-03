@@ -11,6 +11,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class SearchService {
 		#localSearch;
 		#localCollection = new Map();
+		#recentCollection = new Map();
 		#searchConfig;
 		#storeUpdater;
 		constructor(searchConfig) {
@@ -30,10 +31,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const itemsFromRecentItems = this.#getItemsFromRecentItems(recentItems, items);
 			await this.#storeUpdater.update(itemsFromRecentItems);
 			await this.updateCustomStore(itemsFromRecentItems);
-			return this.#getDialogIdAndDate(itemsFromRecentItems);
+			const recentResult = this.#getDialogIdAndDate(itemsFromRecentItems);
+			recentResult.forEach(recentItem => {
+				this.#recentCollection.set(recentItem.dialogId, recentItem);
+			});
+			return recentResult;
 		}
 		searchLocal(query) {
-			const localCollection = [...this.#localCollection.values()];
+			const localCollection = [...this.#recentCollection.values(), ...this.#localCollection.values()];
 			return this.#localSearch.search(query, localCollection);
 		}
 		async search(query) {

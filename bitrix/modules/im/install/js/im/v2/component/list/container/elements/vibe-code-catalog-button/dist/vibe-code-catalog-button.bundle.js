@@ -12,7 +12,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 	const ICON_NAME = ui_iconSet_api_vue.Outline.VIBECODE_CATALOG;
 	const COUNTER_DISPLAY_LIMIT = 99;
-	const AVAILABLE_LAYOUTS = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.notification]);
+	const AVAILABLE_LAYOUTS = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.folderAll, im_v2_const.Layout.folderAllSettings, im_v2_const.Layout.notification]);
 	const VibeCodeCatalogButton = ui_vue3.defineComponent({
 		name: 'VibeCodeCatalogButton',
 		components: {
@@ -87,6 +87,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			type="button"
 			class="bx-im-list-container-vibe-code-catalog-button__container"
 			data-bx-vibe-code-catalog-events="true"
+			data-testid="im-vibe-code-catalog-button"
 			:class="{'--active': isActive }"
 			:aria-label="loc('IM_ELEMENTS_VIBE_CODE_CATALOG_ARIA_TITLE')"
 			:aria-pressed="isActive"

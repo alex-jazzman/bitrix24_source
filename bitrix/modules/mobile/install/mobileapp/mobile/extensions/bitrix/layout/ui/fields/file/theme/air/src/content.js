@@ -4,7 +4,6 @@
 jn.define('layout/ui/fields/file/theme/air/src/content', (require, exports, module) => {
 	const { Counter } = require('layout/ui/fields/theme/air/elements/counter');
 	const { AddButton } = require('layout/ui/fields/theme/air/elements/add-button');
-	const { filePreview } = require('layout/ui/fields/file/file-preview');
 	const { Indent } = require('tokens');
 
 	const MAX_ELEMENTS = 3;
@@ -43,16 +42,15 @@ jn.define('layout/ui/fields/file/theme/air/src/content', (require, exports, modu
 						marginBottom: Indent.XL.toNumber(),
 					},
 				},
-				...elementsToShow.map((file, index) => filePreview(
+				...elementsToShow.map((file, index) => field.renderFilePreview({
 					file,
 					index,
 					files,
-					(canDeleteFilesInPreview || file.token) && !file.readOnly && field.deleteFileHandler,
-					true,
-					2,
-					field.getFilePreviewIndent(),
-					field.onFilePreviewMenuClick,
-				)),
+					onDeleteFile: (canDeleteFilesInPreview || file.token) && !file.readOnly && field.deleteFileHandler,
+					showName: true,
+					leftIndent: field.getFilePreviewIndent(),
+					onFilePreviewMenuClick: field.onFilePreviewMenuClick,
+				})),
 				View(
 					{
 						onClick: () => field.onOpenAttachmentList(),

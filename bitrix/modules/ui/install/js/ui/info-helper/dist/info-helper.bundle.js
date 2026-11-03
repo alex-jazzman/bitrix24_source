@@ -1,2 +1,770 @@
-this.BX=this.BX||{},function(e,t,s,a,r,i){"use strict";class l{static ClosePage(){var e;null==(e=BX.SidePanel.Instance.getTopSlider())||e.close(),BX.UI.InfoHelper.close()}static openPage(){window.location.href=BX.UI.InfoHelper.frameUrl}static openPageInNewTab(){window.open(BX.UI.InfoHelper.frameUrl,"_blank")}static reloadParent(){BX.UI.InfoHelper.reloadParent()}static openSlider(e){top.BX.SidePanel.Instance.open(e.url)}static openPriceTable(e){let t="/settings/license_all.php";e&&e.subscr&&(t=i.Uri.addParam(t,{subscr:e.subscr})),l.openSlider({url:t})}static openChatWithHead(e){const t=top.BX.Messenger.Public.openChat(),a={tool:"InfoHelper",c_section:document.location.href,event:"create_chatforrequest"};e.toolId&&i.ajax.runAction("intranet.tools.tool.createHeadChat",{data:{toolId:e.toolId}}).then(r=>{t.then(()=>{top.BX.Messenger.Public.openChat("chat"+r.data.chatId)}),a.type=e.toolId,a.category="tool_off",s.sendData(a)}),e.featureCode&&i.ajax.runAction("bitrix24.license.upgraderequest.createHeadChat",{data:{code:e.featureCode}}).then(r=>{t.then(()=>{top.BX.Messenger.Public.openChat("chat"+r.data.chatId)}),a.type=e.featureCode,a.category="limit",s.sendData(a)})}static openCheckout(e){if(e.tariff){var t;const s=i.Uri.addParam("/settings/order/make.php",{product:e.period?e.tariff+e.period:e.tariff+"12",subscr:null!=(t=e.subscr)?t:null});l.openSlider({url:s})}else if(i.Extension.getSettings("ui.info-helper").licenseType){var s;const t=i.Uri.addParam("/settings/order/make.php",{product:i.Extension.getSettings("ui.info-helper").licenseType+"12",subscr:null!=(s=e.subscr)?s:null});l.openSlider({url:t})}else this.openPriceTable(e)}static openBaasCheckout(e){const t=i.Uri.addParam("/settings/order/make.php",{product:"PACKAGE_"+e.package});l.openSlider({url:t})}static openToolsSettings(){l.openSlider({url:i.Extension.getSettings("ui.info-helper").settingsUrl+"?page=tools"})}static openInformer(e){top.BX.UI.InfoHelper.__showExternal(e.code,e.option)}static activateDemoSubscription(e){if("Y"===e.licenseAgreed){const e="/bitrix/tools/rest.php",t=e=>{var t;BX.SidePanel.Instance.getTopSlider()&&e.error&&(null==(t=BX.UI.InfoHelper.sliderProviderForOldFormat)||t.getFrame().contentWindow.postMessage({action:"onActivateDemoSubscriptionResult",result:e},"*"));if(!e.error){let e=window.location.href;e+=e.includes("?")?"&":"?",e+="feature_promoter=limit_market_trial_active",window.location.href=e}};BX.ajax({dataType:"json",method:"POST",url:e,data:{action:"activate_demo",sessid:BX.bitrix_sessid()},onsuccess:t,onfailure:function(e,s){t({error:e+(s?": "+s:"")})}})}}static activateDemoLicense(){i.ajax.runAction("ui.infoHelper.activateDemoLicense").then(e=>{const t=BX.SidePanel.Instance.getTopSlider(),s=a.FeaturePromotersRegistry.getLastPromoter(),r=null==s?void 0:s.getProvider();var i;t&&(r instanceof g&&"limit_demo"===s.getCode()?null==r||r.getFrame().contentWindow.postMessage({action:"onActivateDemoLicenseResult",result:e},"*"):null==(i=BX.UI.InfoHelper.sliderProviderForOldFormat)||i.getFrame().contentWindow.postMessage({action:"onActivateDemoLicenseResult",result:e},"*"));"Y"===e.data.success&&(BX.onCustomEvent("BX.UI.InfoHelper:onActivateDemoLicenseSuccess",{result:e}),window.location.reload())})}static openBuySubscriptionPage(){i.ajax.runAction("ui.infoHelper.getBuySubscriptionUrl").then(e=>{e.data&&e.data.url&&("blank"===e.data.action?window.open(e.data.url,"_blank"):"redirect"===e.data.action&&(window.location.href=e.data.url))})}static activateTrialFeature(e){i.ajax.runAction("ui.infoHelper.activateTrialFeature",{data:{featureId:e.featureId}}).then(t=>{var s;BX.SidePanel.Instance.getTopSlider()&&(null==(s=BX.UI.InfoHelper.sliderProviderForOldFormat)||s.getFrame().contentWindow.postMessage({action:"onActivateTrialFeature",result:t},"*"));"Y"===t.data.success&&BX.onCustomEvent("BX.UI.InfoHelper:onActivateTrialFeatureSuccess",{result:t,featureId:e.featureId})})}}var o=babelHelpers.classPrivateFieldLooseKey("code"),n=babelHelpers.classPrivateFieldLooseKey("category");class d{constructor(e,t){Object.defineProperty(this,o,{writable:!0,value:void 0}),Object.defineProperty(this,n,{writable:!0,value:void 0}),babelHelpers.classPrivateFieldLooseBase(this,o)[o]=e,babelHelpers.classPrivateFieldLooseBase(this,n)[n]=t}sendByEventName(e,t=null){s.sendData({tool:"InfoHelper",category:babelHelpers.classPrivateFieldLooseBase(this,n)[n],type:babelHelpers.classPrivateFieldLooseBase(this,o)[o],event:e,c_section:new i.Uri(document.location.href).getPath(),p1:t})}}class c{}c.SLIDER="slider",c.POPUP="popup";var p=babelHelpers.classPrivateFieldLooseKey("type"),u=babelHelpers.classPrivateFieldLooseKey("code"),b=babelHelpers.classPrivateFieldLooseKey("featureId");class h{constructor(e){if(Object.defineProperty(this,p,{writable:!0,value:void 0}),Object.defineProperty(this,u,{writable:!0,value:void 0}),Object.defineProperty(this,b,{writable:!0,value:void 0}),e.type!==c.SLIDER&&e.type!==c.POPUP)throw new Error("Invalid parameter 'type'");var t,s;babelHelpers.classPrivateFieldLooseBase(this,p)[p]=e.type,babelHelpers.classPrivateFieldLooseBase(this,u)[u]=null!=(t=e.code)?t:null,babelHelpers.classPrivateFieldLooseBase(this,b)[b]=null!=(s=e.featureId)?s:null}getRequest(){return i.ajax.runAction(h.controller,{data:{type:babelHelpers.classPrivateFieldLooseBase(this,p)[p],code:babelHelpers.classPrivateFieldLooseBase(this,u)[u],currentUrl:window.location.href,featureId:babelHelpers.classPrivateFieldLooseBase(this,b)[b]}})}}h.controller="ui.infoHelper.getInitParams";class v{show(e,t){throw new Error("Must be implemented in a child class")}close(){throw new Error("Must be implemented in a child class")}}var P=babelHelpers.classPrivateFieldLooseKey("openSlider"),m=babelHelpers.classPrivateFieldLooseKey("buildUrl"),f=babelHelpers.classPrivateFieldLooseKey("createContainerNode"),F=babelHelpers.classPrivateFieldLooseKey("createFrameNode");class g extends v{constructor(e={}){if(super(),Object.defineProperty(this,F,{value:w}),Object.defineProperty(this,f,{value:H}),Object.defineProperty(this,m,{value:B}),Object.defineProperty(this,P,{value:L}),this.frameUrlTemplate=e.frameUrlTemplate||"",this.frameUrl=i.Type.isStringFilled(e.frameUrl)?e.frameUrl:"",this.width=i.Type.isNumber(e.width)?e.width:700,this.constructorParams=e,e.dataSource&&e.dataSource instanceof Promise)this.dataSource=e.dataSource;else{const t={type:c.SLIDER,code:null,featureId:e.featureId};this.dataSource=new h(t).getRequest()}}__showExternal(e,t){let s=700;const r=`${this.getId()}:${e}`,l=babelHelpers.classPrivateFieldLooseBase(this,F)[F]();t&&t.width&&t.width>0&&(s=t.width);const o=a.FeaturePromotersRegistry.getPromoter({code:e}).getProvider();babelHelpers.classPrivateFieldLooseBase(this,P)[P]({id:r,contentCallback:(t=>new Promise((t,s)=>{const a={type:c.SLIDER};new h(a).getRequest().then(t=>{var s,a;i.Type.isStringFilled(this.frameUrlTemplate)||(this.frameUrlTemplate=null!=(s=null==(a=t.data)?void 0:a.frameUrlTemplate)?s:"");return l.src=babelHelpers.classPrivateFieldLooseBase(this,m)[m](e),babelHelpers.classPrivateFieldLooseBase(this,f)[f](this.getLoader(),l)}).then(e=>t(e))})).bind(this),width:s,events:{onLoad:()=>{o.frameNode=l,o.frameUrl=l.src,this.showFrame(l)}}})}show(e,t){this.isOpen()||(i.Type.isPlainObject(t)||(t={}),(e||t.featureId||this.constructorParams.featureId||this.constructorParams.dataSource)&&(this.contentCallback=s=>new Promise((s,a)=>{this.hasOpen?s(this.getContent()):this.dataSource.then(a=>{const{data:r}=a;return r.code&&(e=r.code),this.frameUrlTemplate=r.frameUrlTemplate,this.frameUrl=babelHelpers.classPrivateFieldLooseBase(this,m)[m](e,t,r),this.getFrame().src!==this.frameUrl&&(this.getFrame().src=this.frameUrl),this.bindEvent(r.availableDomainList),this.hasOpen=!0,s(this.getContent())})}),babelHelpers.classPrivateFieldLooseBase(this,P)[P]({id:this.getId(),contentCallback:this.contentCallback,width:this.width,events:{onLoad:()=>this.showFrame(),onClose:()=>{var e;(i.Event.unbindAll(window,"message"),this.frameNode)&&(null==(e=this.frameNode.contentWindow)||e.postMessage({action:"onCloseWidget"},"*"))}}})))}bindEvent(e){BX.bind(top.window,"message",BX.proxy((function(t){if(!t.origin||t.origin&&!e.includes(t.origin))return;if(!t.data||!i.Type.isObject(t.data))return;const s=l[t.data.action];i.Type.isFunction(s)&&s(t.data)}),this))}close(){const e=this.getSlider();e&&e.isOpen()&&e.close()}getContent(){return this.content||(this.content=babelHelpers.classPrivateFieldLooseBase(this,f)[f](this.getLoader(),this.getFrame())),this.content}getId(){return"ui:info_helper"}getFrame(){return this.frameNode||(this.frameNode=babelHelpers.classPrivateFieldLooseBase(this,F)[F]()),this.frameNode}hasFrameNode(){return i.Type.isElementNode(this.frameNode)}showFrame(e){e||(e=this.getFrame()),setTimeout(()=>{e.classList.add("info-helper-panel-iframe-show")},600)}getSlider(){return BX.SidePanel.Instance.getSlider(this.getId())}isOpen(){return this.getSlider()&&this.getSlider().isOpen()}getLoader(){if(this.popupLoader)return this.popupLoader;const e=new t.Loader({target:BX("info-helper-container"),size:100});return e.show(),this.popupLoader=e.data.container,this.popupLoader}}function L(e){BX.SidePanel.Instance.open(e.id,{contentCallback:e.contentCallback,width:e.width,loader:"default-loader",cacheable:!1,customRightBoundary:0,events:e.events})}function B(e,t={},s=null){let a=this.frameUrlTemplate.replace(/code/,e);return t.featureId&&i.Type.isArray(s.trialableFeatureList)&&(a=i.Uri.addParam(a,{featureId:t.featureId,trialableFeatureList:s.trialableFeatureList.join(",")})),a}function H(e,t){return BX.create("div",{attrs:{className:"info-helper-container",id:"info-helper-container"},children:[e,t]})}function w(){return BX.create("iframe",{attrs:{className:"info-helper-panel-iframe",src:"about:blank"}})}var y=babelHelpers.classPrivateFieldLooseKey("dataSource"),I=babelHelpers.classPrivateFieldLooseKey("bindElement"),O=babelHelpers.classPrivateFieldLooseKey("popup"),S=babelHelpers.classPrivateFieldLooseKey("code"),E=babelHelpers.classPrivateFieldLooseKey("analytics"),U=babelHelpers.classPrivateFieldLooseKey("getPopup");class T extends v{constructor(e){var t,s;if(super(),Object.defineProperty(this,U,{value:X}),Object.defineProperty(this,y,{writable:!0,value:void 0}),Object.defineProperty(this,I,{writable:!0,value:void 0}),Object.defineProperty(this,O,{writable:!0,value:void 0}),Object.defineProperty(this,S,{writable:!0,value:void 0}),Object.defineProperty(this,E,{writable:!0,value:void 0}),!i.Type.isDomNode(e.bindElement))throw new Error("Invalid parameter 'bindElement'");if(babelHelpers.classPrivateFieldLooseBase(this,I)[I]=e.bindElement,!i.Type.isString(e.code))throw new Error("Invalid parameter 'code'");if(babelHelpers.classPrivateFieldLooseBase(this,S)[S]=e.code,e.dataSource&&e.dataSource instanceof Promise)babelHelpers.classPrivateFieldLooseBase(this,y)[y]=e.dataSource;else{const t={type:c.POPUP,code:babelHelpers.classPrivateFieldLooseBase(this,S)[S],featureId:e.featureId};babelHelpers.classPrivateFieldLooseBase(this,y)[y]=new h(t).getRequest()}babelHelpers.classPrivateFieldLooseBase(this,E)[E]=new d(null!=(t=null==(s=e.analytics)?void 0:s.code)?t:babelHelpers.classPrivateFieldLooseBase(this,S)[S],c.POPUP)}show(e,t){babelHelpers.classPrivateFieldLooseBase(this,U)[U]().show(),babelHelpers.classPrivateFieldLooseBase(this,E)[E].sendByEventName("show")}close(){babelHelpers.classPrivateFieldLooseBase(this,U)[U]().close(),babelHelpers.classPrivateFieldLooseBase(this,E)[E].sendByEventName("close")}}function X(){if(!babelHelpers.classPrivateFieldLooseBase(this,O)[O]){const e=(e,t)=>{babelHelpers.classPrivateFieldLooseBase(this,E)[E]&&babelHelpers.classPrivateFieldLooseBase(this,E)[E].sendByEventName(e,t)};babelHelpers.classPrivateFieldLooseBase(this,O)[O]=new r.PopupWithHeader({target:babelHelpers.classPrivateFieldLooseBase(this,I)[I],id:"demo-popup-components-maker-"+Math.random(8),width:370,skeletonWidth:370,content:[],asyncData:babelHelpers.classPrivateFieldLooseBase(this,y)[y],template:new r.SaleTemplate({analyticsCallback:e}),analyticsCallback:e})}return babelHelpers.classPrivateFieldLooseBase(this,O)[O]}var j=babelHelpers.classPrivateFieldLooseKey("code"),C=babelHelpers.classPrivateFieldLooseKey("provider"),K=babelHelpers.classPrivateFieldLooseKey("options"),_=babelHelpers.classPrivateFieldLooseKey("analytics"),k=babelHelpers.classPrivateFieldLooseKey("createProvider");class x{constructor(e){var t,s,a;if(Object.defineProperty(this,k,{value:N}),Object.defineProperty(this,j,{writable:!0,value:void 0}),Object.defineProperty(this,C,{writable:!0,value:void 0}),Object.defineProperty(this,K,{writable:!0,value:void 0}),Object.defineProperty(this,_,{writable:!0,value:void 0}),!e.code&&!e.featureId)throw new Error("Either the 'code' parameter or the 'featureId' parameter is required");babelHelpers.classPrivateFieldLooseBase(this,K)[K]=e,babelHelpers.classPrivateFieldLooseBase(this,K)[K].bindElement=null!=(t=e.bindElement)?t:null,babelHelpers.classPrivateFieldLooseBase(this,j)[j]=null!=(s=e.code)?s:"",babelHelpers.classPrivateFieldLooseBase(this,_)[_]=null!=(a=e.analytics)?a:null;const r=i.Extension.getSettings("ui.info-helper");babelHelpers.classPrivateFieldLooseBase(this,C)[C]=babelHelpers.classPrivateFieldLooseBase(this,k)[k](r)}getOptions(){return babelHelpers.classPrivateFieldLooseBase(this,K)[K]}getCode(){return babelHelpers.classPrivateFieldLooseBase(this,j)[j]}getProvider(){return babelHelpers.classPrivateFieldLooseBase(this,C)[C]}getAnalytics(){return babelHelpers.classPrivateFieldLooseBase(this,_)[_]}show(){return babelHelpers.classPrivateFieldLooseBase(this,C)[C].show(babelHelpers.classPrivateFieldLooseBase(this,j)[j],{})}close(){return babelHelpers.classPrivateFieldLooseBase(this,C)[C].close()}getBindElement(){return this.getOptions().bindElement}}function N(e){if(!(i.Type.isObject(e)&&e.popupProviderEnabled&&i.Type.isDomNode(this.getOptions().bindElement))||this.getOptions().featureId&&e.isUpgradeTariffAvailable){var t;const e=new g({featureId:null!=(t=this.getOptions().featureId)?t:null});return null!=a.InfoHelper.sliderProviderForOldFormat||(a.InfoHelper.sliderProviderForOldFormat=e),e}var s;return new T({bindElement:this.getOptions().bindElement,code:babelHelpers.classPrivateFieldLooseBase(this,j)[j],analytics:babelHelpers.classPrivateFieldLooseBase(this,_)[_],featureId:null!=(s=this.getOptions().featureId)?s:null})}var A=babelHelpers.classPrivateFieldLooseKey("promoters");class D{static register(e){D.exist(e)||babelHelpers.classPrivateFieldLooseBase(D,A)[A].push(e)}static exist(e){return babelHelpers.classPrivateFieldLooseBase(D,A)[A].find(t=>t===e)}static getPromoter(e){let t;return babelHelpers.classPrivateFieldLooseBase(D,A)[A].forEach(s=>{let a=!0;Object.keys(s.getOptions()).forEach(t=>{s.getOptions()[t]!==e[t]&&(a=!1)}),a&&(t=s)}),t instanceof x||(t=new x(e),D.register(t)),t}static getLastPromoter(){var e;const t=babelHelpers.classPrivateFieldLooseBase(this,A)[A].length;return null!=(e=babelHelpers.classPrivateFieldLooseBase(this,A)[A][t-1])?e:null}}Object.defineProperty(D,A,{writable:!0,value:[]});var R=babelHelpers.classPrivateFieldLooseKey("elements"),M=babelHelpers.classPrivateFieldLooseKey("isLaunch"),W=babelHelpers.classPrivateFieldLooseKey("attributeName");class q{static launch(){babelHelpers.classPrivateFieldLooseBase(q,M)[M]||(q.getElements().forEach(e=>{i.Event.bind(e,"click",t=>{var s,a,r;const i=null==(s=t.target)||null==(a=s.attributes)||null==(r=a.getNamedItem(babelHelpers.classPrivateFieldLooseBase(q,W)[W]))?void 0:r.value;i&&D.getPromoter({code:i,bindElement:e}).show()})}),babelHelpers.classPrivateFieldLooseBase(q,M)[M]=!0)}static getElements(){return babelHelpers.classPrivateFieldLooseBase(q,R)[R]||(babelHelpers.classPrivateFieldLooseBase(q,R)[R]=document.querySelectorAll(`[${babelHelpers.classPrivateFieldLooseBase(q,W)[W]}]`)),babelHelpers.classPrivateFieldLooseBase(q,R)[R]}}Object.defineProperty(q,R,{writable:!0,value:void 0}),Object.defineProperty(q,M,{writable:!0,value:void 0}),Object.defineProperty(q,W,{writable:!0,value:"data-feature-promoter"}),q.launch(),e.InfoHelper=class{static init(e){this.sliderProviderForOldFormat=new g({width:700,frameUrlTemplate:e.frameUrlTemplate})}static __showExternal(e,t){var s;this.sliderProviderForOldFormat||this.init({}),null==(s=this.sliderProviderForOldFormat)||s.__showExternal(e,t)}static show(e,t){var s;i.Type.isPlainObject(t)||(t={}),this.init({}),null==(s=this.sliderProviderForOldFormat)||s.show(e,t)}static close(){var e;null==(e=this.sliderProviderForOldFormat)||e.close()}static getContent(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.getContent()}static getFrame(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.getFrame()}static showFrame(e){var t;null==(t=this.sliderProviderForOldFormat)||t.showFrame(e)}static getLoader(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.getLoader()}static getSliderId(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.getId()}static getSlider(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.getSlider()}static reloadParent(){let e=!1;const t=BX.SidePanel.Instance.getTopSlider();t&&(e=BX.SidePanel.Instance.getPreviousSlider(t)),e?e.reload():window.location.reload()}static isOpen(){var e;return null==(e=this.sliderProviderForOldFormat)?void 0:e.isOpen()}static isInited(){return this.inited}},e.FeaturePromoter=x,e.FeaturePromotersRegistry=D}(this.BX.UI=this.BX.UI||{},BX,BX.UI.Analytics,BX.UI,BX.UI,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core, main_loader, ui_analytics, ui_buttons, ui_dialogs_messagebox, ui_infoHelper, ui_popupWithHeader) {
+	'use strict';
+
+	class Analytics {
+		#code;
+		#category;
+		constructor(code, category) {
+			this.#code = code;
+			this.#category = category;
+		}
+		sendByEventName(event, additionalParameter = null) {
+			ui_analytics.sendData({
+				tool: 'InfoHelper',
+				category: this.#category,
+				type: this.#code,
+				event: event,
+				c_section: new main_core.Uri(document.location.href).getPath(),
+				p1: additionalParameter
+			});
+		}
+	}
+
+	class BaseProvider {
+		show(code, params) {
+			throw new Error('Must be implemented in a child class');
+		}
+		close() {
+			throw new Error('Must be implemented in a child class');
+		}
+	}
+
+	class ProvidersType {
+		static SLIDER = 'slider';
+		static POPUP = 'popup';
+	}
+
+	class ProviderRequestFactory {
+		#type;
+		#code;
+		#featureId;
+		static controller = 'ui.infoHelper.getInitParams';
+		constructor(configuration) {
+			if (configuration.type === ProvidersType.SLIDER || configuration.type === ProvidersType.POPUP) {
+				this.#type = configuration.type;
+				this.#code = configuration.code ?? null;
+				this.#featureId = configuration.featureId ?? null;
+			} else {
+				throw new Error("Invalid parameter 'type'");
+			}
+		}
+		getRequest() {
+			return main_core.ajax.runAction(ProviderRequestFactory.controller, {
+				data: {
+					type: this.#type,
+					code: this.#code,
+					currentUrl: window.location.href,
+					featureId: this.#featureId
+				}
+			});
+		}
+	}
+
+	class PopupProvider extends BaseProvider {
+		#dataSource;
+		#bindElement;
+		#popup;
+		#code;
+		#analytics;
+		constructor(config) {
+			super();
+			if (main_core.Type.isDomNode(config.bindElement)) {
+				this.#bindElement = config.bindElement;
+			} else {
+				throw new Error("Invalid parameter 'bindElement'");
+			}
+			if (main_core.Type.isString(config.code)) {
+				this.#code = config.code;
+			} else {
+				throw new Error("Invalid parameter 'code'");
+			}
+			if (config.dataSource && config.dataSource instanceof Promise) {
+				this.#dataSource = config.dataSource;
+			} else {
+				const providerRequestFactoryConfiguration = {
+					type: ProvidersType.POPUP,
+					code: this.#code,
+					featureId: config.featureId
+				};
+				this.#dataSource = new ProviderRequestFactory(providerRequestFactoryConfiguration).getRequest();
+			}
+			this.#analytics = new Analytics(config.analytics?.code ?? this.#code, ProvidersType.POPUP);
+		}
+		show(code, params) {
+			this.#getPopup().show();
+			this.#analytics.sendByEventName('show');
+		}
+		close() {
+			this.#getPopup().close();
+			this.#analytics.sendByEventName('close');
+		}
+		#getPopup() {
+			if (!this.#popup) {
+				const analyticsCallbackFunction = (event, additionalParameter) => {
+					if (this.#analytics) {
+						this.#analytics.sendByEventName(event, additionalParameter);
+					}
+				};
+				this.#popup = new ui_popupWithHeader.PopupWithHeader({
+					target: this.#bindElement,
+					id: `demo-popup-components-maker-${Math.random(8)}`,
+					width: 370,
+					skeletonWidth: 370,
+					content: [],
+					asyncData: this.#dataSource,
+					template: new ui_popupWithHeader.SaleTemplate({
+						analyticsCallback: analyticsCallbackFunction
+					}),
+					analyticsCallback: analyticsCallbackFunction
+				});
+			}
+			return this.#popup;
+		}
+	}
+
+	class FeaturePromoter {
+		#code;
+		#provider;
+		#options;
+		#analytics;
+		constructor(options) {
+			if (!options.code && !options.featureId) {
+				throw new Error("Either the 'code' parameter or the 'featureId' parameter is required");
+			}
+			this.#options = options;
+			this.#options.bindElement = options.bindElement ?? null;
+			this.#code = options.code ?? '';
+			this.#analytics = options.analytics ?? null;
+			const settings = main_core.Extension.getSettings('ui.info-helper');
+			this.#provider = this.#createProvider(settings);
+		}
+		getOptions() {
+			return this.#options;
+		}
+		getCode() {
+			return this.#code;
+		}
+		getProvider() {
+			return this.#provider;
+		}
+		getAnalytics() {
+			return this.#analytics;
+		}
+		show(params = {}) {
+			return this.#provider.show(this.#code, params);
+		}
+		close() {
+			return this.#provider.close();
+		}
+		getBindElement() {
+			return this.getOptions().bindElement;
+		}
+		#createProvider(settings) {
+			if (main_core.Type.isObject(settings) && settings.popupProviderEnabled && main_core.Type.isDomNode(this.getOptions().bindElement) && (!this.getOptions().featureId || !settings.isUpgradeTariffAvailable)) {
+				return new PopupProvider({
+					bindElement: this.getOptions().bindElement,
+					code: this.#code,
+					analytics: this.#analytics,
+					featureId: this.getOptions().featureId ?? null
+				});
+			} else {
+				const provider = new SliderProvider({
+					featureId: this.getOptions().featureId ?? null
+				});
+				ui_infoHelper.InfoHelper.sliderProviderForOldFormat ??= provider;
+				return provider;
+			}
+		}
+	}
+
+	class FeaturePromotersRegistry {
+		static #promoters = [];
+		static register(promoter) {
+			if (!FeaturePromotersRegistry.exist(promoter)) {
+				FeaturePromotersRegistry.#promoters.push(promoter);
+			}
+		}
+		static exist(promoter) {
+			return FeaturePromotersRegistry.#promoters.find(savedPromoter => savedPromoter === promoter);
+		}
+		static getPromoter(config) {
+			let promoter;
+			FeaturePromotersRegistry.#promoters.forEach(savedPromoter => {
+				let isSavedPromoter = true;
+				Object.keys(savedPromoter.getOptions()).forEach(key => {
+					if (savedPromoter.getOptions()[key] !== config[key]) {
+						isSavedPromoter = false;
+					}
+				});
+				if (isSavedPromoter) {
+					promoter = savedPromoter;
+				}
+			});
+			if (promoter instanceof FeaturePromoter) {
+				return promoter;
+			}
+			promoter = new FeaturePromoter(config);
+			FeaturePromotersRegistry.register(promoter);
+			return promoter;
+		}
+		static getLastPromoter() {
+			const count = this.#promoters.length;
+			return this.#promoters[count - 1] ?? null;
+		}
+	}
+
+	class Actions {
+		static ClosePage() {
+			BX.SidePanel.Instance.getTopSlider()?.close();
+			BX.UI.InfoHelper.close();
+		}
+		static openPage() {
+			window.location.href = BX.UI.InfoHelper.frameUrl;
+		}
+		static openPageInNewTab() {
+			window.open(BX.UI.InfoHelper.frameUrl, '_blank');
+		}
+		static reloadParent() {
+			BX.UI.InfoHelper.reloadParent();
+		}
+		static openSlider(data) {
+			top.BX.SidePanel.Instance.open(data.url);
+		}
+		static openPriceTable(data) {
+			let url = '/settings/license_all.php';
+			if (data && data.subscr) {
+				url = main_core.Uri.addParam(url, {
+					subscr: data.subscr
+				});
+			}
+			Actions.openSlider({
+				url
+			});
+		}
+		static openChatWithHead(data) {
+			const opener = top.BX.Messenger.Public.openChat();
+			const analyticData = {
+				tool: 'InfoHelper',
+				c_section: document.location.href,
+				event: 'create_chatforrequest'
+			};
+			if (data.toolId) {
+				main_core.ajax.runAction('intranet.tools.tool.createHeadChat', {
+					data: {
+						toolId: data.toolId
+					}
+				}).then(response => {
+					opener.then(() => {
+						top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
+					});
+					analyticData.type = data.toolId;
+					analyticData.category = 'tool_off';
+					ui_analytics.sendData(analyticData);
+				});
+			}
+			if (data.featureCode) {
+				main_core.ajax.runAction('bitrix24.license.upgraderequest.createHeadChat', {
+					data: {
+						code: data.featureCode
+					}
+				}).then(response => {
+					opener.then(() => {
+						top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
+					});
+					analyticData.type = data.featureCode;
+					analyticData.category = 'limit';
+					ui_analytics.sendData(analyticData);
+				});
+			}
+		}
+		static openCheckout(data) {
+			if (data.tariff) {
+				const url = main_core.Uri.addParam('/settings/order/make.php', {
+					product: data.period ? data.tariff + data.period : `${data.tariff}12`,
+					subscr: data.subscr ?? null
+				});
+				Actions.openSlider({
+					url
+				});
+			} else if (main_core.Extension.getSettings('ui.info-helper').licenseType) {
+				const url = main_core.Uri.addParam('/settings/order/make.php', {
+					product: `${main_core.Extension.getSettings('ui.info-helper').licenseType}12`,
+					subscr: data.subscr ?? null
+				});
+				Actions.openSlider({
+					url
+				});
+			} else {
+				this.openPriceTable(data);
+			}
+		}
+		static openBaasCheckout(data) {
+			const url = main_core.Uri.addParam('/settings/order/make.php', {
+				product: `PACKAGE_${data.package}`
+			});
+			Actions.openSlider({
+				url
+			});
+		}
+		static openToolsSettings() {
+			Actions.openSlider({
+				url: main_core.Extension.getSettings('ui.info-helper').settingsUrl + '?page=tools'
+			});
+		}
+		static openInformer(data) {
+			top.BX.UI.InfoHelper.__showExternal(data.code, data.option);
+		}
+		static activateDemoSubscription(data) {
+			if (data.licenseAgreed === 'Y') {
+				const ajaxRestPath = '/bitrix/tools/rest.php';
+				const callback = result => {
+					const slider = BX.SidePanel.Instance.getTopSlider();
+					if (slider && result.error) {
+						BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame().contentWindow.postMessage({
+							action: 'onActivateDemoSubscriptionResult',
+							result: result
+						}, '*');
+					}
+					if (!result.error) {
+						let url = window.location.href;
+						url += url.includes('?') ? '&' : '?';
+						url += 'feature_promoter=limit_market_trial_active';
+						window.location.href = url;
+					}
+				};
+				BX.ajax({
+					dataType: 'json',
+					method: 'POST',
+					url: ajaxRestPath,
+					data: {
+						action: 'activate_demo',
+						sessid: BX.bitrix_sessid()
+					},
+					onsuccess: callback,
+					onfailure: function (error_type, error) {
+						callback({
+							error: error_type + (error ? `: ${error}` : '')
+						});
+					}
+				});
+			}
+		}
+		static activateDemoLicense() {
+			return main_core.ajax.runAction('ui.infoHelper.activateDemoLicense').then(response => Actions.#processDemoActivationResponse(response), () => Actions.#processDemoActivationResponse({
+				data: {
+					success: 'N',
+					error: {
+						message: main_core.Loc.getMessage('UI_INFO_HELPER_DEMO_LICENSE_ACTIVATION_FAILED')
+					}
+				}
+			}));
+		}
+		static #processDemoActivationResponse(response) {
+			Actions.#notifyDemoActivationResult(response);
+			if (response.data.success === 'N' && response.data.error) {
+				Actions.showDemoActivationError(response.data.error);
+			}
+			if (response.data.success === 'Y') {
+				BX.onCustomEvent('BX.UI.InfoHelper:onActivateDemoLicenseSuccess', {
+					result: response
+				});
+				window.location.reload();
+			}
+		}
+		static #notifyDemoActivationResult(response) {
+			if (!BX.SidePanel.Instance.getTopSlider()) {
+				return;
+			}
+			const promoter = FeaturePromotersRegistry.getLastPromoter();
+			const provider = promoter?.getProvider();
+			const frame = provider instanceof SliderProvider && promoter?.getCode() === 'limit_demo' ? provider.getFrame() : BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame();
+			frame?.contentWindow?.postMessage({
+				action: 'onActivateDemoLicenseResult',
+				result: response
+			}, '*');
+		}
+		static showDemoActivationError(error) {
+			const action = error.customData?.action;
+			const hasAction = main_core.Type.isStringFilled(action?.title) && main_core.Type.isStringFilled(action?.code);
+			const buttons = hasAction ? [this.#getHelperButton(action.title, action.code), this.#getCloseButton()] : [this.#getCloseButton(true)];
+			new ui_dialogs_messagebox.MessageBox({
+				useAirDesign: true,
+				message: error.message,
+				title: error.customData?.title,
+				buttons,
+				popupOptions: {
+					closeByEsc: true,
+					closeIcon: true
+				}
+			}).show();
+		}
+		static #getCloseButton(primary = false) {
+			return new ui_buttons.CloseButton({
+				color: primary ? ui_buttons.ButtonColor.PRIMARY : ui_buttons.ButtonColor.LINK,
+				useAirDesign: true,
+				wide: true,
+				events: {
+					click: button => {
+						button.getContext().close();
+					}
+				}
+			});
+		}
+		static #getHelperButton(title, code) {
+			return new ui_buttons.Button({
+				color: ui_buttons.ButtonColor.PRIMARY,
+				text: title,
+				useAirDesign: true,
+				wide: true,
+				onclick: button => {
+					button.getContext().close();
+					top.BX.Helper.show(`redirect=detail&code=${code}`);
+				}
+			});
+		}
+		static openBuySubscriptionPage() {
+			main_core.ajax.runAction('ui.infoHelper.getBuySubscriptionUrl').then(response => {
+				if (!!response.data && !!response.data.url) {
+					if (response.data.action === 'blank') {
+						window.open(response.data.url, '_blank');
+					} else if (response.data.action === 'redirect') {
+						window.location.href = response.data.url;
+					}
+				}
+			});
+		}
+		static activateTrialFeature(data) {
+			main_core.ajax.runAction('ui.infoHelper.activateTrialFeature', {
+				data: {
+					featureId: data.featureId
+				}
+			}).then(response => {
+				const slider = BX.SidePanel.Instance.getTopSlider();
+				if (slider) {
+					BX.UI.InfoHelper.sliderProviderForOldFormat?.getFrame().contentWindow.postMessage({
+						action: 'onActivateTrialFeature',
+						result: response
+					}, '*');
+				}
+				if (response.data.success === 'Y') {
+					BX.onCustomEvent('BX.UI.InfoHelper:onActivateTrialFeatureSuccess', {
+						result: response,
+						featureId: data.featureId
+						// featureId: this.featureId
+					});
+				}
+			});
+		}
+	}
+
+	class SliderProvider extends BaseProvider {
+		constructor(params = {}) {
+			super();
+			this.frameUrlTemplate = params.frameUrlTemplate || '';
+			this.frameUrl = main_core.Type.isStringFilled(params.frameUrl) ? params.frameUrl : '';
+			this.width = main_core.Type.isNumber(params.width) ? params.width : 700;
+			this.constructorParams = params;
+			if (params.dataSource && params.dataSource instanceof Promise) {
+				this.dataSource = params.dataSource;
+			} else {
+				const providerRequestFactoryConfiguration = {
+					type: ProvidersType.SLIDER,
+					code: null,
+					featureId: params.featureId
+				};
+				this.dataSource = new ProviderRequestFactory(providerRequestFactoryConfiguration).getRequest();
+			}
+		}
+		__showExternal(code, option) {
+			let width = 700;
+			const sliderId = `${this.getId()}:${code}`;
+			const frame = this.#createFrameNode();
+			if (!!option && !!option.width && option.width > 0) {
+				width = option.width;
+			}
+			const contentCallback = slider => {
+				return new Promise((resolve, reject) => {
+					const providerRequestFactoryConfiguration = {
+						type: ProvidersType.SLIDER
+					};
+					new ProviderRequestFactory(providerRequestFactoryConfiguration).getRequest().then(response => {
+						if (!main_core.Type.isStringFilled(this.frameUrlTemplate)) {
+							this.frameUrlTemplate = response.data?.frameUrlTemplate ?? '';
+						}
+						frame.src = this.#buildUrl(code);
+						return this.#createContainerNode(this.getLoader(), frame);
+					}).then(content => resolve(content));
+				});
+			};
+			const provider = ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+				code
+			}).getProvider();
+			this.#openSlider({
+				id: sliderId,
+				contentCallback: contentCallback.bind(this),
+				width: width,
+				events: {
+					onLoad: () => {
+						provider.frameNode = frame;
+						provider.frameUrl = frame.src;
+						this.showFrame(frame);
+					}
+				}
+			});
+		}
+		show(code, params) {
+			if (this.isOpen()) {
+				return;
+			}
+			if (!main_core.Type.isPlainObject(params)) {
+				params = {};
+			}
+			const width = main_core.Type.isNumber(params.width) && params.width > 0 ? params.width : this.width;
+			if (!code && !params.featureId && !this.constructorParams.featureId && !this.constructorParams.dataSource) {
+				return;
+			}
+			this.contentCallback = slider => {
+				return new Promise((resolve, reject) => {
+					if (this.hasOpen) {
+						resolve(this.getContent());
+					} else {
+						this.dataSource.then(response => {
+							const {
+								data
+							} = response;
+							if (data.code) {
+								code = data.code;
+							}
+							this.frameUrlTemplate = data.frameUrlTemplate;
+							this.frameUrl = this.#buildUrl(code, params, data);
+							if (this.getFrame().src !== this.frameUrl) {
+								this.getFrame().src = this.frameUrl;
+							}
+							this.bindEvent(data.availableDomainList);
+							this.hasOpen = true;
+							return resolve(this.getContent());
+						});
+					}
+				});
+			};
+			this.#openSlider({
+				id: this.getId(),
+				contentCallback: this.contentCallback,
+				width,
+				events: {
+					onLoad: () => this.showFrame(),
+					onClose: () => {
+						main_core.Event.unbindAll(window, 'message');
+						if (this.frameNode) {
+							this.frameNode.contentWindow?.postMessage({
+								action: 'onCloseWidget'
+							}, '*');
+						}
+					}
+				}
+			});
+		}
+		bindEvent(availableDomainList) {
+			BX.bind(top.window, 'message', BX.proxy(function (event) {
+				if (!event.origin || !!event.origin && !availableDomainList.includes(event.origin)) {
+					return;
+				}
+				if (!event.data || !main_core.Type.isObject(event.data)) {
+					return;
+				}
+				const action = Actions[event.data.action];
+				if (main_core.Type.isFunction(action)) {
+					action(event.data);
+				}
+			}, this));
+		}
+		#openSlider(params) {
+			BX.SidePanel.Instance.open(params.id, {
+				contentCallback: params.contentCallback,
+				width: params.width,
+				loader: 'default-loader',
+				cacheable: false,
+				customRightBoundary: 0,
+				events: params.events
+			});
+		}
+		#buildUrl(code, params = {}, data = null) {
+			let url = this.frameUrlTemplate.replace(/code/, code);
+			if (params.featureId && main_core.Type.isArray(data.trialableFeatureList)) {
+				url = main_core.Uri.addParam(url, {
+					featureId: params.featureId,
+					trialableFeatureList: data.trialableFeatureList.join(',')
+				});
+			}
+			return url;
+		}
+		close() {
+			const slider = this.getSlider();
+			if (slider && slider.isOpen()) {
+				slider.close();
+			}
+		}
+		getContent() {
+			if (this.content) {
+				return this.content;
+			}
+			this.content = this.#createContainerNode(this.getLoader(), this.getFrame());
+			return this.content;
+		}
+		#createContainerNode(loader, frame) {
+			return BX.create('div', {
+				attrs: {
+					className: 'info-helper-container',
+					id: 'info-helper-container'
+				},
+				children: [loader, frame]
+			});
+		}
+		getId() {
+			return 'ui:info_helper';
+		}
+		getFrame() {
+			if (this.frameNode) {
+				return this.frameNode;
+			}
+			this.frameNode = this.#createFrameNode();
+			return this.frameNode;
+		}
+		hasFrameNode() {
+			return main_core.Type.isElementNode(this.frameNode);
+		}
+		#createFrameNode() {
+			return BX.create('iframe', {
+				attrs: {
+					className: 'info-helper-panel-iframe',
+					src: 'about:blank'
+				}
+			});
+		}
+		showFrame(frame) {
+			if (!frame) {
+				frame = this.getFrame();
+			}
+			setTimeout(() => {
+				frame.classList.add('info-helper-panel-iframe-show');
+			}, 600);
+		}
+		getSlider() {
+			return BX.SidePanel.Instance.getSlider(this.getId());
+		}
+		isOpen() {
+			return this.getSlider() && this.getSlider().isOpen();
+		}
+		getLoader() {
+			if (this.popupLoader) {
+				return this.popupLoader;
+			}
+			const loader = new main_loader.Loader({
+				target: BX('info-helper-container'),
+				size: 100
+			});
+			loader.show();
+			this.popupLoader = loader.data.container;
+			return this.popupLoader;
+		}
+	}
+
+	class InfoHelper {
+		static init(params) {
+			this.sliderProviderForOldFormat = new SliderProvider({
+				width: 700,
+				frameUrlTemplate: params.frameUrlTemplate
+			});
+		}
+		static __showExternal(code, option) {
+			if (!this.sliderProviderForOldFormat) {
+				this.init({});
+			}
+			this.sliderProviderForOldFormat?.__showExternal(code, option);
+		}
+		static show(code, params) {
+			if (!main_core.Type.isPlainObject(params)) {
+				params = {};
+			}
+			this.init({});
+			this.sliderProviderForOldFormat?.show(code, params);
+		}
+		static close() {
+			this.sliderProviderForOldFormat?.close();
+		}
+		static getContent() {
+			return this.sliderProviderForOldFormat?.getContent();
+		}
+		static getFrame() {
+			return this.sliderProviderForOldFormat?.getFrame();
+		}
+		static showFrame(frame) {
+			this.sliderProviderForOldFormat?.showFrame(frame);
+		}
+		static getLoader() {
+			return this.sliderProviderForOldFormat?.getLoader();
+		}
+		static getSliderId() {
+			return this.sliderProviderForOldFormat?.getId();
+		}
+		static getSlider() {
+			return this.sliderProviderForOldFormat?.getSlider();
+		}
+		static reloadParent() {
+			let slider = false;
+			const sliderTop = BX.SidePanel.Instance.getTopSlider();
+			if (sliderTop) {
+				slider = BX.SidePanel.Instance.getPreviousSlider(sliderTop);
+			}
+			if (slider) {
+				slider.reload();
+			} else {
+				window.location.reload();
+			}
+		}
+		static isOpen() {
+			return this.sliderProviderForOldFormat?.isOpen();
+		}
+		static isInited() {
+			return this.inited;
+		}
+	}
+
+	class FeaturePromoterAutoBinder {
+		static #elements;
+		static #isLaunch;
+		static #attributeName = 'data-feature-promoter';
+		static launch() {
+			if (!FeaturePromoterAutoBinder.#isLaunch) {
+				FeaturePromoterAutoBinder.getElements().forEach(element => {
+					main_core.Event.bind(element, 'click', event => {
+						const code = event.target?.attributes?.getNamedItem(FeaturePromoterAutoBinder.#attributeName)?.value;
+						if (code) {
+							FeaturePromotersRegistry.getPromoter({
+								code: code,
+								bindElement: element
+							}).show();
+						}
+					});
+				});
+				FeaturePromoterAutoBinder.#isLaunch = true;
+			}
+		}
+		static getElements() {
+			if (!FeaturePromoterAutoBinder.#elements) {
+				FeaturePromoterAutoBinder.#elements = document.querySelectorAll(`[${FeaturePromoterAutoBinder.#attributeName}]`);
+			}
+			return FeaturePromoterAutoBinder.#elements;
+		}
+	}
+
+	FeaturePromoterAutoBinder.launch();
+
+	exports.FeaturePromoter = FeaturePromoter;
+	exports.FeaturePromotersRegistry = FeaturePromotersRegistry;
+	exports.InfoHelper = InfoHelper;
+
+})(this.BX.UI = this.BX.UI || {}, BX, BX, BX.UI.Analytics, BX.UI, BX.UI.Dialogs, BX.UI, BX.UI);
 //# sourceMappingURL=info-helper.bundle.js.map

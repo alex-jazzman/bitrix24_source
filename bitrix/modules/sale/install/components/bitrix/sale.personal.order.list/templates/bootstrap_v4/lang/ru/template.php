@@ -44,4 +44,6 @@ $MESS["SPOL_CANCEL_PAYMENT"] = "назад";
 $MESS["SPOL_ORDER_SHIPMENT_STATUS"] = "Статус отгрузки";
 $MESS["SPOL_CHECK_TITLE"] = "Список чеков";
 $MESS["SPOL_CHECK_NUM"] = "Чек №#CHECK_NUMBER#";
+$MESS['SPOL_COPY_TRACKING_ARIA'] = 'Скопировать идентификатор отправления #NUMBER#';
+$MESS['SPOL_PAYMENT_FORM_ARIA'] = 'Оплата счёта №#BILL#';
 ?>

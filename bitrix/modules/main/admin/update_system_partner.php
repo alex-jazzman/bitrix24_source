@@ -51,6 +51,8 @@ else
 	$myaddmodule = preg_replace("#[^a-z0-9.,_-]#i", "", $_REQUEST["addmodule"] ?? '');
 }
 
+$requestedModuleIds = explode(',', strtolower($myaddmodule));
+
 $stableVersionsOnly = COption::GetOptionString("main", "stable_versions_only", "Y");
 $arRequestedModules = CUpdateClientPartner::GetRequestedModules($myaddmodule);
 
@@ -697,8 +699,10 @@ $tabControl->BeginNextTab();
 							$arModuleTmp["@"]["ID"] = preg_replace("#[^A-Za-z0-9._-]#", "", $arModuleTmp["@"]["ID"]);
 							if($myaddmodule <> '')
 							{
-								if(strtolower($myaddmodule) != strtolower($arModuleTmp["@"]["ID"]) && !str_contains(strtolower($myaddmodule), strtolower($arModuleTmp["@"]["ID"])))
+								if (!in_array(strtolower($arModuleTmp["@"]["ID"]), $requestedModuleIds, true))
+								{
 									$checked = "";
+								}
 							}
 							$strTitleTmp = $arModuleTmp["@"]["NAME"]." (".$arModuleTmp["@"]["ID"].")\n".$arModuleTmp["@"]["DESCRIPTION"]."\n";
 							if (is_array($arModuleTmp["#"]) && array_key_exists("VERSION", $arModuleTmp["#"]) && !empty($arModuleTmp["#"]["VERSION"]))
@@ -728,7 +732,7 @@ $tabControl->BeginNextTab();
 									else
 									{
 										echo GetMessage("SUP_SULL_REF_N");
-										if(strtolower($myaddmodule) == strtolower($arModuleTmp["@"]["ID"]) || str_contains(strtolower($myaddmodule), strtolower($arModuleTmp["@"]["ID"])))
+										if (in_array(strtolower($arModuleTmp["@"]["ID"]), $requestedModuleIds, true))
 										{
 											?>
 											<script>

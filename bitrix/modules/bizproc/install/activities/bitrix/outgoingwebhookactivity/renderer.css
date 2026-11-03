@@ -1,0 +1,247 @@
+.bizproc-webhook-request-line {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-webhook-request-line__method {
+	flex: 0 0 auto;
+}
+
+.bizproc-webhook-request-line__url {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-webhook-section {
+	width: 100%;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+}
+
+.bizproc-webhook-section__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	cursor: pointer;
+	list-style: none;
+	transition: background-color 200ms ease;
+}
+
+.bizproc-webhook-section__header::-webkit-details-marker {
+	display: none;
+}
+
+.bizproc-webhook-section__header:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizproc-webhook-section__header::after {
+	content: '';
+	width: 6px;
+	height: 6px;
+	margin-left: auto;
+	border-right: 1.5px solid var(--ui-color-base-3);
+	border-bottom: 1.5px solid var(--ui-color-base-3);
+	transform: rotate(45deg) translate(-2px, -2px);
+	transition: transform 200ms ease;
+}
+
+.bizproc-webhook-section[open] > .bizproc-webhook-section__header::after {
+	transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.bizproc-webhook-section__caption {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook-section__summary {
+	overflow: hidden;
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bizproc-webhook-section__body {
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm) var(--ui-space-inset-sm);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.bizproc-webhook-pairs__head,
+.bizproc-webhook-pairs__row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-2xs);
+}
+
+.bizproc-webhook-pairs__head {
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook-pairs__cell {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.node-settings-panel input[type="text"].bizproc-webhook-pairs__name {
+	height: 44px;
+	margin-top: 2px;
+}
+
+.bizproc-webhook-pairs__head > .bizproc-webhook-pairs__cell:last-child {
+	margin-right: var(--ui-space-inline-lg);
+}
+
+.bizproc-webhook-pairs__remove {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+	transition: color 200ms ease;
+}
+
+.bizproc-webhook-pairs__remove:hover {
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-webhook-pairs__add {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	margin-top: var(--ui-space-stack-2xs);
+	color: var(--ui-color-accent-main-link);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	cursor: pointer;
+}
+
+.bizproc-webhook-fields__item {
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-webhook-fields__item:last-child {
+	margin-bottom: 0;
+}
+
+.bizproc-webhook-fields__label:not(:empty) {
+	margin-bottom: var(--ui-space-stack-3xs);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook__input,
+.bizproc-webhook__select {
+	box-sizing: border-box;
+	max-width: 100%;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook__input {
+	width: 100%;
+}
+
+.node-settings-panel select.bizproc-webhook__select {
+	height: 44px;
+	margin-top: 1px;
+}
+
+.node-settings-panel .bizproc-webhook__timeout {
+	display: block;
+	margin: 0;
+	padding: 9px 32px 9px 11px;
+	width: 100%;
+	min-height: 40px;
+	outline: none;
+	border: 1px solid rgb(var(--ui-field-color-border-default));
+	border-radius: var(--ui-border-radius-sm);
+	background-color: var(--ui-color-palette-white-base);
+	color: var(--ui-color-palette-black-base);
+	vertical-align: middle;
+	text-align: left;
+	font: 400 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	line-height: normal;
+	transition: border .3s ease, background-color .3s ease, color .3s ease, padding .3s ease;
+}
+
+.node-settings-panel .bizproc-webhook__timeout:hover {
+	border-color: var(--ui-field-color-link);
+}
+
+.bizproc-webhook__engine-field {
+	min-width: 0;
+}
+
+.bizproc-webhook-test__result:not(:empty) {
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.bizproc-webhook-test__status {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook-test__code {
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-3xs);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook-test__code.--success {
+	background: var(--ui-color-accent-soft-green-2);
+	color: var(--ui-color-accent-soft-element-green);
+}
+
+.bizproc-webhook-test__code.--error {
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red);
+}
+
+.bizproc-webhook-test__details {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bizproc-webhook-test__message {
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.bizproc-webhook-test__body {
+	max-height: 200px;
+	margin: var(--ui-space-stack-2xs) 0 0;
+	padding: var(--ui-space-inset-xs);
+	overflow: auto;
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-system-mono);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	white-space: pre-wrap;
+	word-break: break-all;
+}

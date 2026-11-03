@@ -34,7 +34,7 @@ div.crm_import_error span {
 	font-weight: bold;
 }
 .crm_notice_message {
-    background: url(./images/info.png) no-repeat 10px 7px #FFFDC3;
+    background: url(./images/info.webp) no-repeat 10px 7px #FFFDC3;
     border: 1px solid #FFCA63;
     margin: 1.117em 0;
     padding: 0.4em 1.117em;
@@ -42,7 +42,7 @@ div.crm_import_error span {
 	
 }
 .crm_notice_arrow {
-	background: url(./images/arrow.png) no-repeat 0px 2px;
+	background: url(./images/arrow.webp) no-repeat 0px 2px;
 	width: 13px;
 	height: 11px;
 	display: inline-block;

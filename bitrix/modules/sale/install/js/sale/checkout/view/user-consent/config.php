@@ -8,10 +8,11 @@ return [
 	'css' => 'dist/user-consent.bundle.css',
 	'js' => 'dist/user-consent.bundle.js',
 	'rel' => [
-		'ui.vue',
 		'main.core',
 		'main.core.events',
 		'sale.checkout.const',
+		'sale.user-consent-a11y',
+		'ui.vue',
 	],
 	'skip_core' => false,
 ];

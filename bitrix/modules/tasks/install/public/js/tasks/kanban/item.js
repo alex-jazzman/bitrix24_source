@@ -12,6 +12,13 @@ BX.namespace("BX.Tasks.Kanban");
  * @extends {BX.Kanban.Item}
  * @constructor
  */
+/**
+ * SC-005: shared registry — at most one deadlineless hint popup is open at a time.
+ * Stored in the module closure (not on the prototype) to avoid prototype pollution.
+ * @type {BX.Tasks.Kanban.Item|null}
+ */
+var activeDeadlinelessHintItem = null;
+
 BX.Tasks.Kanban.Item = function(options)
 {
 	BX.Kanban.Item.apply(this, arguments);
@@ -137,6 +144,36 @@ BX.Tasks.Kanban.Item.prototype = {
 	},
 
 	/**
+	 * Set the accessible name of a card control.
+	 * @param {HTMLElement} control
+	 * @param {String} phrase
+	 * @param {Object} [replacements] value by #placeholder# key
+	 * @returns {void}
+	 */
+	setControlLabel: function(control, phrase, replacements)
+	{
+		let name = BX.message(phrase);
+
+		Object.keys(replacements || {}).forEach((placeholder) => {
+			name = name.replace(placeholder, replacements[placeholder]);
+		});
+
+		control.setAttribute("aria-label", name);
+	},
+
+	/**
+	 * Set both the mouse hint and the accessible name of a card control.
+	 * @param {HTMLElement} control
+	 * @param {String} phrase
+	 * @returns {void}
+	 */
+	setControlName: function(control, phrase)
+	{
+		control.setAttribute("title", BX.message(phrase));
+		this.setControlLabel(control, phrase);
+	},
+
+	/**
 	 * Set status for current item.
 	 * @param {String} code
 	 * @returns {undefined}
@@ -163,25 +200,25 @@ BX.Tasks.Kanban.Item.prototype = {
 		if (this.task_start && data.in_progress && !BX.hasClass(this.task_start, "tasks-kanban-task-pause"))
 		{
 			BX.addClass(this.task_start, "tasks-kanban-task-pause");
-			this.task_start.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_PAUSE"));
+			this.setControlName(this.task_start, "TASKS_KANBAN_TITLE_PAUSE");
 		}
 		else if (this.task_start && !data.in_progress)
 		{
 			BX.removeClass(this.task_start, "tasks-kanban-task-pause");
-			this.task_start.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_START"));
+			this.setControlName(this.task_start, "TASKS_KANBAN_TITLE_START");
 		}
 
 		if (this.task_mute && data.muted && !BX.hasClass(this.task_mute, "tasks-kanban-task-muted"))
 		{
 			BX.addClass(this.container, "tasks-kanban-task-muted");
-			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_UNMUTE"));
+			this.setControlName(this.task_mute, "TASKS_KANBAN_TITLE_UNMUTE");
 			this.task_counter.setColor(BX.UI.Counter.Color.GRAY);
 		}
 		else if (this.task_mute && !data.muted)
 		{
 			var isExpiredCounts = data.is_expired && !data.completed && !data.completed_supposedly;
 			BX.removeClass(this.container, "tasks-kanban-task-muted");
-			this.task_mute.setAttribute("title", BX.message("TASKS_KANBAN_TITLE_MUTE"));
+			this.setControlName(this.task_mute, "TASKS_KANBAN_TITLE_MUTE");
 			this.task_counter.setColor(isExpiredCounts ? BX.UI.Counter.Color.DANGER : BX.UI.Counter.Color.SUCCESS);
 		}
 	},
@@ -277,6 +314,13 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	completeTask: function()
 	{
+		if (this.getGrid().getData().kanbanType === 'P')
+		{
+			const intent = this.getDataKey('completed_supposedly') ? 'approve' : 'complete';
+
+			return this.getGrid().completeMyPlanTask(this.getId(), this.getColumnId(), intent);
+		}
+
 		var currentStatus = this.getDataKey("status");
 
 		this.setStatus("completed");
@@ -311,14 +355,14 @@ BX.Tasks.Kanban.Item.prototype = {
 	 * Action for set deadline for the task.
 	 * @returns {void}
 	 */
-	deadlineTask: function()
+	deadlineTask: function(node)
 	{
 		var data = this.getData();
 		var format = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));
 		var value = BX.date.format(format, data.date_deadline || data.date_day_end);
 
 		var calendar = BX.calendar({
-			node: BX.proxy_context,
+			node: node || this.date_deadline_container,
 			value: value,
 			currentTime: value,
 			bTime: true,
@@ -363,6 +407,250 @@ BX.Tasks.Kanban.Item.prototype = {
 			calendar: calendar,
 			itemId: data.id
 		});
+	},
+
+	/**
+	 * SC-005 events 1-2: the deadlineless hint is a notification, not a card banner —
+	 * type=notification, no c_element, c_sub_section=deadline. The kanban surface reports the
+	 * deadline context rather than its own: analytics dropped `kanban`, which only occurs in
+	 * legacy projects. Values are literals kept in sync with the tasks.v2.const dictionary
+	 * (no ES import in this public plain-JS bundle).
+	 * ui.analytics is loaded lazily via the loadExtension fallback below. The CTA opens the
+	 * local BX.calendar without unloading the page, so the promise resolves and the event is
+	 * delivered.
+	 * @param {string} event
+	 * @returns {void}
+	 */
+	sendDeadlinelessHintAnalytics: function(event)
+	{
+		var analyticsData = {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: event,
+			type: 'notification',
+			c_section: this.getGrid().getSectionTypeForAnalytics(),
+			c_sub_section: 'deadline'
+		};
+
+		if (BX.UI.Analytics)
+		{
+			BX.UI.Analytics.sendData(analyticsData);
+
+			return;
+		}
+
+		BX.Runtime.loadExtension('ui.analytics').then(function() {
+			BX.UI.Analytics.sendData(analyticsData);
+		});
+	},
+
+	/**
+	 * Handler of the deadline chip: click on the chip or on its container, Enter on the chip.
+	 * @param {Event} event
+	 * @returns {void}
+	 */
+	handleDeadlineClick: function(event)
+	{
+		if (!this.canChangeDeadline)
+		{
+			return;
+		}
+
+		event.stopPropagation();
+		this.deadlineTask();
+	},
+
+	/**
+	 * The move command is offered where dragging is allowed and there is a stage to move into.
+	 * The check reads the same target list openMoveMenu() builds the menu from, so a reachable
+	 * button always has a menu behind it.
+	 * @returns {Boolean}
+	 */
+	isMoveAllowed: function()
+	{
+		return (
+			this.isDraggable()
+			&& this.getGridData().kanbanType !== "TL"
+			&& this.getMoveTargetColumns().length > 0
+		);
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	updateMoveCommand: function()
+	{
+		const allowed = this.isMoveAllowed();
+
+		this.switchVisible(this.moveButton, allowed);
+		if (!allowed)
+		{
+			this.moveButton.setAttribute("tabindex", "-1");
+			this.closeMoveMenu();
+		}
+	},
+
+	/**
+	 * Stages of the current grid the card may be moved to: every stage but the
+	 * current one that allows sorting its items.
+	 * @returns {Array}
+	 */
+	getMoveTargetColumns: function()
+	{
+		const currentColumnId = this.getColumn().getId();
+
+		return this.getGrid().getColumns().filter(function(column) {
+			return (column.getId() !== currentColumnId && column.canSortColumnItems());
+		});
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	toggleMoveMenu: function()
+	{
+		if (this.moveMenu && this.moveMenu.isShown())
+		{
+			this.closeMoveMenu();
+
+			return;
+		}
+
+		this.openMoveMenu();
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	openMoveMenu: function()
+	{
+		const columns = this.getMoveTargetColumns();
+		if (columns.length === 0)
+		{
+			return;
+		}
+
+		this.destroyMoveMenu();
+
+		// focusTrap is set explicitly: left to the environment gate, the menu takes no
+		// focus at all on a customer portal
+		this.moveMenu = new BX.Main.Menu({
+			id: "tasks-kanban-move-menu-" + this.getId(),
+			bindElement: this.moveButton,
+			ariaLabel: BX.message("TASKS_KANBAN_A11Y_MOVE_MENU_LABEL"),
+			focusTrap: true,
+			items: columns.map(function(column) {
+				return {
+					text: column.getName(),
+					attrs: {
+						"data-testid": "tasks-kanban-stage-menu-item"
+					},
+					onclick: function() {
+						this.moveToColumn(column);
+					}.bind(this)
+				};
+			}, this),
+			events: {
+				onClose: this.handleMoveMenuClose.bind(this)
+			}
+		});
+		this.moveMenu.getPopupWindow().getPopupContainer().setAttribute("data-testid", "tasks-kanban-stage-menu");
+
+		this.moveButton.setAttribute("aria-expanded", "true");
+		this.moveMenu.show();
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	closeMoveMenu: function()
+	{
+		if (this.moveMenu)
+		{
+			this.moveMenu.close();
+		}
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	destroyMoveMenu: function()
+	{
+		if (this.moveMenu)
+		{
+			this.moveMenu.destroy();
+			this.moveMenu = null;
+		}
+	},
+
+	/**
+	 * The stage menu keeps a popup of its own, and a popup is cacheable by default: closing
+	 * it leaves both its markup and its record in the popup registry behind the removed card.
+	 * @returns {void}
+	 */
+	dispose: function()
+	{
+		this.destroyMoveMenu();
+
+		BX.Kanban.Item.prototype.dispose.apply(this, arguments);
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	handleMoveMenuClose: function()
+	{
+		this.moveButton.setAttribute("aria-expanded", "false");
+		this.restoreFocusFromMoveMenu();
+	},
+
+	/**
+	 * The focus goes back to the trigger by our own hand: neither the focus trap nor
+	 * restoreLostFocus is guaranteed outside the developer stand, and the hidden
+	 * button does not pass a visibility check while the menu holds the focus.
+	 * @returns {void}
+	 */
+	restoreFocusFromMoveMenu: function()
+	{
+		const active = document.activeElement;
+		const menuContainer = (this.moveMenu ? this.moveMenu.getPopupWindow().getPopupContainer() : null);
+		const focusLeftBehind = (!active || active === document.body);
+
+		if (!focusLeftBehind && !(menuContainer && menuContainer.contains(active)))
+		{
+			return;
+		}
+
+		const attached = (node) => Boolean(node && node.isConnected && node.offsetParent !== null);
+
+		(attached(this.moveButton) ? this.moveButton : this.getContainer()).focus();
+	},
+
+	/**
+	 * @returns {Boolean}
+	 */
+	holdsFocus: function()
+	{
+		return this.getContainer().contains(document.activeElement);
+	},
+
+	/**
+	 * @returns {void}
+	 */
+	focusCard: function()
+	{
+		this.getContainer().focus();
+	},
+
+	/**
+	 * Keyboard entrance into the move operation the mouse drop enters as well.
+	 * @param {BX.Tasks.Kanban.Column} column
+	 * @returns {void}
+	 */
+	moveToColumn: function(column)
+	{
+		this.closeMoveMenu();
+		column.acceptItem(this);
 	},
 
 	/**
@@ -614,8 +902,16 @@ BX.Tasks.Kanban.Item.prototype = {
 		BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
 		if (!event.isActionAllowed())
 		{
+			this.getGrid().forgetSourcePosition(draggableItem);
+			this.getColumn().announceRefusedMove(draggableItem);
+
 			return;
 		}
+
+		// read before the completion chain opens its dialog and takes the focus away: by the
+		// time the operation ends, the answer is already lost. A drop that held no focus
+		// (every drop of the mouse) is given none back
+		var heldFocus = (draggableItem ? draggableItem.holdsFocus() : false);
 
 		var taskCompletePromise = new BX.Promise();
 
@@ -655,12 +951,29 @@ BX.Tasks.Kanban.Item.prototype = {
 			taskCompletePromise.fulfill();
 		}
 
+		// the rejection handler must be registered in the same then() call: BX.Promise replays
+		// every fulfilment handler on each subscription made after the promise is settled
 		taskCompletePromise.then(function() {
+			// the first half of the focus return: moveItem re-attaches the cards of both
+			// columns, and the node under focus inside the moved card drops to the body
 			var success = this.getGrid().moveItem(draggableItem, this.getColumn(), this);
 			if (success)
 			{
+				if (heldFocus)
+				{
+					draggableItem.focusCard();
+				}
+
 				BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [draggableItem, this.getColumn(), this]);
 			}
+			else
+			{
+				// the card never left its stage: the snapshot would be spent on the next rollback
+				this.getGrid().forgetSourcePosition(draggableItem);
+			}
+		}.bind(this), function() {
+			this.getGrid().forgetSourcePosition(draggableItem);
+			this.getGrid().announceRejectedCompletion(draggableItem, heldFocus);
 		}.bind(this));
 	},
 
@@ -736,65 +1049,22 @@ BX.Tasks.Kanban.Item.prototype = {
 			data.high
 		);
 		this.switchVisible(this.link, data.name !== '');
+		this.getContainer().setAttribute("aria-label", data.name);
 
-		if (this.getGrid().isScrumGrid())
-		{
-			BX.cleanNode(this.epicLayout);
-			if (this.epic)
-			{
-				this.epicLayout.appendChild(this.createEpicLayout());
-			}
-		}
-		// tags
-		if (data.tags && data.tags.length > 0)
-		{
-			BX.cleanNode(this.tags);
-			for (var i = 0, c = data.tags.length; i < c; i++)
-			{
-				this.tag = BX.create("span", {
-					props: {
-						className: "ui-label ui-label-tag-light ui-label-fill ui-label-md ui-label-link"
-					},
-					children: [
-						BX.create("span", {
-							props: {
-								className: "ui-label-inner"
-							},
-							text: "#" + data.tags[i],
-							events: {
-								click: BX.delegate(function(e) {
-									this.setFilterTag();
-									e.stopPropagation();
-								}, this)
-							}
-						})
-					]
-				});
-				this.tags.appendChild(this.tag);
-			}
-		}
+		this.updateEpic();
+		this.updateTags(data.tags);
 
 		// deadline
-		const canChangeDeadline = data.deadline?.clickable && data.allow_change_deadline;
+		this.canChangeDeadline = Boolean(data.deadline?.clickable && data.allow_change_deadline);
 
 		this.switchClass(
 			this.date_deadline_container,
 			"tasks-kanban-item-pointer",
-			canChangeDeadline,
+			this.canChangeDeadline,
 		);
-		if (canChangeDeadline)
+		if (!this.canChangeDeadline && this.deadlineChipNode)
 		{
-			BX.bind(this.date_deadline_container, "click", BX.delegate(function(e) {
-				this.deadlineTask();
-				e.stopPropagation();
-			}, this));
-		}
-		else
-		{
-			BX.unbind(this.date_deadline_container, "click", BX.delegate(function(e) {
-				this.deadlineTask();
-				e.stopPropagation();
-			}, this));
+			this.deadlineChipNode.setAttribute("tabindex", "-1");
 		}
 
 		if (!this.isSprintView && data?.deadline_visibility !== 'hidden')
@@ -862,6 +1132,10 @@ BX.Tasks.Kanban.Item.prototype = {
 				this.task_counter.update(data.counter.value);
 			}
 		}
+		this.task_counter_container.setAttribute(
+			"aria-label",
+			BX.message("TASKS_KANBAN_A11Y_COMMENTS_COUNTER").replace("#count#", data.counter.value)
+		);
 		this.switchVisible(this.task_counter_container, (data.counter.value > 0));
 
 		//region checklist
@@ -874,12 +1148,13 @@ BX.Tasks.Kanban.Item.prototype = {
 			"tasks-kanban-item-super-blue",
 			data.log.checklist > 0
 		);
-		this.check_list.setAttribute("title",
-			BX.message("TASKS_KANBAN_TITLE_CHECKLIST")
+		const checkListTitle = BX.message("TASKS_KANBAN_TITLE_CHECKLIST")
 			.replace("#complete#", data.check_list.complete)
-			.replace("#all#", (parseInt(data.check_list.complete) + parseInt(data.check_list.work)))
-		);
-		this.check_list.textContent = data.log.checklist > 0
+			.replace("#all#", (parseInt(data.check_list.complete) + parseInt(data.check_list.work)));
+
+		this.check_list.setAttribute("title", checkListTitle);
+		this.check_list.setAttribute("aria-label", checkListTitle);
+		this.checkListValue.nodeValue = data.log.checklist > 0
 										? "+" + data.log.checklist
 										: data.check_list.complete + "/" +
 										 (+data.check_list.complete + +data.check_list.work);
@@ -896,143 +1171,18 @@ BX.Tasks.Kanban.Item.prototype = {
 			"tasks-kanban-item-super-blue",
 			data.log.file > 0
 		);
-		this.count_files.setAttribute(
-			"title",
-			BX.message("TASKS_KANBAN_TITLE_FILES").replace("#count#", data.count_files)
-		);
-		this.count_files.textContent = data.log.file > 0
+		const countFilesTitle = BX.message("TASKS_KANBAN_TITLE_FILES").replace("#count#", data.count_files);
+
+		this.count_files.setAttribute("title", countFilesTitle);
+		this.count_files.setAttribute("aria-label", countFilesTitle);
+		this.countFilesValue.nodeValue = data.log.file > 0
 										? "+" + data.log.file
 										: data.count_files;
-		// users
-		if (!this.isSprintView && data.author)
-		{
-			if (this.author)
-			{
-				BX.remove(this.author);
-			}
 
-			this.author = BX.create("div", {
-				props: {
-					className: "tasks-kanban-item-author",
-					style: "cursor: pointer"
-				}
-			});
+		this.updateAuthor(data.author, data.allow_edit);
+		this.updateResponsible(data.responsible, data.allow_delegate);
+		this.updateMoveCommand();
 
-			var authorType;
-
-			if(data.author.extranet)
-			{
-				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-extranet";
-			}
-			else if (data.author.crm)
-			{
-				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-crm";
-			}
-			else if (data.author.mail)
-			{
-				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-mail";
-			}
-			else if (data.author.collaber)
-			{
-				authorType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-collaber";
-			}
-			else
-			{
-				authorType = "tasks-kanban-item-author-avatar";
-			}
-
-			var avatarClass;
-
-			!data.author.photo ? avatarClass = ' tasks-kanban-item-author-avatar-empty' : avatarClass = '';
-
-			this.author.appendChild(BX.create("div", {
-				props: {
-					title: data.author.name,
-					className: authorType + avatarClass
-				},
-				style: {
-					backgroundImage: data.author.photo
-						? "url(\'" + encodeURI(data.author.photo.src) + "\')"
-						: "",
-					cursor: data.allow_edit
-						? "pointer"
-						: "default"
-				},
-				events: {
-					click: data.allow_edit
-							? BX.delegate(function(e) {
-								this.changeAuthorTask();
-								e.stopPropagation();
-							}, this)
-							: function() {}
-				}
-			}));
-			this.user_container.appendChild(this.author);
-		}
-		if (data.responsible)
-		{
-			if (this.responsible)
-			{
-				BX.remove(this.responsible);
-			}
-
-			var responsibleClassName = (this.isSprintView ?
-				'tasks-kanban-item-responsible-sprint' : 'tasks-kanban-item-responsible');
-
-			this.responsible = BX.create("div", {
-				props: {
-					className: responsibleClassName,
-					style: "cursor: pointer"
-				}
-			});
-
-			var responsibleType;
-
-			if(data.responsible.extranet)
-			{
-				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-extranet";
-			}
-			else if (data.responsible.crm)
-			{
-				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-crm";
-			}
-			else if (data.responsible.mail)
-			{
-				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-mail";
-			}
-			else if (data.responsible.collaber)
-			{
-				responsibleType = "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-collaber";
-			}
-			else
-			{
-				responsibleType = "tasks-kanban-item-author-avatar";
-			}
-
-			this.responsible.appendChild(BX.create("div", {
-				props: {
-					title: data.responsible.name,
-					className: responsibleType
-				},
-				style: {
-					backgroundImage: 	data.responsible.photo
-										? "url(\'" + encodeURI(data.responsible.photo.src) + "\')"
-										: "",
-					cursor: data.allow_delegate
-						? "pointer"
-						: "default"
-				},
-				events: {
-					click: data.allow_delegate
-							? BX.delegate(function(e) {
-								this.delegateTask();
-								e.stopPropagation();
-							}, this)
-							: function() {}
-				}
-			}));
-			this.user_container.appendChild(this.responsible);
-		}
 		// time
 		if (this.time_logs)
 		{
@@ -1067,6 +1217,10 @@ BX.Tasks.Kanban.Item.prototype = {
 			if (this.task_complete)
 			{
 				this.switchVisible(this.task_complete, data.allow_complete);
+				if (this.getGrid().getData().kanbanType === 'P')
+				{
+					this.task_complete.disabled = this.getGrid().isMyPlanCompletionPending(this.getId());
+				}
 			}
 		}
 
@@ -1074,20 +1228,389 @@ BX.Tasks.Kanban.Item.prototype = {
 		BX.cleanNode(this.itemFieldsNode);
 		if (data?.item_fields?.length > 0)
 		{
-			data.item_fields.forEach((item) =>
+			data.item_fields.forEach((item, index) =>
 			{
 				if (item?.value || item?.collection?.length > 0)
 				{
-					this.itemFieldsNode.appendChild(this.getItemFieldDiv(item));
+					this.itemFieldsNode.appendChild(this.getItemFieldDiv(item, index));
 				}
 			});
 		}
 
+		// SC-005: mark item (badge after the "No deadline" date chip, see kanban.css) with the
+		// ALG-02 predicate (isNewUser && no deadline && I am creator)
+		this.switchClass(
+			this.container,
+			'tasks-kanban-item--deadlineless-hint',
+			this.isDeadlinelessOwnedHint()
+		);
+
 		return this.container;
 	},
 
-	getItemFieldDiv(item)
+	/**
+	 * ALG-02 (NORMATIVE): returns true when the current user is a new user,
+	 * is the task creator, and the task has no deadline.
+	 * Derived from data only — no closed state is stored (AC-023).
+	 * @returns {boolean}
+	 */
+	isDeadlinelessOwnedHint: function()
 	{
+		var grid = this.getGrid();
+		var data = this.getData();
+
+		// Boolean(): without author (scrum-view) the chain yields undefined, not false
+		return Boolean(
+			grid.isNewUser
+			&& !data.date_deadline // "No deadline"
+			&& data.author // guard: scrum-view may not pass the author (render():907)
+			&& Number(data.author.id) === grid.currentUserId // I am the creator
+			// the deadline must actually be settable on this card — the same gate that arms
+			// the deadline chip click handler (deadlineTask, see render():785); otherwise the
+			// badge/CTA would target a read-only chip (completed/deferred/no-permission).
+			&& data.deadline && data.deadline.clickable && data.allow_change_deadline
+		);
+	},
+
+	/**
+	 * Show SC-005 hover popup for a deadlineless item.
+	 * Suppressed under an open slider (AC-024). No closed state is persisted (AC-023).
+	 * @returns {void}
+	 */
+	showDeadlinelessHint: function()
+	{
+		if (this.deadlinelessHintPopup)
+		{
+			return;
+		}
+
+		// AC-024: suppress under an open slider / panel
+		if (
+			typeof BX.SidePanel !== 'undefined'
+			&& BX.SidePanel.Instance
+			&& BX.SidePanel.Instance.getTopSlider
+			&& BX.SidePanel.Instance.getTopSlider()
+		)
+		{
+			return;
+		}
+
+		var item = this;
+
+		var ctaButton = BX.create('button', {
+			attrs: {
+				type: 'button',
+				// Q-UX-003: focusable CTA reachable by keyboard
+				className: 'tasks-kanban-deadlineless-hint__cta',
+				'data-testid': 'task-kanban-deadlineless-hint-cta'
+			},
+			text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_CTA'),
+			events: {
+				click: function()
+				{
+					// RF-10: in sprint-view/hidden date_deadline_container is absent — fall back to the row container
+					var deadlineNode = item.date_deadline_container || item.container;
+					// Event 2: sent before opening the calendar (ALG-02) so it survives the navigation
+					item.sendDeadlinelessHintAnalytics('click_suggest_banner');
+					if (item.deadlinelessHintPopup)
+					{
+						item.deadlinelessHintPopup.close();
+					}
+					item.deadlineTask(deadlineNode);
+				}
+			}
+		});
+
+		var closeButton = BX.create('button', {
+			attrs: {
+				type: 'button',
+				className: 'tasks-kanban-deadlineless-hint__close',
+				'data-testid': 'task-kanban-deadlineless-hint-close',
+				'aria-label': BX.message('TASKS_KANBAN_DEADLINELESS_HINT_CLOSE')
+			},
+			html: '&times;',
+			events: {
+				click: function()
+				{
+					// Event 1: explicit dismissal via the × button
+					item.sendDeadlinelessHintAnalytics('close_suggest_banner');
+					if (item.deadlinelessHintPopup)
+					{
+						item.deadlinelessHintPopup.close();
+					}
+				}
+			}
+		});
+
+		// RF-11: no role/aria-label here — the accessible name and role are set on the BX.Main.Popup itself
+		var content = BX.create('div', {
+			attrs: {
+				className: 'tasks-kanban-deadlineless-hint'
+			},
+			children: [
+				BX.create('div', { attrs: { className: 'tasks-kanban-deadlineless-hint__avatar' } }),
+				BX.create('div', {
+					attrs: { className: 'tasks-kanban-deadlineless-hint__body' },
+					children: [
+						BX.create('div', {
+							attrs: { className: 'tasks-kanban-deadlineless-hint__title' },
+							text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TITLE')
+						}),
+						BX.create('div', {
+							attrs: { className: 'tasks-kanban-deadlineless-hint__text' },
+							text: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TEXT')
+						}),
+						ctaButton
+					]
+				}),
+				closeButton
+			]
+		});
+
+		// SC-005 Bug 2: close any previously open hint before opening a new one
+		if (activeDeadlinelessHintItem && activeDeadlinelessHintItem !== this)
+		{
+			clearTimeout(activeDeadlinelessHintItem.deadlinelessHintCloseTimer);
+			if (activeDeadlinelessHintItem.deadlinelessHintPopup)
+			{
+				activeDeadlinelessHintItem.deadlinelessHintPopup.close();
+			}
+		}
+
+		this.deadlinelessHintPopup = new BX.Main.Popup({
+			bindElement: this.date_deadline_container || this.container,
+			content: content,
+			// RF-11: hover hint — expose as a named live region instead of a nameless dialog
+			role: 'status',
+			ariaLabel: BX.message('TASKS_KANBAN_DEADLINELESS_HINT_TITLE'),
+			width: 390,
+			padding: 0,
+			angle: true,
+			background: 'var(--ui-color-bg-content-inapp, #0056bf)',
+			borderRadius: 16,
+			closeByEsc: true,
+			autoHide: true,
+			// onClose drops the reference, so a cacheable (default) popup would leak
+			// a hidden container into document.body on every hover
+			cacheable: false,
+			offsetLeft: 40,
+			className: 'tasks-kanban-deadlineless-hint-popup',
+			events: {
+				onClose: function()
+				{
+					clearTimeout(item.deadlinelessHintCloseTimer);
+					item.deadlinelessHintPopup = null;
+					if (activeDeadlinelessHintItem === item)
+					{
+						activeDeadlinelessHintItem = null;
+					}
+				},
+				onDestroy: function()
+				{
+					clearTimeout(item.deadlinelessHintCloseTimer);
+					item.deadlinelessHintPopup = null;
+					if (activeDeadlinelessHintItem === item)
+					{
+						activeDeadlinelessHintItem = null;
+					}
+				}
+			}
+		});
+
+		// SC-005 Bug 1: hover-intent — keep popup open while cursor is inside it
+		var popupContainer = this.deadlinelessHintPopup.getPopupContainer();
+		if (popupContainer)
+		{
+			popupContainer.addEventListener('mouseenter', function()
+			{
+				clearTimeout(item.deadlinelessHintCloseTimer);
+			});
+			popupContainer.addEventListener('mouseleave', function()
+			{
+				item.deadlinelessHintCloseTimer = setTimeout(function()
+				{
+					if (item.deadlinelessHintPopup)
+					{
+						item.deadlinelessHintPopup.close();
+					}
+				}, 300);
+			});
+		}
+
+		// SC-005 Bug 2: register this item as the active hint
+		activeDeadlinelessHintItem = this;
+
+		this.deadlinelessHintPopup.show();
+	},
+
+	/**
+	 * The column is redrawn as a whole on any card added or removed, so render() rebuilds the
+	 * controls of the active card even when a neighbour card is the one that moved. The raise
+	 * belongs here and not at the end of render(): the base renderLayout detaches the body,
+	 * renders it and only then puts it back into the card node the grid holds as the active one.
+	 * @returns {HTMLElement}
+	 */
+	renderLayout: function()
+	{
+		const container = BX.Kanban.Item.prototype.renderLayout.apply(this, arguments);
+
+		this.getGrid().restoreCardControlsTabIndex(this);
+
+		return container;
+	},
+
+	updateEpic: function()
+	{
+		if (!this.epicNode)
+		{
+			return;
+		}
+
+		this.switchVisible(this.epicNode, this.epic);
+		if (!this.epic)
+		{
+			return;
+		}
+
+		this.epicNode.textContent = this.epic.name;
+		this.setControlLabel(this.epicNode, "TASKS_KANBAN_A11Y_EPIC_FILTER", { "#epic#": this.epic.name });
+		this.epicNode.style.background = this.convertHexToRGBA(this.epic.color, 0.3);
+		this.epicNode.style.borderColor = this.convertHexToRGBA(this.epic.color, 0.7);
+	},
+
+	updateTags: function(tags)
+	{
+		if (!BX.type.isArray(tags))
+		{
+			return;
+		}
+
+		this.tagNodes.forEach((node, name) => {
+			if (!tags.includes(name))
+			{
+				BX.remove(node);
+				this.tagNodes.delete(name);
+			}
+		});
+
+		let previous = null;
+
+		tags.forEach((name) => {
+			let node = this.tagNodes.get(name);
+			if (!node)
+			{
+				node = this.createTagLayout(name);
+				this.tagNodes.set(name, node);
+			}
+
+			const expected = (previous ? previous.nextSibling : this.tags.firstChild);
+			if (node !== expected)
+			{
+				this.tags.insertBefore(node, expected);
+			}
+
+			previous = node;
+		});
+	},
+
+	updateAuthor: function(user, allowEdit)
+	{
+		if (!this.author)
+		{
+			return;
+		}
+
+		this.switchVisible(this.author, user);
+		if (!user)
+		{
+			return;
+		}
+
+		this.authorAvatar = this.syncUserAvatar(this.authorAvatar, this.authorControl, allowEdit);
+		this.authorAvatar.className = this.getUserAvatarClassName(user)
+			+ (user.photo ? "" : " tasks-kanban-item-author-avatar-empty");
+		this.updateUserAvatar(this.authorAvatar, this.authorControl, user, allowEdit);
+	},
+
+	updateResponsible: function(user, allowDelegate)
+	{
+		this.switchVisible(this.responsible, user);
+		if (!user)
+		{
+			return;
+		}
+
+		this.responsibleAvatar = this.syncUserAvatar(this.responsibleAvatar, this.responsibleControl, allowDelegate);
+		this.responsibleAvatar.className = this.getUserAvatarClassName(user);
+		this.updateUserAvatar(this.responsibleAvatar, this.responsibleControl, user, allowDelegate);
+	},
+
+	/**
+	 * An avatar is operable only while its action is allowed: the allowed one is
+	 * a button, the denied one is a picture, so a changed permission replaces
+	 * the node.
+	 * @param {HTMLElement} avatar
+	 * @param {Object} control
+	 * @param {Boolean} allowChange
+	 * @returns {HTMLElement}
+	 */
+	syncUserAvatar: function(avatar, control, allowChange)
+	{
+		const operable = (avatar.tagName.toLowerCase() === "button");
+		if (operable === Boolean(allowChange))
+		{
+			return avatar;
+		}
+
+		const node = this.createUserAvatar(control);
+		avatar.parentNode.replaceChild(node, avatar);
+
+		return node;
+	},
+
+	updateUserAvatar: function(avatar, control, user, allowChange)
+	{
+		avatar.title = user.name;
+		avatar.style.backgroundImage = user.photo
+			? "url(\'" + encodeURI(user.photo.src) + "\')"
+			: "";
+		avatar.style.cursor = allowChange ? "pointer" : "default";
+		this.setControlLabel(
+			avatar,
+			allowChange ? control.phrase : control.deniedPhrase,
+			{ "#name#": user.name }
+		);
+	},
+
+	getUserAvatarClassName: function(user)
+	{
+		if (user.extranet)
+		{
+			return "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-extranet";
+		}
+
+		if (user.crm)
+		{
+			return "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-crm";
+		}
+
+		if (user.mail)
+		{
+			return "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-mail";
+		}
+
+		if (user.collaber)
+		{
+			return "tasks-kanban-item-author-avatar tasks-kanban-item-author-avatar-collaber";
+		}
+
+		return "tasks-kanban-item-author-avatar";
+	},
+
+	getItemFieldDiv(item, index)
+	{
+		const labelId = "tasks-kanban-item-field-label-" + this.getId() + "-" + index;
+
 		return BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-fields-item"
@@ -1099,6 +1622,9 @@ BX.Tasks.Kanban.Item.prototype = {
 					},
 					children:[
 						BX.create("div", {
+							attrs: {
+								id: labelId
+							},
 							props: {
 								className: "tasks-kanban-item-fields-item-title-text"
 							},
@@ -1107,6 +1633,11 @@ BX.Tasks.Kanban.Item.prototype = {
 					],
 				}),
 				BX.create("div", {
+					attrs: {
+						role: "group",
+						"aria-labelledby": labelId,
+						"data-testid": "tasks-kanban-card-field-value"
+					},
 					props: {
 						className: "tasks-kanban-item-fields-item-value"
 					},
@@ -1119,11 +1650,16 @@ BX.Tasks.Kanban.Item.prototype = {
 		});
 	},
 
+	// the markup is rebuilt on every render, so the links carry tabindex from the
+	// start: only the active card raises its controls into the tab order
 	getItemFieldLinks(collection)
 	{
 		return collection.map((item) => {
-			return `<a href="${BX.util.htmlspecialchars(item.url)}">${BX.util.htmlspecialchars(item.name)}</a>`;
-		});
+			const url = BX.util.htmlspecialchars(item.url);
+			const name = BX.util.htmlspecialchars(item.name);
+
+			return `<a href="${url}" tabindex="-1" data-testid="tasks-kanban-card-field-link">${name}</a>`;
+		}).join(' ');
 	},
 
 	animate: function(params)
@@ -1197,6 +1733,10 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//region title link
 		this.link = BX.create("a", {
+			attrs: {
+				tabindex: "-1",
+				"data-testid": "tasks-kanban-card-title-link"
+			},
 			props: {
 				className: data.counter.value > 0 ? "tasks-kanban-item-title" : "tasks-kanban-item-title tasks-kanban-item-title--with-counter"
 			}
@@ -1220,14 +1760,13 @@ BX.Tasks.Kanban.Item.prototype = {
 					className: "tasks-kanban-item-epic-container"
 				}
 			});
-			if (this.epic)
-			{
-				this.epicLayout.appendChild(this.createEpicLayout());
-			}
+			this.epicNode = this.createEpicLayout();
+			this.epicLayout.appendChild(this.epicNode);
 			this.container.appendChild(this.epicLayout);
 		}
 
 		//region tags
+		this.tagNodes = new Map();
 		this.tags = BX.create("span", {
 			props: {
 				className: "tasks-kanban-item-tags"
@@ -1239,6 +1778,10 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//region background
 		this.containerImg = BX.create("a", {
+			attrs: {
+				"aria-hidden": "true",
+				tabindex: "-1"
+			},
 			props: {
 				className: "tasks-kanban-item-image"
 			}
@@ -1263,25 +1806,54 @@ BX.Tasks.Kanban.Item.prototype = {
 				design: data.deadline.design,
 				rounded: true,
 				size: BX.UI.System.Chip.ChipSize.Xs,
+				onClick: this.handleDeadlineClick.bind(this),
 			});
+
+			// the chip has no option for tabindex, and its own value is always "0"
+			this.deadlineChipNode = this.date_deadline.render();
+			this.deadlineChipNode.setAttribute("tabindex", "-1");
+			this.deadlineChipNode.setAttribute("data-testid", "tasks-kanban-card-deadline-chip");
+
 			this.date_deadline_container = BX.create("div", {
+				props: { className: "tasks-kanban-item-date-deadline" },
 				children: [
-					this.date_deadline.render()
-				]
+					this.deadlineChipNode
+				],
+				events: {
+					click: this.handleDeadlineClick.bind(this)
+				}
 			});
 			this.container.appendChild(this.date_deadline_container);
 		}
 
+		this.checkListValue = document.createTextNode("");
 		this.check_list = BX.create("div", {
+			attrs: {
+				// the counters of the card are read by their name alone: the role keeps the digit
+				// inside out of the name, which every reading of it would otherwise repeat
+				role: "img",
+				"data-testid": "tasks-kanban-card-checklist"
+			},
 			props: {
 				className: "tasks-kanban-item-checklist"
-			}
+			},
+			children: [
+				this.checkListValue
+			]
 		});
 		this.task_content.appendChild(this.check_list);
+		this.countFilesValue = document.createTextNode("");
 		this.count_files = BX.create("div", {
+			attrs: {
+				role: "img",
+				"data-testid": "tasks-kanban-card-files"
+			},
 			props: {
 				className: "tasks-kanban-item-files"
-			}
+			},
+			children: [
+				this.countFilesValue
+			]
 		});
 		this.task_content.appendChild(this.count_files);
 
@@ -1301,6 +1873,57 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		});
 		this.actions_container.appendChild(this.user_container);
+
+		if (!this.isSprintView)
+		{
+			this.authorControl = {
+				permission: "allow_edit",
+				action: this.changeAuthorTask,
+				phrase: "TASKS_KANBAN_A11Y_AUTHOR_CHANGE",
+				deniedPhrase: "TASKS_KANBAN_A11Y_AUTHOR",
+				testId: "tasks-kanban-card-author"
+			};
+			this.authorAvatar = this.createUserAvatar(this.authorControl);
+			this.author = this.createUserContainer("tasks-kanban-item-author", this.authorAvatar);
+			this.user_container.appendChild(this.author);
+		}
+
+		this.responsibleControl = {
+			permission: "allow_delegate",
+			action: this.delegateTask,
+			phrase: "TASKS_KANBAN_A11Y_RESPONSIBLE_CHANGE",
+			deniedPhrase: "TASKS_KANBAN_A11Y_RESPONSIBLE",
+			testId: "tasks-kanban-card-responsible"
+		};
+		this.responsibleAvatar = this.createUserAvatar(this.responsibleControl);
+		this.responsible = this.createUserContainer(
+			this.isSprintView ? "tasks-kanban-item-responsible-sprint" : "tasks-kanban-item-responsible",
+			this.responsibleAvatar
+		);
+		this.user_container.appendChild(this.responsible);
+
+		// the move command lives outside the quick actions block: that block is not
+		// created for a scrum card, where story points take its place
+		this.moveButton = BX.create("button", {
+			attrs: {
+				type: "button",
+				tabindex: "-1",
+				"aria-haspopup": "menu",
+				"aria-expanded": "false",
+				"data-testid": "tasks-kanban-card-move-btn"
+			},
+			props: {
+				className: "tasks-kanban-item-move"
+			},
+			events: {
+				click: BX.delegate(function(e) {
+					this.toggleMoveMenu();
+					e.stopPropagation();
+				}, this)
+			}
+		});
+		this.setControlName(this.moveButton, "TASKS_KANBAN_A11Y_MOVE_BUTTON");
+		this.user_container.appendChild(this.moveButton);
 
 		//endregion
 
@@ -1323,7 +1946,12 @@ BX.Tasks.Kanban.Item.prototype = {
 			});
 			this.container.appendChild(this.track_control);
 
-			this.task_mute = BX.create("div", {
+			this.task_mute = BX.create("button", {
+				attrs: {
+					type: "button",
+					tabindex: "-1",
+					"data-testid": "tasks-kanban-card-mute-btn"
+				},
 				props: {
 					className: "tasks-kanban-task-mute"
 				},
@@ -1338,7 +1966,12 @@ BX.Tasks.Kanban.Item.prototype = {
 			// BX.hide(this.task_mute);
 			this.track_control.appendChild(this.task_mute);
 
-			this.task_start = BX.create("div", {
+			this.task_start = BX.create("button", {
+				attrs: {
+					type: "button",
+					tabindex: "-1",
+					"data-testid": "tasks-kanban-card-start-btn"
+				},
 				props: {
 					className: "tasks-kanban-task-start"
 				},
@@ -1352,10 +1985,14 @@ BX.Tasks.Kanban.Item.prototype = {
 			});
 			this.track_control.appendChild(this.task_start);
 
-			this.task_complete = BX.create("div", {
+			this.task_complete = BX.create("button", {
+				attrs: {
+					type: "button",
+					tabindex: "-1",
+					"data-testid": "tasks-kanban-card-complete-btn"
+				},
 				props: {
-					className: "tasks-kanban-task-complete",
-					title: BX.message("TASKS_KANBAN_TITLE_COMPLETE")
+					className: "tasks-kanban-task-complete"
 				},
 				events: {
 					click: function (e)
@@ -1365,17 +2002,27 @@ BX.Tasks.Kanban.Item.prototype = {
 					}.bind(this)
 				}
 			});
+			this.setControlName(this.task_complete, "TASKS_KANBAN_TITLE_COMPLETE");
 			this.track_control.appendChild(this.task_complete);
 		}
 		else
 		{
 			this.storyPointsNode = BX.create('div', {
+				attrs: {
+					role: 'img',
+					'data-testid': 'tasks-kanban-card-story-points'
+				},
 				props: {
 					className: 'tasks-kanban-item-story-points',
 					title: BX.message('TASKS_KANBAN_ITEM_STORY_POINTS_TITLE')
 				},
 				text: this.getDataKey('storyPoints'),
 			});
+			this.setControlLabel(
+				this.storyPointsNode,
+				"TASKS_KANBAN_A11Y_STORY_POINTS",
+				{ "#points#": this.getDataKey('storyPoints') }
+			);
 
 			this.container.appendChild(this.storyPointsNode);
 		}
@@ -1389,6 +2036,10 @@ BX.Tasks.Kanban.Item.prototype = {
 			animate: true
 		});
 		this.task_counter_container = BX.create("div", {
+			attrs: {
+				role: "img",
+				"data-testid": "tasks-kanban-card-comments"
+			},
 			props: {
 				className: "tasks-kanban-task-counter",
 			},
@@ -1405,13 +2056,129 @@ BX.Tasks.Kanban.Item.prototype = {
 		this.container.addEventListener("mouseenter", function()
 		{
 			this.addHoverClass(this.container);
+			// SC-005 Bug 1: cancel any pending close when re-entering the card
+			clearTimeout(this.deadlinelessHintCloseTimer);
+			// SC-005: show deadlineless hint popup on highlighted item (AC-024)
+			if (this.isDeadlinelessOwnedHint())
+			{
+				this.showDeadlinelessHint();
+			}
 		}.bind(this));
 		this.container.addEventListener("mouseleave", function ()
 		{
 			this.removeHoverClass(this.container);
+			// SC-005 Bug 1: schedule close with hover-intent delay so user can reach popup
+			if (this.deadlinelessHintPopup)
+			{
+				this.deadlinelessHintCloseTimer = setTimeout(function()
+				{
+					if (this.deadlinelessHintPopup)
+					{
+						this.deadlinelessHintPopup.close();
+					}
+				}.bind(this), 300);
+			}
 		}.bind(this), false);
 
 		//endregion
+
+		// SC-005: track popup reference and close-timer for this item
+		this.deadlinelessHintPopup = null;
+		this.deadlinelessHintCloseTimer = null;
+	},
+
+	dispose: function()
+	{
+		clearTimeout(this.deadlinelessHintCloseTimer);
+
+		if (this.deadlinelessHintPopup)
+		{
+			this.deadlinelessHintPopup.destroy();
+			this.deadlinelessHintPopup = null;
+		}
+
+		if (activeDeadlinelessHintItem === this)
+		{
+			activeDeadlinelessHintItem = null;
+		}
+
+		BX.Kanban.Item.prototype.dispose.apply(this, arguments);
+	},
+
+	createUserAvatar: function(control)
+	{
+		if (!this.getData()[control.permission])
+		{
+			return BX.create("div", {
+				attrs: {
+					role: "img",
+					"data-testid": control.testId
+				}
+			});
+		}
+
+		return BX.create("button", {
+			attrs: {
+				type: "button",
+				tabindex: "-1",
+				"data-testid": control.testId
+			},
+			events: {
+				click: BX.delegate(function(e) {
+					if (!this.getData()[control.permission])
+					{
+						return;
+					}
+
+					control.action.call(this);
+					e.stopPropagation();
+				}, this)
+			}
+		});
+	},
+
+	createUserContainer: function(className, avatar)
+	{
+		return BX.create("div", {
+			props: {
+				className: className,
+				style: "cursor: pointer"
+			},
+			children: [
+				avatar
+			]
+		});
+	},
+
+	createTagLayout: function(name)
+	{
+		const inner = BX.create("button", {
+			attrs: {
+				type: "button",
+				tabindex: "-1",
+				"data-testid": "tasks-kanban-card-tag-btn"
+			},
+			props: {
+				className: "ui-label-inner"
+			},
+			text: "#" + name,
+			events: {
+				click: BX.delegate(function(e) {
+					this.setFilterTag();
+					e.stopPropagation();
+				}, this)
+			}
+		});
+		this.setControlLabel(inner, "TASKS_KANBAN_A11Y_TAG_FILTER", { "#tag#": name });
+
+		return BX.create("span", {
+			props: {
+				className: "ui-label ui-label-tag-light ui-label-fill ui-label-md ui-label-link"
+			},
+			children: [
+				inner
+			]
+		});
 	},
 
 	/**
@@ -1438,8 +2205,11 @@ BX.Tasks.Kanban.Item.prototype = {
 		this.layout.container = BX.create("div", {
 			attrs: {
 				className: "main-kanban-item",
+				role: "listitem",
+				tabindex: "-1",
 				"data-id": this.getId(),
-				"data-type": "item"
+				"data-type": "item",
+				"data-testid": "tasks-kanban-card"
 			},
 			children: [
 				this.getDragTarget(),
@@ -1489,20 +2259,22 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	createEpicLayout: function ()
 	{
-		const colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
-		const colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
-
-		return BX.create("span", {
+		return BX.create("button", {
+			attrs: {
+				type: "button",
+				tabindex: "-1",
+				"data-testid": "tasks-kanban-card-epic-btn"
+			},
 			props: {
 				className: "tasks-kanban-item-epic"
 			},
-			style: {
-				background: colorBackground,
-				borderColor: colorBorder
-			},
-			text: this.epic.name,
 			events: {
 				click: BX.delegate(function(e) {
+					if (!this.epic)
+					{
+						return;
+					}
+
 					this.setFilterEpic(this.epic.id);
 					e.stopPropagation();
 				}, this)

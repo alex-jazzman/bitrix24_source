@@ -1,0 +1,1 @@
+.crm-currency-list-a11y-control:focus-visible,.crm-currency-list-settings-window input:focus-visible+label,[data-testid=crm-currency-list-root] input.main-grid-checkbox:focus-visible+label.main-grid-checkbox{outline:2px solid Highlight;outline-offset:2px}

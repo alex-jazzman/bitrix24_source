@@ -277,7 +277,23 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			{
 				if (chatHelper?.isOpenChannel)
 				{
-					await this.store.dispatch('recentModel/deleteOpenChannel', { id: dialogId });
+					const sections = params.recentConfigToHide?.sections;
+					if (!Type.isArrayFilled(sections))
+					{
+						this.logger.error('chatUserLeave without sections', { dialogId });
+
+						return;
+					}
+
+					// The event carries no parentChatId yet, so the nested bucket comes from the
+					// dialog model, the same fallback the hide path applies.
+					const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+
+					await this.store.dispatch('recentModel/hideByRecentConfigTabs', {
+						id: dialogId,
+						fromSections: sections,
+						parentChatId: params.parentChatId ?? dialog?.parentChatId,
+					});
 					await recentProvider.deleteFromSource(RecentDataProvider.source.database, { dialogId });
 				}
 				else
@@ -538,6 +554,9 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 					id: item.user.id,
 					lastActivityDate: item.date,
 					invited: false,
+					// The person has no conversation with the reader yet, and the marker is said
+					// explicitly: a cleared invitation alone no longer implies it.
+					options: { defaultUserRecord: true },
 				};
 			});
 			await this.store.dispatch('recentModel/setChat', recentItems);

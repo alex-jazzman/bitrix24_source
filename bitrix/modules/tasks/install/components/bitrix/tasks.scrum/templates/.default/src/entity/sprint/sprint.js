@@ -210,14 +210,16 @@ export class Sprint extends Entity
 		}
 	}
 
-	removeItem(item: Item)
+	removeItems(items: Array<Item>, removeNodes: boolean = false): number
 	{
-		super.removeItem(item);
+		const removedCount = super.removeItems(items, removeNodes);
 
 		if (this.isEmpty())
 		{
 			this.emit('showDropzone');
 		}
+
+		return removedCount;
 	}
 
 	setName(name)
@@ -853,4 +855,3 @@ export class Sprint extends Entity
 		return this.subTaskLoadingActive === true;
 	}
 }
-

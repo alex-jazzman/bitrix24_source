@@ -24,10 +24,10 @@
 
 /*.tm-dashboard-arrow, .tm-dashboard-title { visibility: hidden; }*/
 .tm-dashboard-title { margin: 0 8px 0 5px; height:20px; line-height: 18px; }
-.tm-dashboard-arrow { width: 6px; background: url(images/planner-sprite.png) no-repeat -79px 4px; }
-.tm-dashboard-bell { width: 11px; background: url(images/planner-sprite.png) no-repeat 0 4px; }
-.tm-dashboard-clock { width: 10px; background: url(images/planner-sprite.png) no-repeat -22px 4px; }
-.tm-dashboard-flag { width: 10px; background: url(images/planner-sprite.png) no-repeat -44px 4px; }
+.tm-dashboard-arrow { width: 6px; background: url(images/planner-sprite.webp) no-repeat -79px 4px; }
+.tm-dashboard-bell { width: 11px; background: url(images/planner-sprite.webp) no-repeat 0 4px; }
+.tm-dashboard-clock { width: 10px; background: url(images/planner-sprite.webp) no-repeat -22px 4px; }
+.tm-dashboard-flag { width: 10px; background: url(images/planner-sprite.webp) no-repeat -44px 4px; }
 
 .tm-dashboard-text { margin: 0 12px 0 4px; height:20px; line-height: 18px; }
 .tm-dashboard-subtext { color: #878787; padding: 0 0 0 3px; }

@@ -120,6 +120,7 @@
 }
 
 .main-user-field-edit-settings td input[type='text'],
+.main-user-field-edit-settings td textarea,
 .main-user-field-edit-settings td .main-ui-control.main-ui-select,
 .main-user-field-edit-settings .typeselect,
 .main-user-field-edit-settings .adm-detail-iblock-types,
@@ -149,18 +150,22 @@
 	appearance: none;
 }
 
-.main-user-field-edit-input textarea {
+.main-user-field-edit-input textarea,
+.main-user-field-edit-settings td textarea {
 	height: auto;
 	min-height: 40px;
+	overflow: auto;
 	padding-top: 12px;
 	padding-bottom: 12px;
 	resize: vertical;
-	white-space: normal;
+	white-space: pre-wrap;
 	flex: auto;
 }
 
 .main-user-field-edit-settings td input:hover,
 .main-user-field-edit-settings td input:focus,
+.main-user-field-edit-settings td textarea:hover,
+.main-user-field-edit-settings td textarea:focus,
 .main-user-field-edit-settings td .main-ui-control.main-ui-select:hover,
 .main-user-field-edit-settings td .main-ui-control.main-ui-select:focus,
 .main-user-field-edit-settings .adm-detail-select:hover,

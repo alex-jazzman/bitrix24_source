@@ -1,34 +1,42 @@
-import {MessengerPopup} from 'im.v2.component.elements.popup';
+import { type PopupOptions } from 'main.popup';
 
-import {MarketShowMorePopupContent} from './market-show-more-popup-content';
+import { MessengerPopup } from 'im.v2.component.elements.popup';
+import { MarketManager } from 'im.v2.lib.market';
+import { type ImModelMarketApplication } from 'im.v2.model';
+
+import { MarketShowMorePopupContent } from './market-show-more-popup-content';
 
 import '../../css/market-apps-panel/market-show-more-popup.css';
-
-import type {PopupOptions} from 'main.popup';
 
 // @vue/component
 export const MarketShowMorePopup = {
 	name: 'MarketShowMorePopup',
-	components: {MessengerPopup, MarketShowMorePopupContent},
+	components: { MessengerPopup, MarketShowMorePopupContent },
 	props:
 	{
 		marketApps: {
 			type: Array,
-			required: true
+			required: true,
 		},
 		dialogId: {
 			type: String,
-			required: true
-		}
+			required: true,
+		},
 	},
-	emits: ['close'],
 	data() {
 		return {
-			showPopup: false
+			showPopup: false,
 		};
 	},
 	computed:
 	{
+		// an application from the collapsed list is anchored to the show more button
+		openedApp(): ?ImModelMarketApplication
+		{
+			const openedAppId = this.$store.getters['market/getOpenedAppId'](this.dialogId);
+
+			return this.marketApps.find((app) => app.id === openedAppId) ?? null;
+		},
 		popupConfig(): PopupOptions
 		{
 			return {
@@ -38,7 +46,7 @@ export const MarketShowMorePopup = {
 				height: 422,
 				bindElement: this.$refs['textarea-show-more-market-apps'],
 				bindOptions: {
-					position: 'top'
+					position: 'top',
 				},
 				offsetTop: 0,
 				offsetLeft: 0,
@@ -54,11 +62,37 @@ export const MarketShowMorePopup = {
 				.replace('#NUMBER#', this.marketApps.length);
 		},
 	},
+	methods:
+	{
+		onAppClick(app: ImModelMarketApplication)
+		{
+			this.showPopup = false;
+
+			if (app.id === this.openedApp?.id)
+			{
+				MarketManager.getInstance().closePlacement(this.dialogId, app.id);
+
+				return;
+			}
+
+			this.showPlacement(app);
+		},
+		showPlacement(app: ImModelMarketApplication)
+		{
+			MarketManager.getInstance().showPlacement({
+				dialogId: this.dialogId,
+				appId: app.id,
+				bindElement: this.$refs['textarea-show-more-market-apps'],
+				width: app.options.width,
+				height: app.options.height,
+			});
+		},
+	},
 	template: `
 		<div
 			@click="showPopup = true"
 			class="bx-im-market-apps-panel__more-items-button"
-			:class="{'--active': showPopup}"
+			:class="{'--active': showPopup, '--opened': openedApp !== null}"
 			ref="textarea-show-more-market-apps"
 		>
 			{{ showMoreButtonText }}
@@ -69,7 +103,11 @@ export const MarketShowMorePopup = {
 			@close="showPopup = false"
 			id="im-market-apps-more-popup"
 		>
-			<MarketShowMorePopupContent :marketApps='marketApps' :dialogId="dialogId" @close="showPopup = false" />
+			<MarketShowMorePopupContent
+				:marketApps="marketApps"
+				:dialogId="dialogId"
+				@appClick="onAppClick"
+			/>
 		</MessengerPopup>
-	`
+	`,
 };

@@ -49,7 +49,7 @@ jn.define('more-menu/ui/list/src/item', (require, exports, module) => {
 			super(props);
 
 			this.getTestId = createTestIdGenerator({
-				prefix: props.testId,
+				context: this,
 			});
 
 			this.state = {

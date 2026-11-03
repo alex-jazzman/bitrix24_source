@@ -24,6 +24,7 @@ import { EmailLimitationDialog } from './emaillimitationdialog';
 import { AttendeesList } from './attendeeslist';
 import { IntranetButton } from './intranetbutton';
 import { AccessibilitySelector } from './accessibilityselector';
+import { PlannerLimitHint } from './plannerlimithint';
 
 export {
 	Reminder,
@@ -52,4 +53,5 @@ export {
 	AttendeesList,
 	IntranetButton,
 	AccessibilitySelector,
+	PlannerLimitHint,
 };

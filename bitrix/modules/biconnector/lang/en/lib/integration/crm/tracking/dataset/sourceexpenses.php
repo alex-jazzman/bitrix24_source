@@ -23,4 +23,4 @@ $MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_MEDIUM_FULL"] = "Identifies the means 
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_SOURCE"] = "Source ID";
 $MESS["TRACKING_SOURCE_EXPENSES_FIELD_UTM_SOURCE_FULL"] = "Identifies the source (site, channel etc.) the visitor originated from.";
 $MESS["TRACKING_SOURCE_EXPENSES_TABLE"] = "Ad costs";
-$MESS["TRACKING_SOURCE_EXPENSES_TABLE_DESCRIPTION_FULL"] = "This provides daily ad cost statistics, including currency, number of clicks, impressions, and actions.";
+$MESS["TRACKING_SOURCE_EXPENSES_TABLE_DESCRIPTION_FULL_MSGVER_1"] = "Advertising expense data: sources, campaigns, groups and ads, expenses, clicks, impressions, actions, and UTM tags.";

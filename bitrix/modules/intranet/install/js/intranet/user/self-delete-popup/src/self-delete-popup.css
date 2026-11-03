@@ -1,0 +1,175 @@
+.intranet-self-delete-popup
+{
+	position: relative;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	width: 590px;
+	max-width: calc(100vw - 32px);
+	max-height: calc(100vh - 120px);
+	overflow: auto;
+	padding: 20px 24px 8px;
+	margin-bottom: 24px;
+	background-color: var(--ui-color-bg-content-primary, #ffffff);
+	background-image: url('./image/self-delete-popup-background.svg');
+	background-repeat: no-repeat;
+	background-position: center top;
+	background-size: 100% auto;
+	border-radius: 18px;
+}
+
+.intranet-self-delete-popup__title
+{
+	min-width: 0;
+}
+
+.intranet-self-delete-popup__close-btn
+{
+	--ui-icon-set__icon-color: var(--ui-color-base-4, #a8adb4);
+	position: absolute;
+	top: 20px;
+	right: 24px;
+	z-index: 1;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	margin: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.intranet-self-delete-popup__hero
+{
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.intranet-self-delete-popup__hero::after
+{
+	content: '';
+	display: block;
+	flex: 0 0 78px;
+	width: 78px;
+	height: 78px;
+	background-image: url('./image/self-delete-popup-icon.png');
+	background-image: -webkit-image-set(
+		url('./image/self-delete-popup-icon.png') 1x,
+		url('./image/self-delete-popup-icon@2x.png') 2x
+	);
+	background-image: image-set(
+		url('./image/self-delete-popup-icon.png') 1x,
+		url('./image/self-delete-popup-icon@2x.png') 2x
+	);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.intranet-self-delete-popup__description
+{
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+.intranet-self-delete-popup__paragraph
+{
+	margin: 0;
+}
+
+.intranet-self-delete-popup__accent
+{
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.intranet-self-delete-popup__content
+{
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.intranet-self-delete-popup__content.--empty
+{
+	display: none;
+}
+
+.intranet-self-delete-popup__card
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 12px);
+	padding: var(--ui-space-inset-md, 16px) var(--ui-space-inset-md2, 18px)
+		var(--ui-space-inset-xs2, 10px);
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	background: var(--ui-color-bg-content-primary, #ffffff);
+	box-shadow: var(--ui-shadow-bottom-xs, 0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.intranet-self-delete-popup__participant-box
+{
+	width: 100%;
+}
+
+.intranet-self-delete-popup__button.ui-btn
+{
+	margin: 0;
+	border-radius: var(--ui-border-radius-md, 10px);
+}
+
+.intranet-self-delete-popup__button.ui-btn .ui-btn-text
+{
+	font-size: var(--ui-font-size-md, 15px);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}
+
+.intranet-self-delete-popup__button.ui-btn.ui-btn-wait
+{
+	min-width: 144px;
+	justify-content: center;
+}
+
+.intranet-self-delete-popup__footer
+{
+	display: flex;
+	justify-content: center;
+	padding-top: 8px;
+}
+
+.intranet-self-delete-popup__footer-buttons
+{
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 12px;
+	width: 100%;
+}
+
+@media (max-width: 767px)
+{
+	.intranet-self-delete-popup__hero::after
+	{
+		flex-basis: 64px;
+		width: 64px;
+		height: 64px;
+	}
+
+	.intranet-self-delete-popup__footer-buttons
+	{
+		flex-direction: column;
+	}
+
+	.intranet-self-delete-popup__button.ui-btn
+	{
+		width: 100%;
+	}
+}

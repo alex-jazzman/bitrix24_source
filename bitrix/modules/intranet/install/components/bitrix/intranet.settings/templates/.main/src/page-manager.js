@@ -38,6 +38,11 @@ export class PageManager
 		});
 	}
 
+	getPages(): Array<BaseSettingsPage>
+	{
+		return this.#pages;
+	}
+
 	collectData()
 	{
 		const data = {};

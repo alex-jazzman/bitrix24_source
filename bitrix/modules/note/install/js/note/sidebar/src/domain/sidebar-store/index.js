@@ -100,7 +100,7 @@ class SidebarStore
 			messages,
 			notify,
 			isFavorite: bind(queryService, 'isFavorite'),
-			// [ALG-02] The block owns the expansion flags, not the branches: both namespaces are read
+			// The block owns the expansion flags, not the branches: both namespaces are read
 			// through their existing loaders, so a branch is never fetched twice.
 			ensureChildrenLoaded,
 			ensureAccessibleChildrenLoaded: (collectionId, parentId) => (
@@ -108,7 +108,7 @@ class SidebarStore
 			),
 			isBranchLoaded: bind(queryService, 'isBranchLoaded'),
 			isAccessibleBranchLoaded: bind(accessibleTreeActions, 'isSharedBranchHydrated'),
-			// [API-06] Which documents an opened branch holds - the set whose coverage is asked for.
+			// Which documents an opened branch holds - the set whose coverage is asked for.
 			getBranchDocs: (collectionId, parentId, isShared) => (
 				isShared
 					? accessibleTreeActions.getSharedChildren(collectionId, parentId)
@@ -241,6 +241,7 @@ class SidebarStore
 			// Nothing left for the trees to do - the document left them when it went to the bin - but the
 			// favorite rows pointing at it are deleted for good at this moment, server-side.
 			[PullCommand.DOCUMENT_HARD_DELETE]: () => favoriteActions.invalidateComposition(),
+			[PullCommand.DOCUMENT_MENTION_TARGET_CHANGED]: () => {},
 			[PullCommand.COLLECTION_CREATE]: applyCollectionCreate,
 			[PullCommand.COLLECTION_UPDATE]: applyCollectionUpdate,
 			[PullCommand.COLLECTION_MOVE]: applyCollectionMove,

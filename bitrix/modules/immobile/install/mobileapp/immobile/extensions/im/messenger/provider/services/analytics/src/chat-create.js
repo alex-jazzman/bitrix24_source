@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/services/analytics/chat-create', (require, expo
 	const { AnalyticsEvent } = require('analytics');
 	const { Analytics } = require('im/messenger/const');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
 
 	/**
@@ -12,13 +13,20 @@ jn.define('im/messenger/provider/services/analytics/chat-create', (require, expo
 	 */
 	class ChatCreate
 	{
-		sendStartCreation({ category, type, section = Analytics.Section.chatTab })
+		/**
+		 * @desc The section is the folder of the screen, the answer every other chat event gives. The
+		 *       creation menu of a project's nested tab is the one caller naming its section itself:
+		 *       the label table keeps that label on `project_tab` for both platforms, and the nested
+		 *       navigation stands for no folder of the dictionary.
+		 * @param {{category: string, type: string, section?: string}} params
+		 */
+		sendStartCreation({ category, type, section })
 		{
 			try
 			{
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
-					.setSection(section)
+					.setSection(section ?? AnalyticsHelper.getFolderSectionCode())
 					.setCategory(category)
 					.setEvent(Analytics.Event.clickCreateNew)
 					.setType(type)
@@ -38,6 +46,14 @@ jn.define('im/messenger/provider/services/analytics/chat-create', (require, expo
 		 */
 		sendCreateCopilotDialog({ chatId })
 		{
+			// Under BitrixGPT v2 the backend emits create_new_chat for every client, so sending it
+			// here too would count the same chat twice. The server flag is used on purpose: it is the
+			// exact condition the backend emitter is gated by.
+			if (Feature.isBitrixGptV2Available)
+			{
+				return;
+			}
+
 			try
 			{
 				const analytics = new AnalyticsEvent()

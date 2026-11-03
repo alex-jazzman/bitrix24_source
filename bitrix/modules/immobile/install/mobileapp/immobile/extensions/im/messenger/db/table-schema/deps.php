@@ -10,10 +10,12 @@ return [
 		'type',
 	],
 	'bundle' => [
+		'./src/chat-command',
 		'./src/dialog',
 		'./src/draft',
 		'./src/folder',
 		'./src/folder-chat',
+		'./src/folder-source',
 		'./src/recent',
 		'./src/recent-section',
 		'./src/user',

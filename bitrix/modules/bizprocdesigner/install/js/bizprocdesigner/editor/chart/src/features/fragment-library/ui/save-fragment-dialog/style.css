@@ -1,0 +1,19 @@
+.bizprocdesigner-save-fragment
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.bizprocdesigner-save-fragment__shared
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* The caption toggles the checkbox through `for`, so it answers the pointer the way the box does. */
+.bizprocdesigner-save-fragment__shared label
+{
+	cursor: pointer;
+}

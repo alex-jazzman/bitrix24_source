@@ -60,13 +60,21 @@ export class StylePanel extends Content
 	static getInstance(): StylePanel
 	{
 		const rootWindow = PageObject.getRootWindow();
+		// Outside the editor the root window is the portal page and has no landing namespace,
+		// so the panel keeps its instance in the current window.
+		const rootWindowPanel = rootWindow.BX.getClass('BX.Landing.UI.Panel.StylePanel');
 
-		if (!rootWindow.BX.Landing.UI.Panel.StylePanel.instance && !StylePanel.instance)
+		if (!rootWindowPanel?.instance && !StylePanel.instance)
 		{
-			rootWindow.BX.Landing.UI.Panel.StylePanel.instance = new StylePanel();
+			StylePanel.instance = new StylePanel();
+
+			if (rootWindowPanel)
+			{
+				rootWindowPanel.instance = StylePanel.instance;
+			}
 		}
 
-		return (rootWindow.BX.Landing.UI.Panel.StylePanel.instance || StylePanel.instance);
+		return (rootWindowPanel?.instance || StylePanel.instance);
 	}
 
 	getSwitcher(): BX.Landing.UI.Field.Switch

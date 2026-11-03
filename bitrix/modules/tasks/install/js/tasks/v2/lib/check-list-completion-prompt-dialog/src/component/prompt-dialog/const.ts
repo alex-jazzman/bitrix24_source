@@ -1,0 +1,16 @@
+export const TestId = Object.freeze({
+	DialogRoot: 'tasks-checklist-on-complete-dialog',
+	Title: 'tasks-checklist-on-complete-title',
+	TitleLink: 'tasks-checklist-on-complete-title-link',
+	Subtitle: 'tasks-checklist-on-complete-subtitle',
+	List: 'tasks-checklist-on-complete-list',
+	ScrollArea: 'tasks-checklist-on-complete-scroll-area',
+	GroupPrefix: 'tasks-checklist-on-complete-group',
+	ProgressPrefix: 'tasks-checklist-on-complete-progress',
+	ProgressBarPrefix: 'tasks-checklist-on-complete-progress-bar',
+	ItemPrefix: 'tasks-checklist-on-complete-item',
+	CloseButton: 'tasks-checklist-on-complete-close-btn',
+	CompleteButton: 'tasks-checklist-on-complete-complete-btn',
+	ReturnButton: 'tasks-checklist-on-complete-return-btn',
+	ErrorAlert: 'tasks-checklist-on-complete-error-alert',
+} as const);

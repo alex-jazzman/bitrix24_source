@@ -29,6 +29,7 @@
 
 .chart-editor-content-separator__separator {
 	position: relative;
+	flex: 0 0 auto;
 	width: 13px;
 	height: 100%;
 	cursor: ew-resize;
@@ -177,11 +178,18 @@
 	display: block;
 }
 
-.chart-editor-content-separator__first-part {
-	flex-grow: 1;
+/* The content part keeps the size it is given: it is what separatorPosition measures.
+   Only the empty part flexes, so any rounding residue of the container never moves the line. */
+.chart-editor-content-separator__first-part,
+.chart-editor-content-separator__second-part {
+	flex: 0 0 auto;
 	overflow: auto;
 	box-sizing: border-box;
-	
+}
+
+.chart-editor-content-separator__first-part.--fill,
+.chart-editor-content-separator__second-part.--fill {
+	flex: 1 1 auto;
 }
 
 .chart-editor-content-separator__first-part.--resizing {
@@ -198,13 +206,6 @@
 	bottom: auto;
 	left: 0;
 	right: 0;
-}
-
-.chart-editor-content-separator__second-part {
-	flex-grow: 1;
-	/* padding: 7px; */
-	overflow: auto;
-	box-sizing: border-box;
 }
 
 .chart-editor-content-separator__second-part.--resizing {

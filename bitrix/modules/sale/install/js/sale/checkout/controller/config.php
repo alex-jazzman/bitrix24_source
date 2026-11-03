@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'sale.checkout.provider.rest',
 		'sale.checkout.const',
 		'sale.checkout.lib',
+		'sale.checkout.provider.rest',
 	],
 	'skip_core' => false,
 ];

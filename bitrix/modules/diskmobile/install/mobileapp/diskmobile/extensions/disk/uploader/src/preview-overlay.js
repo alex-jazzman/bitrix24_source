@@ -4,6 +4,11 @@
 jn.define('disk/uploader/src/preview-overlay', (require, exports, module) => {
 	const { Color } = require('tokens');
 
+	/**
+	 * @param {DiskFileRowPreviewOverlayProps} props
+	 * @param {...View} children
+	 * @return {View}
+	 */
 	const DiskFileRowPreviewOverlay = (props, ...children) => View(
 		{
 			testId: props.testId,

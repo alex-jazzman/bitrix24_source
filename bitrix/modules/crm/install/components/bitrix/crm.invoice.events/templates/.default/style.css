@@ -52,7 +52,7 @@ table.bx-interface-grid td {
 .event-detail-file .event-detail-file-link:hover { color: #1c91e7; }
 .event-detail-file-size { color: #919191; margin: 0 0 0 6px;  vertical-align: top; white-space: nowrap; }
 .crm_notice_message {
-    background: url(./images/info.png) no-repeat 10px 7px #FFFDC3;
+    background: url(./images/info.webp) no-repeat 10px 7px #FFFDC3;
     border: 1px solid #FFCA63;
     margin: 1.117em 0;
     padding: 0.4em 1.117em;

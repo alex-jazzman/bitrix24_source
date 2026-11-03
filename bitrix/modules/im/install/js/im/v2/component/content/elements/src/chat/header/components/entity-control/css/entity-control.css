@@ -1,0 +1,26 @@
+.bx-im-chat-header-entity-button__container {
+	display: flex;
+	margin-left: 12px;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.bx-im-chat-header-entity-button__container.--compact {
+	width: 100%;
+}
+
+.bx-im-chat-header-entity-button__text {
+	font-size: var(--im-font-size-sm);
+	font-weight: var(--im-font-weight-normal);
+	color: var(--ui-color-accent-main-link);
+	border-bottom: 1px solid transparent;
+}
+
+.bx-im-chat-header-entity-button__icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-link);
+	--ui-icon-set__icon-size: 18px;
+}
+
+.bx-im-chat-header-entity-button__container:hover .bx-im-chat-header-entity-button__text {
+	border-bottom: 1px solid var(--ui-color-accent-main-link);
+}

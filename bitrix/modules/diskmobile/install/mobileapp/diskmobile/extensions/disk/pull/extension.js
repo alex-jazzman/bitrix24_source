@@ -28,7 +28,27 @@ jn.define('disk/pull', (require, exports, module) => {
 		FILE: 3,
 	};
 
+	const UnifiedLinkPullStrategy = {
+		RELOAD_LIST: 'reloadList',
+		UPDATE_ROW: 'updateRow',
+		DEFAULT: 'default',
+	};
+
 	const isCommandExists = (command) => Boolean(StatefulListActionType[command]);
+
+	const resolveUnifiedLinkPullStrategy = (command) => {
+		if (command === Command.OBJECT_ADDED)
+		{
+			return UnifiedLinkPullStrategy.RELOAD_LIST;
+		}
+
+		if (StatefulListActionType[command] === StatefulListPull.command.UPDATED)
+		{
+			return UnifiedLinkPullStrategy.UPDATE_ROW;
+		}
+
+		return UnifiedLinkPullStrategy.DEFAULT;
+	};
 
 	const resolveObjectId = (pullMessage) => {
 		if (
@@ -150,10 +170,12 @@ jn.define('disk/pull', (require, exports, module) => {
 		StatefulListActionType,
 		isCommandExists,
 		resolveObjectId,
+		resolveUnifiedLinkPullStrategy,
 	};
 
 	module.exports = {
 		DiskPull,
+		UnifiedLinkPullStrategy,
 		createCommandExistsMiddleware,
 		createCommandAllowedMiddleware,
 		createResolveObjectIdMiddleware,

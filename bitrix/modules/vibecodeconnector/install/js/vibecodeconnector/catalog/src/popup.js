@@ -122,7 +122,6 @@ export class CatalogPopup
 
 	setNewAppsCount(value: number): void
 	{
-		// opening an app spends the counter at once, and the owner of the badge recounts it
 		// right after; the New slice the user is in the middle of must not go with it
 		if (this.#isShown && this.#newAppsCount > 0 && !(Type.isNumber(value) && value > 0))
 		{
@@ -275,6 +274,7 @@ export class CatalogPopup
 				this.#selectState(state);
 			},
 			onReloadRequested: () => this.#reloadActiveState(),
+			onCreateClosed: () => this.#reloadActiveState(),
 			onSearchInput: () => this.#scheduleSearch(),
 			onSearchClear: () => {
 				this.#clearSearchTimer();
@@ -445,7 +445,6 @@ export class CatalogPopup
 		// the server is the one source allowed to lower the count: it answers for the very
 		// session being opened
 		this.#applyNewAppsCount(newAppsCount);
-		// the value came from the server, so the owner of the badge learns it too instead of
 		// waiting for its own recount to land
 		this.#onNewAppsCount?.(this.#newAppsCount);
 

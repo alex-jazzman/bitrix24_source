@@ -3,6 +3,7 @@ import { type UploaderFile } from 'ui.uploader.core';
 
 import { UnsupportedMessage } from 'im.v2.component.message.unsupported';
 import { FileType } from 'im.v2.const';
+import { Utils } from 'im.v2.lib.utils';
 import { type ImModelMessage, type ImModelFile, type ImModelChat } from 'im.v2.model';
 import { UploadingService } from 'im.v2.provider.service.uploading';
 
@@ -59,33 +60,13 @@ export const FileMessage = {
 		},
 		messageFiles(): ImModelFile[]
 		{
-			const files = [];
-
-			if (this.message.files.length === 0)
-			{
-				return files;
-			}
-
-			this.message.files.forEach((fileId: number) => {
-				const file: ImModelFile = this.$store.getters['files/get'](fileId, true);
-				files.push(file);
-			});
-
-			return files;
+			return this.$store.getters['messages/getMessageFiles'](this.item.id);
 		},
 		isGallery(): boolean
 		{
-			const allowedGalleryTypes: Set<string> = new Set([FileType.image, FileType.video]);
-			const isMediaOnly: boolean = this.messageFiles.every((file) => {
-				return allowedGalleryTypes.has(file.type);
-			});
-			const hasImageProp: boolean = this.messageFiles.some((file) => {
-				return file.image !== false;
-			});
-
-			return isMediaOnly && hasImageProp;
+			return Utils.file.isGallery(this.messageFiles);
 		},
-		componentName(): string
+		componentName(): ?string
 		{
 			if (this.messageFiles.length > 1)
 			{
@@ -93,11 +74,30 @@ export const FileMessage = {
 			}
 
 			const file = this.messageFiles[0];
+			// The composition of an edited message is in the model before the files it added are:
+			// until they arrive there is no attachment to pick a component for
+			if (!file)
+			{
+				return null;
+			}
+
 			const hasPreview = Boolean(file.image);
 
 			if (file.isVideoNote)
 			{
+				// VideoNoteMessage does not accept the before-message slot (it uses BaseMessage's
+				// before-message for its own overlay header), so forwarded slot content is dropped here.
 				return FileMessageType.videoNote;
+			}
+
+			// A record reaches the chat in whatever container the browser wrote it, and the storage
+			// reads the kind of a file from its extension: until the server brings the record to the
+			// target format, the very same voice message is typed as video. It is routed by what it
+			// is and not by the container it arrived in, or the player, the duration and the
+			// transcription of a record on the server path would all be lost.
+			if (file.isVoiceNote)
+			{
+				return FileMessageType.audio;
 			}
 
 			if (file.type === FileType.image && hasPreview)
@@ -172,15 +172,20 @@ export const FileMessage = {
 		},
 	},
 	template: `
-		<component 
-			:is="componentName" 
-			:item="message" 
+		<component
+			v-if="componentName"
+			:is="componentName"
+			:item="message"
 			:dialogId="dialogId"
 			:withTitle="withTitle" 
 			:containerHeight="containerHeight"
 			:withContextMenu="isRealMessage"
 			@cancelClick="onCancel"
-		/>
+		>
+			<template v-if="$slots['before-message']" #before-message>
+				<slot name="before-message"/>
+			</template>
+		</component>
 	`,
 };
 

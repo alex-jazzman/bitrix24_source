@@ -121,6 +121,9 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Component);
+				this.departmentFilterFocus = null;
+				this.departmentFilterFocusResetTimeout = null;
+				this.departmentFilterApplication = null;
 				this.clearAnalyticsParams();
 			},
 
@@ -143,24 +146,197 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 			bindEvents: function()
 			{
 				BX.addCustomEvent('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+				BX.addCustomEvent(window, 'BX.Main.Filter:beforeApply', this.onFilterBeforeApply.bind(this));
 				BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this));
 
 				var filterId = this.option('filterId');
 				var scope = this.scope();
 
-				BX.bindDelegate(scope, 'click', {
-					tagName: 'a',
-					className: 'js-id-department'
-				}, BX.delegate(function(event) {
-					BX.PreventDefault(event);
-					var filter = BX.Main.filterManager.getById(filterId);
-					if (!!filter && (filter instanceof BX.Main.Filter))
+				scope.addEventListener('click', BX.delegate(function(event) {
+					var button = event.target.closest && event.target.closest('button.js-id-department');
+					if (!button || !scope.contains(button))
 					{
-						var filterApi = filter.getApi();
-						filterApi.setFields({'UF_DEPARTMENT': {0: this.dataset.id}});
-						filterApi.apply();
+						return;
 					}
-				}));
+
+					event.stopPropagation();
+
+					var filter = BX.Main.filterManager.getById(filterId);
+					if (!filter || !(filter instanceof BX.Main.Filter))
+					{
+						return;
+					}
+
+					var focusData = this.rememberDepartmentFilterFocus(event, button);
+					var filterApi = filter.getApi();
+					filterApi.setFields({'UF_DEPARTMENT': {0: button.dataset.departmentId}});
+
+					this.departmentFilterApplication = focusData;
+					try
+					{
+						filterApi.apply();
+						if (focusData)
+						{
+							focusData.trackFocusChanges = true;
+						}
+					}
+					catch (error)
+					{
+						this.clearDepartmentFilterFocus(focusData);
+						throw error;
+					}
+					finally
+					{
+						this.departmentFilterApplication = null;
+					}
+				}, this), true);
+			},
+
+			rememberDepartmentFilterFocus: function(event, button)
+			{
+				this.clearDepartmentFilterFocus();
+
+				if (event.detail !== 0)
+				{
+					return null;
+				}
+
+				var focusData = {
+					departmentId: button.dataset.departmentId,
+					userId: button.dataset.userId,
+					departmentName: button.textContent.trim(),
+					button: button,
+					focusMoved: false,
+					trackFocusChanges: false,
+					onFocusIn: null,
+					onUserInteraction: null,
+					onWindowBlur: null
+				};
+				focusData.onFocusIn = function(focusEvent) {
+					if (focusData.trackFocusChanges && focusEvent.target !== focusData.button)
+					{
+						focusData.focusMoved = true;
+					}
+				};
+				focusData.onUserInteraction = function(interactionEvent) {
+					if (focusData.trackFocusChanges && interactionEvent.target !== focusData.button)
+					{
+						focusData.focusMoved = true;
+					}
+				};
+				focusData.onWindowBlur = function() {
+					if (focusData.trackFocusChanges)
+					{
+						focusData.focusMoved = true;
+					}
+				};
+
+				this.departmentFilterFocus = focusData;
+				document.addEventListener('focusin', focusData.onFocusIn, true);
+				document.addEventListener('keydown', focusData.onUserInteraction, true);
+				document.addEventListener('pointerdown', focusData.onUserInteraction, true);
+				window.addEventListener('blur', focusData.onWindowBlur);
+
+				var status = this.scope().querySelector('.tasks-departments-overview-status');
+				if (status)
+				{
+					status.textContent = '';
+				}
+
+				this.departmentFilterFocusResetTimeout = window.setTimeout(BX.delegate(function() {
+					if (this.departmentFilterFocus === focusData)
+					{
+						this.clearDepartmentFilterFocus(focusData);
+					}
+				}, this), 60000);
+
+				return focusData;
+			},
+
+			clearDepartmentFilterFocus: function(focusData)
+			{
+				if (focusData && this.departmentFilterFocus !== focusData)
+				{
+					return;
+				}
+
+				var currentFocusData = this.departmentFilterFocus;
+				this.departmentFilterFocus = null;
+				window.clearTimeout(this.departmentFilterFocusResetTimeout);
+				this.departmentFilterFocusResetTimeout = null;
+
+				if (currentFocusData && currentFocusData.onFocusIn)
+				{
+					document.removeEventListener('focusin', currentFocusData.onFocusIn, true);
+					document.removeEventListener('keydown', currentFocusData.onUserInteraction, true);
+					document.removeEventListener('pointerdown', currentFocusData.onUserInteraction, true);
+					window.removeEventListener('blur', currentFocusData.onWindowBlur);
+				}
+			},
+
+			onFilterBeforeApply: function(filterId, action, filter, promise)
+			{
+				var focusData = this.departmentFilterApplication;
+				if (
+					!focusData
+					|| this.departmentFilterFocus !== focusData
+					|| filterId !== this.option('filterId')
+					|| !promise
+					|| typeof promise.then !== 'function'
+				)
+				{
+					return;
+				}
+
+				promise.then(
+					BX.delegate(function() {
+						this.restoreDepartmentFilterFocus(focusData);
+					}, this),
+					BX.delegate(function() {
+						this.clearDepartmentFilterFocus(focusData);
+					}, this)
+				);
+			},
+
+			restoreDepartmentFilterFocus: function(focusData)
+			{
+				if (this.departmentFilterFocus !== focusData)
+				{
+					return;
+				}
+
+				var shouldRestoreFocus = !focusData.focusMoved;
+				this.clearDepartmentFilterFocus(focusData);
+
+				var scope = this.scope();
+				var status = scope.querySelector('.tasks-departments-overview-status');
+
+				if (status)
+				{
+					var statusMessage = BX.message('TASKS_DEPARTMENTS_OVERVIEW_FILTER_APPLIED') || '#DEPARTMENT#';
+					status.textContent = statusMessage
+						.replace('#DEPARTMENT#', function() {
+							return focusData.departmentName;
+						});
+				}
+
+				if (shouldRestoreFocus)
+				{
+					var target = scope.querySelector(
+						'.js-id-department[data-department-id="' + focusData.departmentId + '"]'
+						+ '[data-user-id="' + focusData.userId + '"]'
+					);
+
+					if (!target)
+					{
+						target = scope.querySelector('.js-id-departments-overview-grid');
+					}
+
+					if (target)
+					{
+						target.focus({preventScroll: true});
+					}
+				}
 			},
 
 			onFilterApply: function()

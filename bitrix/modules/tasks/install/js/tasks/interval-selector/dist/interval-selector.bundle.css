@@ -1,6 +1,5 @@
 .tasks-interval-selector {
 	position: relative;
-	height: -webkit-max-content;
 	height: max-content;
 	color: var(--ui-color-link-primary-base);
 	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) rgba(var(--ui-color-link-primary-base-rgb), .4);

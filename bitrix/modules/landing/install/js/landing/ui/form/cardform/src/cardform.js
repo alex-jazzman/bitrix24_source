@@ -1,8 +1,11 @@
-import {Dom, Runtime, Tag, Type, Event} from 'main.core';
-import {Loc} from 'landing.loc';
-import {BaseForm} from 'landing.ui.form.baseform';
+import { Dom, Runtime, Tag, Text, Type, Event } from 'main.core';
+import { Loc } from 'landing.loc';
+import { BaseForm } from 'landing.ui.form.baseform';
 
 import './css/card_form.css';
+
+const NBSP = '\u00A0';
+const NBSP_ENTITY_PATTERN = /&(?:amp;)*(?:nbsp|#160|#x0*a0);/gi;
 
 /**
  * @memberOf BX.Landing.UI.Form
@@ -17,10 +20,8 @@ export class CardForm extends BaseForm
 
 		this.onItemClick = Runtime.throttle(this.onItemClick, 200, this);
 		this.onRemoveItemClick = this.onRemoveItemClick.bind(this);
-		this.onHeaderKeyDown = this.onHeaderKeyDown.bind(this);
 		this.onDragButtonClick = this.onDragButtonClick.bind(this);
 
-		this.titleId = `landing-card-title-${this.id}`;
 		this.bodyId = `landing-card-body-${this.id}`;
 		this.wrapper = this.getWrapper();
 
@@ -32,26 +33,25 @@ export class CardForm extends BaseForm
 	getWrapper(): HTMLDivElement
 	{
 		const wrapper = Tag.render`
-			<div class="landing-ui-form-cards-item">
+			<div class="landing-ui-form-cards-item" data-testid="landing-card-form">
 				<div class="landing-ui-form-cards-item-inner">
-					<div
-						class="landing-ui-form-card-item-header"
-						role="button"
-						tabindex="0"
-						aria-expanded="false"
-						aria-controls="${this.bodyId}"
-						aria-labelledby="${this.titleId}"
-					>
+					<div class="landing-ui-form-card-item-header">
 						<div class="landing-ui-form-card-item-header-left">
 							<div class="landing-ui-form-card-item-header-left-inner">
-								<span
+								<button
+									type="button"
 									class="landing-ui-form-card-item-header-drag landing-ui-drag"
-									role="button"
-									tabindex="0"
 									aria-label="${Loc.getMessage('LANDING_CARDS_FORM_DRAG_HANDLE_LABEL')}"
 									aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
-								></span>
-								<span class="landing-ui-form-card-item-header-title" id="${this.titleId}">${this.label}</span>
+									data-testid="landing-card-form-drag-btn"
+								></button>
+								<button
+									type="button"
+									class="landing-ui-form-card-item-header-title"
+									aria-expanded="false"
+									aria-controls="${this.bodyId}"
+									data-testid="landing-card-form-title-btn"
+								></button>
 							</div>
 							<div class="landing-ui-form-card-item-header-edit" aria-hidden="true">
 								<span class="fa fa-pencil"></span>
@@ -62,6 +62,7 @@ export class CardForm extends BaseForm
 								type="button"
 								class="landing-ui-form-card-item-header-remove"
 								aria-label="${Loc.getMessage('LANDING_CARDS_FORM_REMOVE_LABEL')}"
+								data-testid="landing-card-form-remove-btn"
 							>
 								<span class="fa fa-remove" aria-hidden="true"></span>
 							</button>
@@ -73,15 +74,34 @@ export class CardForm extends BaseForm
 		`;
 
 		this.header = wrapper.querySelector('.landing-ui-form-card-item-header');
+		this.titleButton = wrapper.querySelector('.landing-ui-form-card-item-header-title');
 		this.dragButton = wrapper.querySelector('.landing-ui-form-card-item-header-drag');
 		this.removeButton = wrapper.querySelector('.landing-ui-form-card-item-header-remove');
 
+		// The label is either the ready title node of a block card or a plain string, and a string
+		// one is read off the page with `innerHTML` - a card of the site can hold anything and this
+		// panel runs in the origin of the portal. So it goes in as a node in both cases and markup
+		// of the page stays text here. The string still arrives with its entities intact, and only
+		// the parser used to expand them; decoding gives back the characters it would have shown,
+		// while encoding on top of them would print `Q&amp;A` literally.
+		Dom.append(
+			Type.isDomNode(this.label) ? this.label : document.createTextNode(CardForm.decodeLabel(this.label)),
+			this.titleButton,
+		);
+
+		// The title button is the disclosure control, but the whole header row stays clickable
+		// with the mouse. A native activation of the button - Enter, Space or a click - bubbles
+		// into this very handler, so the toggle is bound once, on the row, and never twice.
 		Event.bind(this.header, 'click', this.onItemClick);
-		Event.bind(this.header, 'keydown', this.onHeaderKeyDown);
 		Event.bind(this.dragButton, 'click', this.onDragButtonClick);
 		Event.bind(this.removeButton, 'click', this.onRemoveItemClick);
 
-		Dom.attr(this.getNode(), 'id', this.bodyId);
+		// The body is what the title button expands and what `inert` leaves out of the Tab order,
+		// so a test needs it by itself and not only through `aria-controls` of the button.
+		Dom.attr(this.getNode(), {
+			id: this.bodyId,
+			'data-testid': 'landing-card-form-body',
+		});
 		this.setExpanded(false);
 
 		return wrapper;
@@ -91,7 +111,7 @@ export class CardForm extends BaseForm
 	{
 		const body = this.getNode();
 
-		Dom.attr(this.header, 'aria-expanded', expanded ? 'true' : 'false');
+		Dom.attr(this.titleButton, 'aria-expanded', expanded ? 'true' : 'false');
 
 		// `inert` keeps the collapsed body measurable (height/transition unchanged)
 		// while removing its fields from Tab order and the accessibility tree —
@@ -112,24 +132,26 @@ export class CardForm extends BaseForm
 			? this.wrapper.querySelector('.landing-ui-form-card-item-header-title')
 			: null;
 
-		return titleNode ? titleNode.textContent : '';
-	}
-
-	onHeaderKeyDown(event: KeyboardEvent)
-	{
-		if (event.target !== event.currentTarget)
+		if (titleNode === null)
 		{
-			return;
+			return '';
 		}
 
-		if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+		const words = titleNode.textContent.trim();
+		if (words !== '')
 		{
-			event.preventDefault();
-			this.onItemClick(event);
+			return words;
 		}
+
+		// A title built of pictures alone says nothing in words, and the name of such a card lives
+		// on the label instead (`block.js`: createCardLabel marks it `role="img"`). The consumer
+		// reads this to announce a card move out loud, so without the fallback a screen reader is
+		// told a card moved and never told which one.
+		const picture = titleNode.querySelector('[role="img"][aria-label]');
+
+		return picture ? picture.getAttribute('aria-label').trim() : '';
 	}
 
-	// eslint-disable-next-line class-methods-use-this
 	onDragButtonClick(event: MouseEvent)
 	{
 		event.preventDefault();
@@ -143,7 +165,14 @@ export class CardForm extends BaseForm
 		if (Type.isDomNode(event.currentTarget))
 		{
 			const target = event.currentTarget.closest('.landing-ui-form-cards-item');
-			if (!Dom.hasClass(target, 'landing-ui-form-cards-item-expand'))
+			if (Dom.hasClass(target, 'landing-ui-form-cards-item-expand'))
+			{
+				Dom.removeClass(target, 'landing-ui-form-cards-item-expand');
+				Dom.style(target, null);
+
+				this.setExpanded(false);
+			}
+			else
 			{
 				Dom.addClass(target, 'landing-ui-form-cards-item-expand');
 
@@ -151,20 +180,13 @@ export class CardForm extends BaseForm
 					Dom.style(target, {
 						overflow: 'visible',
 					});
-				});
+				}).catch(() => {});
 
 				Dom.style(target, {
 					height: 'auto',
 				});
 
 				this.setExpanded(true);
-			}
-			else
-			{
-				Dom.removeClass(target, 'landing-ui-form-cards-item-expand');
-				Dom.style(target, null);
-
-				this.setExpanded(false);
 			}
 		}
 	}
@@ -186,6 +208,7 @@ export class CardForm extends BaseForm
 			.reduce((res, field) => {
 				const [index] = field.selector.split('@');
 				res[index] = field.getValue();
+
 				return res;
 			}, {});
 	}
@@ -193,5 +216,10 @@ export class CardForm extends BaseForm
 	getPreset()
 	{
 		return this.preset || null;
+	}
+
+	static decodeLabel(label): string
+	{
+		return Text.decode(String(label)).replaceAll(NBSP_ENTITY_PATTERN, NBSP);
 	}
 }

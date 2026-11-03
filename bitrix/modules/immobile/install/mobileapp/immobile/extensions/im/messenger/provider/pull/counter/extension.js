@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { AppStatus, DialogType, RecentTab } = require('im/messenger/const');
+	const { AppStatus } = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -368,31 +368,38 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {ReadAllChatsByTypeParams} params
+		 * @param {ReadAllChatsByRecentSectionParams} params
 		 * @param {PullExtraParams} extra
 		 * @param {string} command
 		 */
-		handleReadAllChatsByType(params, extra, command)
+		handleReadAllChatsByRecentSection(params, extra, command)
 		{
-			logger.info('handleReadAllChatsByType', params);
+			logger.info('handleReadAllChatsByRecentSection', params);
 
 			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			const { type } = params;
+			const { recentSection, parentChatId = null } = params;
 
-			if (type !== DialogType.tasksTask)
+			if (!Type.isStringFilled(recentSection))
 			{
-				logger.warn('handleReadAllChatsByType: unsupported type', type);
+				logger.warn('handleReadAllChatsByRecentSection: invalid recentSection', params);
 
 				return;
 			}
 
-			serviceLocator.get('counters-update-system').readByRecentSection(RecentTab.tasksTask)
+			serviceLocator.get('counters-update-system').readByRecentSection(recentSection, parentChatId)
+				.then(() => {
+					// Anchors are a separate data zone from counters and a REACTION anchor doesn't bump a
+					// counter, so we clear anchors for every chat of the recent section, taken from recentModel.
+					const chatIdList = this.store.getters['recentModel/getChatIdListByRecentSection'](recentSection, parentChatId);
+
+					return this.store.dispatch('anchorModel/clearByChatIdList', { chatIdList });
+				})
 				.catch((error) => {
-					logger.error('handleReadAllChatsByType error', error);
+					logger.error('handleReadAllChatsByRecentSection error', error);
 				});
 		}
 

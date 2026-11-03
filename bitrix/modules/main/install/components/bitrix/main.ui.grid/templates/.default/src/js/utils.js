@@ -270,6 +270,120 @@
 			return result;
 		},
 
+		/**
+		 * Takes a node out of the accessibility tree: assistive technology and the Tab order
+		 * skip it. For decorative clones of live markup — the controls of the copy would
+		 * otherwise be announced and focusable twice. Ids of a clone are not this method's
+		 * business: `makeCloneIdsUnique` renames them and keeps the references inside the
+		 * clone pointing at the renamed ones.
+		 *
+		 * `inert` does the whole job at once, so it is used whenever the copy is purely
+		 * decorative. It is dropped only when `keepPointerSelector` names controls the user
+		 * still drags — `inert` swallows the pointer events of the entire subtree, and the
+		 * resize handles of the pinned header are registered from the clone itself. Without
+		 * `inert` the same state is assembled by hand and the named controls get the pointer
+		 * back.
+		 *
+		 * @param {Element} node
+		 * @param {string} [keepPointerSelector] controls left operable for the pointer
+		 * @returns {Element}
+		 */
+		hideFromAssistiveTech(node, keepPointerSelector)
+		{
+			if (!node)
+			{
+				return node;
+			}
+
+			const hidden = node;
+
+			hidden.setAttribute('aria-hidden', 'true');
+			BX.style(hidden, 'pointer-events', 'none');
+
+			if (!keepPointerSelector)
+			{
+				hidden.inert = true;
+			}
+
+			hidden.querySelectorAll('button, input, select, textarea, a[href], [tabindex]').forEach((element) => {
+				element.setAttribute('tabindex', '-1');
+			});
+			hidden.querySelectorAll('button, input, select, textarea').forEach((element) => {
+				element.setAttribute('disabled', 'disabled');
+			});
+
+			if (keepPointerSelector)
+			{
+				hidden.querySelectorAll(keepPointerSelector).forEach((element) => {
+					BX.style(element, 'pointer-events', 'auto');
+					element.removeAttribute('disabled');
+				});
+			}
+
+			return hidden;
+		},
+
+		/**
+		 * Rewrites the ids of a cloned subtree so that the clone does not repeat the ids of
+		 * the markup it was cloned from. Attributes pointing at a renamed id - `for` of a
+		 * label, the aria references - are repointed at the new one, so a control keeps
+		 * working inside the clone; references to an id the clone does not carry are left
+		 * alone, because they point outside of it.
+		 *
+		 * @param {Element} clone
+		 * @param {string} prefix
+		 */
+		makeCloneIdsUnique(clone, prefix)
+		{
+			if (!clone)
+			{
+				return;
+			}
+
+			const referenceAttributes = ['for', 'aria-labelledby', 'aria-describedby', 'aria-controls', 'aria-owns'];
+			const renamed = new Map();
+
+			// The root of the clone carries an id of its own as readily as its descendants,
+			// and `querySelectorAll` does not return it.
+			[clone, ...this.getBySelector(clone, '[id]')].forEach((node) => {
+				if (!node.id)
+				{
+					return;
+				}
+
+				const uniqueId = `${prefix}${node.id}`;
+
+				renamed.set(node.id, uniqueId);
+				BX.Dom.attr(node, 'id', uniqueId);
+			});
+
+			if (renamed.size === 0)
+			{
+				return;
+			}
+
+			const referenceSelector = referenceAttributes.map((name) => `[${name}]`).join(',');
+
+			[clone, ...this.getBySelector(clone, referenceSelector)].forEach((node) => {
+				referenceAttributes.forEach((name) => {
+					const value = node.getAttribute(name);
+
+					if (value === null)
+					{
+						return;
+					}
+
+					// An aria reference may list several ids, so each one is looked up on its own.
+					const rewritten = value.split(/\s+/).map((id) => renamed.get(id) || id).join(' ');
+
+					if (rewritten !== value)
+					{
+						BX.Dom.attr(node, name, rewritten);
+					}
+				});
+			});
+		},
+
 		listenerParams(params)
 		{
 			try

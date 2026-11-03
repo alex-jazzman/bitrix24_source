@@ -15,9 +15,18 @@ declare type RelationCommentInfo = {
 	commentChatId: number,
 	parentMessageId: number,
 	parentChatId: number,
+	// absent while the element of the model has no data of the plate yet
+	messageCount?: number,
+	lastUserIds?: Array<number>,
+};
+
+// a cell of the commentInfo section with the parent chat resolved by its consumer
+declare type RestCommentInfo = CommentInfoModelState & {
+	parentChatId: number,
 };
 
 declare type CommentModelActions = 'commentModel/setComments'
+	| 'commentModel/setCommentsFromSync'
 	| 'commentModel/setComment'
 	| 'commentModel/setFromLocalDatabase'
 	| 'commentModel/updateComment'
@@ -39,7 +48,11 @@ declare type CommentModelMutation = 'commentModel/setComments'
 	| 'commentModel/deleteChannelCounters'
 	;
 
-declare type CommentsSetCommentsActions = 'setComments' | 'updateComment' | 'setComment' | 'setFromLocalDatabase';
+declare type CommentsSetCommentsActions = 'setComments'
+	| 'setCommentsFromSync'
+	| 'updateComment'
+	| 'setComment'
+	| 'setFromLocalDatabase';
 declare type CommentsSetCommentsData = {
 	commentList: Array<CommentInfoModelState>
 }

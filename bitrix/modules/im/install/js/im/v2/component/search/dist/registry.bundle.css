@@ -21,6 +21,19 @@
 	height: 55px;
 }
 
+.bx-im-chat-search__result-list .bx-im-search-item-layout__container.--selected .bx-im-search-item__date {
+	margin-right: var(--ui-space-inline-xl);
+}
+
+/* The result list scrolls inside ScrollWithGradient and its own section container hides the overflow,
+   so a ring drawn around a row would be cut off - it goes inside the row bounds instead. The selector
+   is semantic on purpose: the focusable root of a row is the layout element of the shared search item,
+   whose classes are not ours to hook into. */
+.bx-im-chat-search__result-list [role="option"]:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
 .bx-im-search-empty-state__scope {
 	--im-search-empty-state__color_title: var(--im-color-palette-gray-70, #828b95);
 	--im-search-empty-state__color_subtitle: var(--ui-color-palette-gray-50, #a8adb4);
@@ -100,6 +113,13 @@
 	color: var(--im-search-self-chat__color_hover-name);
 }
 
+/* Keyboard cursor of the search results; same ring as the carousel tile (carousel-user.css). */
+.bx-im-search-self-chat__container.--keyboard-active {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-sm);
+}
+
 .bx-im-search-self-chat__avatar {
 	width: 48px;
 	height: 48px;
@@ -148,7 +168,25 @@
 	color: var(--im-carousel-user__color_extranet-name);
 }
 
-.bx-im-carousel-user__container.--selected .bx-im-avatar__content {
+/* Keyboard cursor: the real focus stays in the search input, so :focus-visible never fires on the
+   tile and the shared .--focus-visible rule cannot be reused. The offset is the outward one of the
+   design system: the tile box ends right at its label, so an inset ring would sit on the text, and
+   the carousel row keeps free space around it - unlike the result rows below (search-item-layout.css).
+   The radius shapes the ring alone, the tile has neither background nor border. Independent of
+   .--selected: the ring is drawn on the tile, the selection mark on the avatar inside it. */
+.bx-im-carousel-user__container.--keyboard-active {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.bx-im-carousel-user__container.--selected .bx-im-legacy-avatar__content {
+	outline: 2px solid var(--im-carousel-user__outline-color_selected);
+	outline-offset: -1px;
+}
+
+/* Air design: the DS avatar has no legacy content node, so mark selection on its container. */
+.bx-im-carousel-user__container.--selected .bx-im-base-ui-avatar__container {
 	outline: 2px solid var(--im-carousel-user__outline-color_selected);
 	outline-offset: -1px;
 }

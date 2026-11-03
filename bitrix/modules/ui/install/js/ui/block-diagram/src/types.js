@@ -1,5 +1,15 @@
 import { SnapshotHandler, RevertHandler } from './composables';
-import { PortsNearest, BlockIntersections, AnimationStepController } from './utils';
+import {
+	PortsNearest,
+	BlockIntersections,
+	AnimationStepController,
+	Camera,
+	Canvas,
+	MapRenderer,
+	InputState,
+	ActionRegistry,
+	CopyPasteBuffer,
+} from './utils';
 
 export type Point = {
 	x: number;
@@ -88,18 +98,6 @@ export type DiagramBlock = {
 
 export type ShortcutHandler = (event: KeyboardEvent, mousePos: Point) => void;
 
-export type PreparedShortcut = {
-	id: string,
-	mainKey: string,
-	requiredModifiers: {
-		ctrl: boolean,
-		meta: boolean,
-		shift: boolean,
-		alt: boolean,
-	},
-	handler: ShortcutHandler,
-};
-
 export type DiagramGroupedBlocks = { [string]: Array<DiagramBlock> };
 export type DiagramBlockGroupNames = Array<string>;
 
@@ -149,12 +147,56 @@ export type DiagramConnectionPreview = {
 export type GroupedConnections = { [string]: Array<DiagramConnection> };
 export type ConnectionGroupNames = Array<string>;
 
+export type DiagramClipboardContent = {
+	blocks: DiagramBlock[];
+	connections: DiagramConnection[];
+	// Which of the copied blocks were containers at the moment of copying. Stated here because the
+	// buffer outlives the blocks it was filled from: by the time of the paste the original may be
+	// gone from the canvas, and nothing would be left to ask. Absent in content copied before this
+	// field existed.
+	backdropIds?: DiagramBlockId[];
+};
+
 export type Transform = {
 	x: number,
 	y: number,
 	zoom: number,
 	viewportX: number,
 	viewportY: number,
+};
+
+// Camera destination. The viewport point is kept in place only while anchorToViewport is set:
+// (0, 0) is a valid point and must not be read as "no anchor".
+export type CameraLandmark = {
+	x: number,
+	y: number,
+	zoom: number,
+	anchorToViewport: boolean,
+	viewportX: number,
+	viewportY: number,
+};
+
+// Edges of the viewport the panels of a consumer cover. The canvas is drawn under them and its own
+// size says nothing about them, so the free part of the screen is known to the consumer alone.
+//
+// Every edge is optional: a consumer names the ones its panels really take and says nothing about
+// the rest, so a partial set is an ordinary value here. Filling the gaps with zeros is the business
+// of the geometry that measures the free area (`resolveInsets` in `utils/canvas/fit-to-view.js`),
+// not of the consumer.
+export type DiagramViewportInsets = {
+	top?: number,
+	right?: number,
+	bottom?: number,
+	left?: number,
+};
+
+// One-off parameters of the fit command. Every field is optional: on its own the command takes the
+// insets published by the panel of the consumer, a margin of one grid step along every side and the
+// natural size of the scheme as the upper bound of the fitted scale.
+export type FitToViewParams = {
+	insets?: DiagramViewportInsets,
+	padding?: number,
+	maxFitZoom?: number,
 };
 
 export type Snapshot = {
@@ -171,8 +213,22 @@ export type AnimationItem = {
 	item: DiagramBlock | DiagramConnection;
 };
 
+/**
+ * A block the way a drag hands it over: what the consumer will put into the model, plus what only
+ * the palette knows about it. The declaration below is read once, at the drop, and is not kept in
+ * the model - from the mount of the block onwards the registry of containers answers for it.
+ */
+export type DiagramDraggedBlock = {
+	...DiagramBlock,
+	// The consumer renders this block as a container (see the `Groupable` wrapper). Optional and
+	// false by default: a consumer that says nothing drops ordinary nodes, exactly as before.
+	// Without it the no-overlap rule would push a container off the very nodes it was aimed to
+	// cover, because the registry is filled at mount and the drop is written before that.
+	isBackdrop?: boolean,
+};
+
 export type DragData = {
-	dragData: DiagramBlock,
+	dragData: DiagramDraggedBlock,
 	dragImage: HTMLElement,
 };
 
@@ -192,10 +248,21 @@ export type DiagramInstancesContext = {
 	getters: Getters;
 };
 
+export type DiagramCanvasContext = {
+	...DiagramInstancesContext,
+	camera: typeof Camera;
+};
+
 export type DiagramInstances = {
 	portsNearest: typeof PortsNearest;
 	blockIntersections: typeof BlockIntersections;
+	camera: typeof Camera;
+	canvas: typeof Canvas;
+	mapRenderer: typeof MapRenderer;
 	animationStep: typeof AnimationStepController;
+	inputState: typeof InputState;
+	actionRegistry: typeof ActionRegistry;
+	copyPasteBuffer: typeof CopyPasteBuffer;
 };
 
 export type DiagramSearchBlockRect = {
@@ -207,6 +274,8 @@ export type DiagramSearchBlockRect = {
 
 export type State = {
 	blockDiagramRef: HTMLElement | null;
+	canvasMapRef: HTMLElement | null;
+	focusScopeRef: HTMLElement | null;
 	blockDiagramTop: number;
 	blockDiagramLeft: number;
 
@@ -243,11 +312,24 @@ export type State = {
 	// takes its group members along.
 	gestureBlockIds: Set<DiagramBlockId>;
 
+	// Whether the running gesture raises the set above: it answers that question alone, and the
+	// raised set is `gestureBlockIds` itself. Outside a gesture - false.
+	isGestureElevated: boolean;
+
+	// Blocks that declared themselves containers by being wrapped in Groupable. The gesture of the
+	// selection frame never reaches a block component, so the registry is the one channel through
+	// which both gestures learn about containers.
+	groupableBlockIds: Set<DiagramBlockId>;
+
+	// The node under the cursor, raised above the rest of the canvas. A single id, not a set:
+	// the shape of the storage is what keeps exactly one node raised at a time.
+	hoveredBlockId: DiagramBlockId | null;
+
 	canvasRef: HTMLElement | null,
 	transformLayoutRef: HTMLElement | null,
-	canvasInstance: {...} | null,
 	canvasWidth: number,
 	canvasHeight: number,
+	viewportInsets: DiagramViewportInsets;
 	transformX: number;
 	transformY: number;
 	viewportX: number;
@@ -280,6 +362,17 @@ export type State = {
 
 	highlitedBlockIds: Array<DiagramBlockId>;
 	transientHighlightedBlockIds: Array<DiagramBlockId>;
+
+	// Blocks the no-overlap rule has just answered about. A channel of its own: neither the user
+	// selection nor the playback highlight may go out because a block was pushed aside, and the
+	// reverse.
+	displacedBlockIds: Array<DiagramBlockId>;
+
+	// What the channel above is saying about those blocks: a correction the rule made, or a refusal
+	// that left them where they started. One flag for the whole set - a channel always carries the
+	// answer to a single operation.
+	isPlacementRefused: boolean;
+
 	isSelectionActive: boolean;
 	selectionWorldRect: { x: number, y: number, width: number, height: number } | null;
 
@@ -292,9 +385,6 @@ export type State = {
 	isPauseAnimation: boolean;
 	isStopAnimation: boolean;
 
-	shortcuts: Array<PreparedShortcut>;
-	mousePosition: Point;
-	isKeyboardInitialized: boolean;
 	isRenderOptimizationAvailable: boolean;
 	connectionRouteHitTestEnabled: boolean;
 };

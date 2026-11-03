@@ -1,3 +1,5 @@
+BX.namespace('BX.Crm.Config.Status');
+
 BX.CrmConfigStatusClass = (function ()
 {
 	var CrmConfigStatusClass = function (parameters)
@@ -74,6 +76,7 @@ BX.CrmConfigStatusClass = (function ()
 		this.initAmCharts();
 		this.showError();
 		this.init();
+		this.initStageEditorIntegration();
 	};
 
 	CrmConfigStatusClass.prototype.selectTab = function(tabId)
@@ -116,6 +119,17 @@ BX.CrmConfigStatusClass = (function ()
 
 	CrmConfigStatusClass.prototype.statusReset = function()
 	{
+		var sidePanel = top.BX && top.BX.SidePanel;
+		if (sidePanel && sidePanel.Instance)
+		{
+			var slider = sidePanel.Instance.getSliderByWindow(window);
+			if (slider)
+			{
+				slider.close();
+				return;
+			}
+		}
+
 		BX('ACTION').value = 'reset';
 		document.forms["crmStatusForm"].submit();
 	};
@@ -138,6 +152,12 @@ BX.CrmConfigStatusClass = (function ()
 
 	CrmConfigStatusClass.prototype.editField = function(fieldId)
 	{
+		if(this.hasSemantics && this.stageEditorIntegration)
+		{
+			this.stageEditorIntegration.openEdit(this.entityId, fieldId);
+			return;
+		}
+
 		var domElement, fieldDiv = this.searchElement('div', this.mainDivStorageFieldIdPrefix+fieldId),
 			spanStoring = this.searchElement('span', this.spanStoringNameIdPrefix+fieldId),
 			fieldName = this.searchElement('span', this.fieldNameIdPrefix+fieldId),
@@ -401,7 +421,11 @@ BX.CrmConfigStatusClass = (function ()
 				var name = BX.message('CRM_STATUS_NEW');
 				if(this.hasSemantics)
 				{
-					name = BX.message('CRM_STATUS_NEW_'+this.entityId);
+					name = BX.Crm.Config.Status.resolveDefaultStageName(
+						this.entityId,
+						CrmConfigStatusClass.entityInfos,
+						name
+					);
 				}
 				newFieldValue = name;
 			}
@@ -431,10 +455,318 @@ BX.CrmConfigStatusClass = (function ()
 		return null;
 	};
 
-	CrmConfigStatusClass.prototype.getDefaultColor = function()
+	CrmConfigStatusClass.prototype.findStageElement = function(entityId, fieldId)
 	{
+		var elements = BX.findChildren(
+			BX(this.contentIdPrefix+entityId),
+			{'tag': 'div', 'attribute': {'id': this.mainDivStorageFieldIdPrefix+fieldId}},
+			true
+		);
+
+		return elements && elements[0] ? elements[0] : null;
+	};
+
+	CrmConfigStatusClass.prototype.findStageControl = function(entityId, tag, id)
+	{
+		var elements = BX.findChildren(
+			BX(this.contentIdPrefix+entityId),
+			{'tag': tag, 'attribute': {'id': id}},
+			true
+		);
+
+		return elements && elements[0] ? elements[0] : null;
+	};
+
+	CrmConfigStatusClass.prototype.initStageEditorIntegration = function()
+	{
+		if(
+			!BX.Crm.Config
+			|| !BX.Crm.Config.Status
+			|| !BX.Crm.Config.Status.StageEditorIntegration
+		)
+		{
+			return;
+		}
+
+		this.stageEditorIntegration = new BX.Crm.Config.Status.StageEditorIntegration({
+			editorFactory: this.createLazyStageEditorFactory(),
+			tooltipFactory: CrmConfigStatusClass.LazyStageDescriptionTooltip,
+			editLabel: BX.message('CRM_STATUS_EDIT_NAME'),
+			getStage: function(entityId, fieldId) {
+				return this.data[entityId] ? this.data[entityId][fieldId] : null;
+			}.bind(this),
+			getStageElement: this.findStageElement.bind(this),
+			getStageNameElement: function(entityId, fieldId) {
+				return this.findStageControl(entityId, 'span', this.fieldNameIdPrefix+fieldId);
+			}.bind(this),
+			getEntityTypeId: function(entityId) {
+				var entityInfo = CrmConfigStatusClass.entityInfos[entityId] || {};
+
+				return entityInfo.ENTITY_TYPE_ID || 0;
+			},
+			getEntityTypeName: function(entityId) {
+				var entityInfo = CrmConfigStatusClass.entityInfos[entityId] || {};
+
+				return entityInfo.ENTITY_TYPE_NAME || '';
+			},
+			canDeleteStage: function(entityId, fieldId) {
+				var stageElement = this.findStageElement(entityId, fieldId);
+				var stage = this.data[entityId] ? this.data[entityId][fieldId] : null;
+
+				return stageElement
+					&& stage
+					&& stage.SYSTEM !== 'Y'
+					&& stageElement.getAttribute('data-stage-can-delete') === 'Y';
+			}.bind(this),
+			getDeleteBlockReasons: function() {
+				return [];
+			},
+			previewStage: this.previewStageEditorData.bind(this),
+			restoreStage: this.restoreStageEditorData.bind(this),
+			applyStage: this.applyStageEditorData.bind(this),
+			activateStage: this.activateStageForDragging.bind(this),
+			deleteStage: this.deleteStageFromEditor.bind(this),
+			removeDraft: this.removeStageEditorDraft.bind(this)
+		});
+
+		for(var i = 0; i < CrmConfigStatusClass.semanticEntityTypes.length; i++)
+		{
+			var entityId = CrmConfigStatusClass.semanticEntityTypes[i];
+			var stages = this.data[entityId] || {};
+			for(var fieldId in stages)
+			{
+				if(stages.hasOwnProperty(fieldId))
+				{
+					this.stageEditorIntegration.registerStage(entityId, fieldId);
+					this.previewStageEditorData(entityId, fieldId, stages[fieldId]);
+				}
+			}
+		}
+	};
+
+	CrmConfigStatusClass.prototype.createLazyStageEditorFactory = function()
+	{
+		return BX.Crm.Config.Status.createLazyStageEditorFactory(function() {
+			return BX.Crm.Config.Status.getStageEditorExtension();
+		});
+	};
+
+	CrmConfigStatusClass.prototype.cancelStageEditor = function()
+	{
+		if(this.stageEditorIntegration)
+		{
+			this.stageEditorIntegration.cancelEditing();
+		}
+	};
+
+	CrmConfigStatusClass.prototype.previewStageEditorData = function(entityId, fieldId, payload)
+	{
+		var stageElement = this.findStageElement(entityId, fieldId);
+		var stage = this.data[entityId] ? this.data[entityId][fieldId] : null;
+		if(!stageElement || !stage)
+		{
+			return;
+		}
+
+		var name = typeof payload.name === 'string' ? payload.name : (payload.NAME || '');
+		var rawColor = typeof payload.color === 'string'
+			? payload.color
+			: (typeof payload.COLOR === 'string' ? payload.COLOR : stage.COLOR);
+		var fieldName = this.findStageControl(entityId, 'span', this.fieldNameIdPrefix+fieldId);
+		var fieldNumber = this.findStageControl(entityId, 'input', this.fieldHiddenNumberIdPrefix+fieldId);
+		if(fieldName && fieldNumber)
+		{
+			fieldName.innerHTML = BX.util.htmlspecialchars(fieldNumber.value+'. '+name);
+		}
+
+		var visual = this.resolveStageVisual(rawColor, stage.SEMANTICS, entityId);
+		this.applyStageVisual(stageElement, visual);
+	};
+
+	CrmConfigStatusClass.prototype.resolveStageVisual = function(color, semantics, entityId)
+	{
+		return BX.Crm.Config.Status.resolveStageVisual(color, semantics, {
+			defaultProcessColor: this.getDefaultColor(entityId),
+			defaultSuccessColor: this.defaultFinalSuccessColor,
+			defaultFailureColor: this.defaultFinalUnSuccessColor
+		});
+	};
+
+	CrmConfigStatusClass.prototype.applyStageVisual = function(stageElement, visual)
+	{
+		stageElement.style.background = visual.backgroundColor;
+		stageElement.style.color = visual.textColor;
+
+		var icons = BX.findChildren(stageElement, {
+			'tag': 'span',
+			'attribute': {'id': 'transaction-stage-phase-icon'}
+		}, true) || [];
+		for(var i = 0; i < icons.length; i++)
+		{
+			icons[i].className = visual.iconClass+' '+icons[i].getAttribute('data-class');
+		}
+
+		var phasePanels = BX.findChildren(stageElement, {
+			'attribute': {'id': 'phase-panel'}
+		}, true) || [];
+		for(var j = 0; j < phasePanels.length; j++)
+		{
+			phasePanels[j].className = visual.blockClass+' '+phasePanels[j].getAttribute('data-class');
+		}
+	};
+
+	CrmConfigStatusClass.prototype.restoreStageEditorData = function(entityId, fieldId, snapshot)
+	{
+		this.previewStageEditorData(entityId, fieldId, snapshot);
+	};
+
+	CrmConfigStatusClass.prototype.activateStageForDragging = function(entityId, fieldId)
+	{
+		var stageElement = this.findStageElement(entityId, fieldId);
+		if(stageElement)
+		{
+			stageElement.setAttribute('data-stage-editor-draft', 'N');
+		}
+		if(this.data[entityId] && this.data[entityId][fieldId])
+		{
+			this.data[entityId][fieldId].IS_DRAFT = false;
+		}
+	};
+
+	CrmConfigStatusClass.prototype.applyStageEditorData = function(entityId, fieldId, payload)
+	{
+		var stage = this.data[entityId] ? this.data[entityId][fieldId] : null;
+		if(!stage)
+		{
+			return;
+		}
+
+		var name = payload.name || '';
+		var description = payload.description || '';
+		var color = '#'+String(payload.color || '').replace('#', '');
+		var fieldHiddenName = this.findStageControl(entityId, 'input', this.fieldHiddenNameIdPrefix+fieldId);
+		var fieldDescription = this.findStageControl(entityId, 'input', 'stage-description-'+fieldId);
+
+		this.previewStageEditorData(entityId, fieldId, payload);
+		stage.NAME = name;
+		stage.DESCRIPTION = description;
+		if(fieldHiddenName)
+		{
+			fieldHiddenName.value = name;
+		}
+		if(fieldDescription)
+		{
+			fieldDescription.value = description;
+		}
+
+		var activeEntityId = this.entityId;
+		var activeHasSemantics = this.hasSemantics;
+		this.entityId = entityId;
+		this.hasSemantics = true;
+		try
+		{
+			this.paintElement(color, {
+				pWnd: {
+					getAttribute: function(attribute) {
+						return attribute === 'data-img' ? fieldId : null;
+					}
+				}
+			});
+		}
+		finally
+		{
+			this.entityId = activeEntityId;
+			this.hasSemantics = activeHasSemantics;
+		}
+	};
+
+	CrmConfigStatusClass.prototype.removeStageEditorDraft = function(entityId, fieldId)
+	{
+		var stageElement = this.findStageElement(entityId, fieldId);
+		if(stageElement && stageElement.parentNode)
+		{
+			stageElement.parentNode.removeChild(stageElement);
+		}
+		if(this.data[entityId])
+		{
+			delete this.data[entityId][fieldId];
+		}
+
+		var activeEntityId = this.entityId;
+		var activeHasSemantics = this.hasSemantics;
+		this.entityId = entityId;
+		this.hasSemantics = true;
+		try
+		{
+			this.recalculateSort();
+		}
+		finally
+		{
+			this.entityId = activeEntityId;
+			this.hasSemantics = activeHasSemantics;
+		}
+	};
+
+	CrmConfigStatusClass.prototype.deleteStageFromEditor = function(entityId, fieldId)
+	{
+		if(isNaN(parseInt(fieldId)))
+		{
+			this.removeStageEditorDraft(entityId, fieldId);
+
+			return Promise.resolve();
+		}
+
+		return new Promise(function(resolve, reject) {
+			BX.ajax({
+				url: this.ajaxUrl,
+				method: 'POST',
+				dataType: 'json',
+				data: {
+					'ACTION': 'CHECK_ENTITY_EXISTENCE',
+					'ENTITY_ID': entityId,
+					'FIELD_ID': fieldId
+				},
+				onsuccess: function(result) {
+					if(result.ERROR)
+					{
+						var errorContainer = document.createElement('div');
+						errorContainer.innerHTML = result.ERROR;
+						reject(errorContainer.textContent || result.ERROR);
+						return;
+					}
+
+					var activeEntityId = this.entityId;
+					var activeHasSemantics = this.hasSemantics;
+					this.entityId = entityId;
+					this.hasSemantics = true;
+					try
+					{
+						this.deleteField(fieldId);
+					}
+					catch(error)
+					{
+						reject(error.message || BX.message('CRM_STATUS_REMOVE_ERROR'));
+						return;
+					}
+					finally
+					{
+						this.entityId = activeEntityId;
+						this.hasSemantics = activeHasSemantics;
+					}
+					resolve();
+				}.bind(this),
+				onfailure: function() {
+					reject(BX.message('CRM_STATUS_REMOVE_ERROR'));
+				}
+			});
+		}.bind(this));
+	};
+
+	CrmConfigStatusClass.prototype.getDefaultColor = function(entityId)
+	{
+		entityId = entityId || this.entityId;
 		var currentColorIndex = -1;
-		var values = BX.util.objectSort(Object.values(this.data[this.entityId]), 'SORT', 'asc');
+		var values = BX.util.objectSort(Object.values(this.data[entityId] || {}), 'SORT', 'asc');
 		for(var i = (values.length - 1); i > 0; i--)
 		{
 			var color = values[i]['COLOR'];
@@ -485,7 +817,11 @@ BX.CrmConfigStatusClass = (function ()
 
 		if(this.hasSemantics)
 		{
-			name = BX.message('CRM_STATUS_NEW_'+this.entityId);
+			name = BX.Crm.Config.Status.resolveDefaultStageName(
+				this.entityId,
+				CrmConfigStatusClass.entityInfos,
+				name
+			);
 		}
 		else
 		{
@@ -499,13 +835,23 @@ BX.CrmConfigStatusClass = (function ()
 			NAME: name,
 			ENTITY_ID: this.entityId,
 			COLOR: color,
+			DESCRIPTION: '',
 			SEMANTICS: semantics,
-			CATEGORY_ID: categoryId
+			CATEGORY_ID: categoryId,
+			SYSTEM: 'N',
+			IS_DRAFT: this.hasSemantics
 		};
 
 		parentNode.insertBefore(this.createStructureHtml(id), element);
 		this.recalculateSort();
-		this.editField(id);
+		if(this.hasSemantics && this.stageEditorIntegration)
+		{
+			this.stageEditorIntegration.openCreate(this.entityId, id);
+		}
+		else
+		{
+			this.editField(id);
+		}
 	};
 
 	CrmConfigStatusClass.prototype.recalculateSort = function()
@@ -803,18 +1149,14 @@ BX.CrmConfigStatusClass = (function ()
 	{
 		var domElement, fieldObject = this.data[this.entityId][fieldId];
 
-		var iconClass = '', color = this.textColorDark, blockClass='', img;
+		var iconClass = '', color = this.textColorDark, blockClass='';
 		if(this.hasSemantics)
 		{
-			iconClass = 'light-icon';
-			color = this.textColorLight;
-			blockClass = 'transaction-stage-phase-dark';
-			img = BX.create('div', {
-				props: {className: 'transaction-stage-phase-panel-button'},
-				attrs: {
-					onclick: 'BX["'+this.jsClass+'"].correctionColorPicker(event, \''+fieldObject.ID+'\');'
-				}
-			});
+			var visual = this.resolveStageVisual(fieldObject.COLOR, fieldObject.SEMANTICS, this.entityId);
+			fieldObject.COLOR = visual.backgroundColor;
+			iconClass = visual.iconClass;
+			color = visual.textColor;
+			blockClass = visual.blockClass;
 		}
 
 		domElement = BX.create('div', {
@@ -823,6 +1165,8 @@ BX.CrmConfigStatusClass = (function ()
 				ondblclick: 'BX["'+this.jsClass+'"].editField(\''+fieldObject.ID+'\');',
 				'data-sort': fieldObject.SORT,
 				'data-calculate': 1,
+				'data-stage-can-delete': 'Y',
+				'data-stage-editor-draft': fieldObject.IS_DRAFT ? 'Y' : 'N',
 				'data-space': fieldObject.ID,
 				'style': 'background: '+fieldObject.COLOR+'; color:'+color+';'
 			},
@@ -836,7 +1180,6 @@ BX.CrmConfigStatusClass = (function ()
 						"data-class": 'transaction-stage-phase-panel'
 					},
 					children: [
-						img,
 						BX.create('div', {
 							props: {className: 'transaction-stage-phase-panel-button ' +
 							'transaction-stage-phase-panel-button-close'},
@@ -915,6 +1258,14 @@ BX.CrmConfigStatusClass = (function ()
 						type: 'hidden',
 						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][COLOR]',
 						value: fieldObject.COLOR
+					}
+				}),
+				BX.create('input', {
+					props: {id: 'stage-description-'+fieldObject.ID},
+					attrs: {
+						type: 'hidden',
+						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][DESCRIPTION]',
+						value: fieldObject.DESCRIPTION || ''
 					}
 				}),
 				BX.create('input', {
@@ -1133,9 +1484,16 @@ BX.CrmConfigStatusClass = (function ()
 						newName = this.data[k][i].NAME.toLowerCase(),
 						oldName = this.oldData[k][i].NAME.toLowerCase(),
 						newColor = this.data[k][i].COLOR.toLowerCase(),
-						oldColor = this.oldData[k][i].COLOR.toLowerCase();
+						oldColor = this.oldData[k][i].COLOR.toLowerCase(),
+						newDescription = this.data[k][i].DESCRIPTION || '',
+						oldDescription = this.oldData[k][i].DESCRIPTION || '';
 
-					if ((newSort !== oldSort) || (newName !== oldName) || (newColor !== oldColor))
+					if (
+						(newSort !== oldSort)
+						|| (newName !== oldName)
+						|| (newColor !== oldColor)
+						|| (newDescription !== oldDescription)
+					)
 					{
 						changes = true;
 						break;
@@ -1184,23 +1542,6 @@ BX.CrmConfigStatusClass = (function ()
 		});
 	};
 
-	CrmConfigStatusClass.prototype.correctionColorPicker = function(event, fieldId)
-	{
-		if(!fieldId)
-		{
-			return;
-		}
-
-		var blockColorPicker = BX('block-color-picker');
-		const pos = BX.Dom.getRelativePosition(event.target, BX('crm-container'));
-
-		blockColorPicker.style.left = pos.left+'px';
-		blockColorPicker.style.top = pos.top+'px';
-		var img = BX.findChildren(BX('block-color-picker'), {'tag': 'IMG'}, true)[0];
-		img.setAttribute('data-img', fieldId);
-		img.onclick();
-	};
-
 	CrmConfigStatusClass.prototype.paintElement = function(color, objColorPicker)
 	{
 		if(!objColorPicker)
@@ -1214,51 +1555,19 @@ BX.CrmConfigStatusClass = (function ()
 
 		if(fields.length)
 		{
-			if(!color && fields[0].parentNode.id == this.finalStorageFieldIdPrefix+this.entityId)
+			var field = this.data[this.entityId][fieldId] || {};
+			if(this.hasSemantics)
 			{
-				color = this.defaultFinalUnSuccessColor;
+				var visual = this.resolveStageVisual(color, field.SEMANTICS, this.entityId);
+				color = visual.backgroundColor;
 			}
-			else if(!color && fields[0].parentNode.id == this.finalSuccessStorageFieldIdPrefix+this.entityId)
-			{
-				color = this.defaultFinalSuccessColor;
-			}
-			else if(!color)
-			{
-				color = this.getDefaultColor();
-			}
-
-			if(!this.hasSemantics)
+			else
 			{
 				color = this.defaultLineColor;
+				visual = this.resolveStageVisual(color, field.SEMANTICS, this.entityId);
 			}
 
-			fields[0].style.background = color;
-
-			var span = BX.findChildren(fields[0], {'tag': 'span', 'attribute':
-				{'id': 'transaction-stage-phase-icon'}}, true);
-
-			var phasePanel = BX.findChildren(fields[0], {'attribute': {'id': 'phase-panel'}}, true);
-
-			if(span.length && phasePanel.length)
-			{
-				BX.ajax({
-					url: this.ajaxUrl,
-					method: "POST",
-					dataType: "json",
-					data: {
-						"ACTION" : "GET_COLOR",
-						"COLOR" : color
-					},
-					onsuccess: BX.delegate(function(result) {
-						fields[0].style.color = result.COLOR;
-						span[0].className = result.ICON_CLASS+' '+span[0].getAttribute('data-class');
-						for(var k in phasePanel)
-						{
-							phasePanel[k].className = result.BLOCK_CLASS+' '+phasePanel[k].getAttribute('data-class');
-						}
-					}, this)
-				});
-			}
+			this.applyStageVisual(fields[0], visual);
 		}
 		else
 		{
@@ -1546,6 +1855,66 @@ BX.CrmConfigStatusClass = (function ()
 		}
 
 		return entityInfos[entityId]['CATEGORY_ID'] || null;
+	};
+
+	CrmConfigStatusClass.LazyStageDescriptionTooltip = function()
+	{
+		this.tooltip = null;
+		this.requestId = 0;
+	};
+	CrmConfigStatusClass.LazyStageDescriptionTooltip.prototype.show = function(options)
+	{
+		var requestId = ++this.requestId;
+		BX.Crm.Config.Status.getStageDescriptionTooltipExtension().then(function(Tooltip) {
+			if(requestId !== this.requestId || !Tooltip)
+			{
+				return;
+			}
+
+			this.tooltip = this.tooltip || new Tooltip();
+			this.tooltip.show(options);
+		}.bind(this));
+	};
+	CrmConfigStatusClass.LazyStageDescriptionTooltip.prototype.hide = function()
+	{
+		this.requestId++;
+		if(this.tooltip)
+		{
+			this.tooltip.hide();
+		}
+	};
+
+	BX.Crm.Config.Status._stageEditorExtensionPromise = null;
+	BX.Crm.Config.Status._stageDescriptionTooltipExtensionPromise = null;
+	BX.Crm.Config.Status.getStageEditorExtension = function()
+	{
+		this._stageEditorExtensionPromise ??= BX.Runtime.loadExtension('crm.stage.editor')
+			.then(function(exports) {
+				return BX.type.isFunction(exports?.StageEditor?.open) ? exports.StageEditor : null;
+			})
+			.catch(function() {
+				this._stageEditorExtensionPromise = null;
+
+				return null;
+			}.bind(this))
+		;
+
+		return this._stageEditorExtensionPromise;
+	};
+	BX.Crm.Config.Status.getStageDescriptionTooltipExtension = function()
+	{
+		this._stageDescriptionTooltipExtensionPromise ??= BX.Runtime.loadExtension('crm.stage.description-tooltip')
+			.then(function(exports) {
+				return BX.type.isFunction(exports?.StageDescriptionTooltip) ? exports.StageDescriptionTooltip : null;
+			})
+			.catch(function() {
+				this._stageDescriptionTooltipExtensionPromise = null;
+
+				return null;
+			}.bind(this))
+		;
+
+		return this._stageDescriptionTooltipExtensionPromise;
 	};
 
 	return CrmConfigStatusClass;

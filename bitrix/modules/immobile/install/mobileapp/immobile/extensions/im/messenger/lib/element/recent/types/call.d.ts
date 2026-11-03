@@ -9,9 +9,10 @@ export type RecentCallData = {
 		type: string,
 		userCounter: number,
 	},
-	id: string,
+	id?: number | string | null,
+	noButton?: boolean,
 	provider: string,
-	uuid: string,
+	uuid?: string | null,
 }
 
 export type RecentCallStatus = 'local' | 'none' | 'remote';

@@ -1,0 +1,2 @@
+<?php
+$MESS['IMMOBILE_NAVIGATION_TAB_ALL_TAB_TITLE'] = 'Все';

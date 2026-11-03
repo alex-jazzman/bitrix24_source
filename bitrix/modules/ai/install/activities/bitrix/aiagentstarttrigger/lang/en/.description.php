@@ -1,5 +1,5 @@
 <?php
-
 $MESS["AI_ACTIVITY_AGENT_START_TRIGGER_DESCRIPTION"] = "User runs AI agent at the AI agents page.";
+$MESS["AI_ACTIVITY_AGENT_START_TRIGGER_EVENT_DATE_TIME"] = "Date and time AI agent started";
 $MESS["AI_ACTIVITY_AGENT_START_TRIGGER_MSGVER_1"] = "Manual AI agent run";
 $MESS["AI_ACTIVITY_AGENT_START_TRIGGER_STARTED_BY"] = "Agent started by";

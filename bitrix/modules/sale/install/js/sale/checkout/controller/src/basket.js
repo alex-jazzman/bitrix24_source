@@ -1,5 +1,6 @@
-import { ajax } from 'main.core';
+import { Loc, ajax } from 'main.core';
 import {
+	Announcer,
 	Pool,
 	Timer,
 	Basket as Lib,
@@ -225,8 +226,15 @@ export class Basket
         let index = event.getData().index;
         let fields = this.getItem(index);
 
+		if (fields.status === LoaderConst.status.wait)
+		{
+			return;
+		}
+
         fields.deleted = 'Y';
         fields.status = LoaderConst.status.wait;
+
+		this.announceRowChange('CHECKOUT_CONTROLLER_ANNOUNCE_BASKET_ITEM_REMOVED', fields);
 
         this.pool.add(PoolConst.action.delete, index, {id: fields.id, fields: {value: 'Y'}});
         this.changeItem({index, fields});
@@ -260,12 +268,19 @@ export class Basket
         let index = event.getData().index;
         let fields = this.getItem(index);
 
+		if (fields.status === LoaderConst.status.wait)
+		{
+			return;
+		}
+
         this.timer.clean({
             index: index + '_DELETE'
         });
 
         fields.deleted = 'N';
         fields.status = LoaderConst.status.wait;
+
+		this.announceRowChange('CHECKOUT_CONTROLLER_ANNOUNCE_BASKET_ITEM_RESTORED', fields);
 
         //todo: send all fields ?
         this.pool.add(PoolConst.action.restore, index, {
@@ -287,6 +302,27 @@ export class Basket
         this.changeItem({index, fields});
         this.shelveCommit();
     }
+
+	/**
+	 * What has happened to the row and the start of the recalculation are one action and go as one message.
+	 *
+	 * @private
+	 */
+	announceRowChange(messageId, fields)
+	{
+		const wait = Loc.getMessage('CHECKOUT_CONTROLLER_ANNOUNCE_BASKET_WAIT');
+
+		if (messageId === null)
+		{
+			Announcer.announce(wait);
+
+			return;
+		}
+
+		const change = Loc.getMessage(messageId, { '#PRODUCT_NAME#': fields.name });
+
+		Announcer.announce(`${change}. ${wait}`);
+	}
 
     /**
      * @private
@@ -562,7 +598,15 @@ export class Basket
         let index = event.getData().index;
         let fields = this.getItem(index);
 
+		if (fields.status === LoaderConst.status.wait)
+		{
+			return;
+		}
+
         fields.status = LoaderConst.status.wait;
+
+		// the choice itself is named by the tree of the row
+		this.announceRowChange(null, fields);
 
         this.pool.add(PoolConst.action.offer, index, {id: fields.id, fields: {offerId: offerId}});
         this.changeItem({index, fields});

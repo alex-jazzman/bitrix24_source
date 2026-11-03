@@ -13,6 +13,7 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 	const { collabModel } = require('im/messenger/model/dialogues/collab/model');
 	const { aiAssistantModel } = require('im/messenger/model/dialogues/ai-assistant/model');
 	const { openlinesModel } = require('im/messenger/model/dialogues/openlines/model');
+	const { CopilotGenerationStatus } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { ModelUtils } = require('im/messenger/lib/utils');
@@ -252,6 +253,59 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 						});
 					}
 				});
+			},
+
+			/**
+			 * Batch counterpart of `set` for a server page: the whole list reaches the store as one
+			 * pair of mutations instead of one per element, so a subscriber of the list rebuilds its
+			 * collection once per page and the local database writer saves the page in one call.
+			 *
+			 * The content of the collection is the one `set` produces: the same validation, the same
+			 * split between an existing dialogue and a new one.
+			 *
+			 * @function dialoguesModel/setCollection
+			 */
+			setCollection: (store, payload) => {
+				const { itemList, actionName = 'setCollection' } = ModelUtils.normalizeItemListPayload(payload);
+
+				const updateItems = [];
+				const addItems = [];
+				itemList.map((element) => {
+					return validate(element);
+				}).forEach((element) => {
+					/** @type {DialoguesModelState} */
+					const existingItem = store.state.collection[element.dialogId];
+					if (existingItem)
+					{
+						updateItems.push({
+							dialogId: element.dialogId,
+							fields: element,
+						});
+					}
+					else
+					{
+						addItems.push({
+							dialogId: element.dialogId,
+							fields: mergeImmutable(dialogDefaultElement, element),
+						});
+					}
+				});
+
+				if (updateItems.length > 0)
+				{
+					store.commit('updateCollection', {
+						actionName,
+						data: { updateItems },
+					});
+				}
+
+				if (addItems.length > 0)
+				{
+					store.commit('addCollection', {
+						actionName,
+						data: { addItems },
+					});
+				}
 			},
 
 			/** @function dialoguesModel/setFromLocalDatabase */
@@ -549,6 +603,63 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					data: {
 						dialogId,
 						fields: validate({ inputActions }),
+					},
+				});
+			},
+
+			/**
+			 * The model keeps only an active generation: the 'generating' status is stored,
+			 * any terminal status (stopped/completed/error) clears the state.
+			 *
+			 * @function dialoguesModel/setCopilotGenerationState
+			 * @param store
+			 * @param {{ dialogId: DialogId, status: string, initiatorId: number }} payload
+			 */
+			setCopilotGenerationState: (store, payload) => {
+				const { dialogId, status, initiatorId } = payload;
+				const existingItem = store.state.collection[String(dialogId)];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const isGenerating = status === CopilotGenerationStatus.generating;
+				const { copilotGenerationState = null } = isGenerating
+					? validate({ copilotGenerationState: { status, initiatorId } })
+					: { copilotGenerationState: null };
+
+				if (isEqual(existingItem.copilotGenerationState, copilotGenerationState))
+				{
+					return false;
+				}
+
+				return store.commit('update', {
+					actionName: 'setCopilotGenerationState',
+					data: {
+						dialogId: String(dialogId),
+						fields: { copilotGenerationState },
+					},
+				});
+			},
+
+			/**
+			 * @function dialoguesModel/clearCopilotGenerationState
+			 * @param store
+			 * @param {{ dialogId: DialogId }} payload
+			 */
+			clearCopilotGenerationState: (store, payload) => {
+				const { dialogId } = payload;
+				const existingItem = store.state.collection[String(dialogId)];
+				if (!existingItem || existingItem.copilotGenerationState === null)
+				{
+					return false;
+				}
+
+				return store.commit('update', {
+					actionName: 'setCopilotGenerationState',
+					data: {
+						dialogId: String(dialogId),
+						fields: { copilotGenerationState: null },
 					},
 				});
 			},

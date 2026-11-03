@@ -67,7 +67,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 			}
 			return ownerDocument.body;
 		}
-		show(element, params) {
+		show(element, params, onClose = null) {
 			this.hide(false);
 			const bindElement = this.#getBindElement(element, params);
 			const popupClassName = ['ui-hint-popup', params.interactivity ? 'ui-hint-popup-interactivity' : '', params.popupOptions?.className ?? ''].filter(Boolean).join(' ');
@@ -81,6 +81,7 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 			`,
 				darkMode: true,
 				autoHide: true,
+				closeByEsc: true,
 				cacheable: false,
 				focusTrap: false,
 				animation: 'fading',
@@ -94,6 +95,9 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 				offset: this.#getCenteredAngleOffset(bindElement)
 			};
 			this.#popup = new main_popup.Popup(popupOptions);
+			if (onClose) {
+				this.#popup.subscribe('onClose', onClose);
+			}
 			this.#popup.show();
 			this.#fixPopupAngle(bindElement);
 			const popupContainer = this.#popup?.getPopupContainer();
@@ -109,9 +113,10 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 		}
 		hide(isInteractive) {
 			if (isInteractive) {
+				const popup = this.#popup;
 				setTimeout(() => {
-					if (this.#popup && this.#popup.getPopupContainer() && !this.#cursorOnPopup) {
-						this.#popup.close();
+					if (popup && popup.getPopupContainer() && !this.#cursorOnPopup) {
+						popup.close();
 					}
 				}, 100);
 			} else {
@@ -136,6 +141,9 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 	 */
 
 	const handlersMap = new WeakMap();
+	let activeElement = null;
+	let showTimeout = null;
+	let pendingElement = null;
 	const hint = {
 		mounted(element, {
 			value
@@ -151,38 +159,101 @@ this.BX.Vue3 = this.BX.Vue3 || {};
 			unbindEvents(element);
 		}
 	};
-	let showTimeout = null;
 	function updateEvents(element, params) {
-		unbindEvents(element);
+		const binding = handlersMap.get(element);
+		if (binding?.params === params) {
+			return;
+		}
+		if (binding && params) {
+			binding.params = params;
+			binding.state.params = params;
+			return;
+		}
+		if (binding) {
+			unbindEvents(element);
+		}
 		if (params) {
-			const handlers = {
-				mouseenter: () => onMouseEnter(element, getParams(params)),
-				mouseleave: () => hideTooltip(getParams(params).interactivity ?? false),
-				click: () => hideTooltip()
+			const state = {
+				params,
+				hovered: false,
+				focused: false
 			};
-			handlersMap.set(element, handlers);
+			const handlers = {
+				mouseenter: () => {
+					state.hovered = true;
+					scheduleTooltip(element, getParams(state.params));
+				},
+				mouseleave: () => {
+					state.hovered = false;
+					if (!state.focused) {
+						hideTooltip(element, getParams(state.params).interactivity ?? false);
+					}
+				},
+				focus: () => {
+					state.focused = true;
+					scheduleTooltip(element, getParams(state.params));
+				},
+				blur: () => {
+					state.focused = false;
+					if (!state.hovered) {
+						hideTooltip(element);
+					}
+				},
+				click: () => hideTooltip(element)
+			};
+			handlersMap.set(element, {
+				params,
+				handlers,
+				state
+			});
 			Object.entries(handlers).forEach(([event, handler]) => main_core.Event.bind(element, event, handler));
 		}
 	}
 	function unbindEvents(element) {
-		clearTimeouts();
-		Object.entries(handlersMap.get(element) ?? {}).forEach(([event, handler]) => main_core.Event.unbind(element, event, handler));
+		if (pendingElement === element) {
+			clearTimeouts();
+		}
+		if (activeElement === element) {
+			hideTooltip(element);
+		}
+		Object.entries(handlersMap.get(element)?.handlers ?? {}).forEach(([event, handler]) => main_core.Event.unbind(element, event, handler));
 		handlersMap.delete(element);
 	}
-	function onMouseEnter(element, params) {
+	function scheduleTooltip(element, params) {
+		if (activeElement === element || pendingElement === element) {
+			return;
+		}
 		clearTimeouts();
-		showTimeout = setTimeout(() => showTooltip(element, params), params.timeout ?? 0);
+		pendingElement = element;
+		showTimeout = setTimeout(() => {
+			if (pendingElement === element && handlersMap.has(element)) {
+				showTooltip(element, params);
+			}
+		}, params.timeout ?? 0);
 	}
 	function showTooltip(element, params) {
 		clearTimeouts();
-		tooltip.show(element, params);
+		activeElement = element;
+		tooltip.show(element, params, () => {
+			if (activeElement === element) {
+				activeElement = null;
+			}
+		});
 	}
-	function hideTooltip(isInteractive) {
-		clearTimeouts();
+	function hideTooltip(element, isInteractive = false) {
+		if (pendingElement === element) {
+			clearTimeouts();
+		}
+		if (activeElement !== element) {
+			return;
+		}
+		activeElement = null;
 		tooltip.hide(isInteractive);
 	}
 	function clearTimeouts() {
 		clearTimeout(showTimeout);
+		showTimeout = null;
+		pendingElement = null;
 	}
 	function getParams(value) {
 		return main_core.Type.isFunction(value) ? value() : value;

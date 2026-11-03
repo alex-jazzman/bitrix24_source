@@ -7,6 +7,7 @@ import type UpdateCategoryAccessOptions from "./type/update-category-access-opti
 import type RemoveCategoryOptions from './type/remove-category-options';
 import type CreateRobotOptions from './type/create-robot-options';
 import type RemoveRobotOptions from './type/remove-robot-options';
+import type { Tunnel } from './type/stage';
 import type RemoveStageOptions from './type/remove-stage-options';
 import type UpdateStageOptions from './type/update-stage-options';
 import type AddStageOptions from './type/add-stage-options';
@@ -128,6 +129,18 @@ export default class Backend
 			analyticsLabel: {
 				component: Backend.component,
 				action: 'remove.robot',
+			},
+			data,
+		});
+	}
+
+	static updateRobot(data: Tunnel)
+	{
+		return Backend.request({
+			action: 'updateRobot',
+			analyticsLabel: {
+				component: Backend.component,
+				action: 'update.robot',
 			},
 			data,
 		});

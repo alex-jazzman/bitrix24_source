@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.z-index-manager',
+		'ui.a11y',
 	],
 	'skip_core' => false,
 ];

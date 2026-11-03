@@ -1,6 +1,7 @@
 import { Type } from 'main.core';
+import { type DiagramBlockIdMap } from 'ui.block-diagram';
 
-import { type ActivityData, type Block } from '../../../shared/types';
+import { type ActivityData, type Block, type Connection } from '../../../shared/types';
 import { createUniqueId } from '../../../shared/utils/index.js';
 
 type ActivityId = string;
@@ -30,48 +31,49 @@ function addActivityIdsToSet(activity: ActivityData, activityIds: ActivityIds): 
 	}
 }
 
-export function cloneBLocksWithNewIds(target: BlocksContent): BlocksContent
+/**
+ * Rewrites the domain references of a fragment the canvas has already re-identified: its blocks and
+ * connections carry new ids, and blockIdMap says which block id replaced which. Seeding the
+ * replacement map with that map is what keeps an activity named exactly like the block it belongs
+ * to; the nested activity names, which the canvas knows nothing about, get ids of their own.
+ */
+export function rewriteActivityIds(target: BlocksContent, blockIdMap: DiagramBlockIdMap): BlocksContent
 {
-	const { blocks } = target;
-	const activityIds: ActivityIds = findBlocksIds(blocks);
-	const replaceMap: ActivityIdsReplaceMap = makeReplaceMap(activityIds);
-
-	return cloneAndReplaceBlocksActivityIds(target, replaceMap);
+	return replaceActivityIds(target, makeReplaceMap(target.blocks, blockIdMap));
 }
 
-function findBlocksIds(blocks: Array<Block>): ActivityIds
-{
-	const activityIds: ActivityIds = new Set();
-
-	blocks.forEach((block: Block): void => {
-		if (Type.isStringFilled(block?.id))
-		{
-			activityIds.add(block.id);
-		}
-
-		addActivityIdsToSet(block?.activity, activityIds);
-	});
-
-	return activityIds;
-}
-
-function makeReplaceMap(activityIds: ActivityIds): ActivityIdsReplaceMap
+function makeReplaceMap(blocks: Array<Block>, blockIdMap: DiagramBlockIdMap): ActivityIdsReplaceMap
 {
 	const replaceMap: ActivityIdsReplaceMap = new Map();
 
+	blockIdMap.forEach((newId: ActivityId, oldId: ActivityId): void => {
+		if (Type.isStringFilled(oldId))
+		{
+			replaceMap.set(oldId, newId);
+		}
+	});
+
+	const activityIds: ActivityIds = new Set();
+	blocks.forEach((block: Block): void => addActivityIdsToSet(block?.activity, activityIds));
+
 	activityIds.forEach((id: ActivityId): void => {
-		replaceMap.set(id, createUniqueId());
+		if (!replaceMap.has(id))
+		{
+			replaceMap.set(id, createUniqueId());
+		}
 	});
 
 	return replaceMap;
 }
 
-function cloneAndReplaceBlocksActivityIds(target: BlocksContent, replaceMap: ActivityIdsReplaceMap): BlocksContent
+function replaceActivityIds(target: BlocksContent, replaceMap: ActivityIdsReplaceMap): BlocksContent
 {
 	let serialized = JSON.stringify(target);
 
 	for (const [pattern, replacement] of replaceMap.entries())
 	{
+		// Quoted on both sides on purpose: a whole string equal to the id is rewritten wherever it
+		// sits, while a reference inside an expression keeps pointing at the original block.
 		serialized = serialized.replaceAll(`"${pattern}"`, `"${replacement}"`);
 	}
 

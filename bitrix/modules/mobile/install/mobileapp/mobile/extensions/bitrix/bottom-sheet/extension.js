@@ -569,21 +569,35 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @return {Promise}
+		 * @return {Promise<LayoutWidget|null>}
 		 */
 		open()
 		{
+			return this.#open({ rejectOnError: false });
+		}
+
+		/**
+		 * @public
+		 * @return {Promise<LayoutWidget>}
+		 */
+		openOrThrow()
+		{
+			return this.#open({ rejectOnError: true });
+		}
+
+		#open({ rejectOnError })
+		{
 			if (this.widget)
 			{
-				return Promise.resolve();
+				return Promise.resolve(this.widget);
 			}
 
 			if (!this.component)
 			{
-				throw new Error('component is not set');
+				return Promise.reject(new Error('component is not set'));
 			}
 
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				this.parentWidget
 					.openWidget('layout', this.widgetOptions)
 					.then((widget) => {
@@ -598,7 +612,18 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 						resolve(this.widget);
 					})
-					.catch(console.error);
+					.catch((error) => {
+						if (rejectOnError)
+						{
+							reject(error);
+
+							return;
+						}
+
+						console.error(error);
+						resolve(null);
+					})
+				;
 			});
 		}
 

@@ -49,24 +49,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return responseErrors.some(error => error.code === INVALID_AUTH_ERROR_CODE);
 	};
 
-	let retryCounter = null;
 	const runAction = (action, config = {}) => {
 		const preparedConfig = {
 			...config,
 			data: prepareRequestData(config.data)
 		};
+		return runActionWithRetries(action, preparedConfig);
+	};
+	const runActionWithRetries = (action, config, retriesLeft = null) => {
 		return new Promise((resolve, reject) => {
-			main_core.ajax.runAction(action, preparedConfig).then(response => {
-				retryCounter = null;
+			main_core.ajax.runAction(action, config).then(response => {
 				return resolve(response.data);
 			}).catch(response => {
-				if (retryCounter === 0) {
-					return reject(response.errors);
+				const errors = main_core.Type.isArray(response?.errors) ? response.errors.filter(error => main_core.Type.isObject(error)) : [];
+				if (retriesLeft === 0) {
+					return reject(errors);
 				}
-				if (needRetryRequest(response.errors)) {
-					return handleErrors(action, preparedConfig, response);
+				if (needRetryRequest(errors)) {
+					return resolve(handleErrors(action, config, errors, retriesLeft));
 				}
-				return reject(response.errors);
+				return reject(errors);
 			});
 		});
 	};
@@ -100,25 +102,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 		});
 	};
-	const handleErrors = async (action, config, response) => {
-		const errorConfig = getErrorConfig(response.errors);
-		if (!retryCounter) {
-			retryCounter = errorConfig.retryCount;
-		}
-		retryCounter--;
-		if (hasInvalidAuthError(response.errors)) {
+	const handleErrors = async (action, config, errors, retriesLeft) => {
+		const errorConfig = getErrorConfig(errors);
+		const nextRetriesLeft = (retriesLeft ?? errorConfig.retryCount) - 1;
+		if (hasInvalidAuthError(errors)) {
 			await main_core_events.EventEmitter.emitAsync(im_v2_const.EventType.request.onAuthError, {
-				errors: response.errors
+				errors
 			});
 		}
 		if (errorConfig.timeout) {
 			return new Promise(resolve => {
 				setTimeout(() => {
-					resolve(runAction(action, config));
+					resolve(runActionWithRetries(action, config, nextRetriesLeft));
 				}, errorConfig.timeout);
 			});
 		}
-		return runAction(action, config);
+		return runActionWithRetries(action, config, nextRetriesLeft);
 	};
 
 	exports.callBatch = callBatch;

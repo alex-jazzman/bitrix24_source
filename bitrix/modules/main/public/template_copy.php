@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2025 Bitrix
+ * @copyright 2001-2026 Bitrix
  */
 
 /**
@@ -67,26 +67,7 @@ else
 $arComponent = false;
 if($strWarning == "")
 {
-	/* parse source file for PHP code */
-	$arComponents = PHPParser::ParseScript($filesrc);
-
-	/* identify the component by line number */
-	for ($i = 0, $cnt = count($arComponents); $i < $cnt; $i++)
-	{
-		$nLineFrom = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["START"]), "\n") + 1;
-		$nLineTo = substr_count(mb_substr($filesrc, 0, $arComponents[$i]["END"]), "\n") + 1;
-
-		if ($nLineFrom <= $src_line && $nLineTo >= $src_line)
-		{
-			if ($arComponents[$i]["DATA"]["COMPONENT_NAME"] == $_GET["component_name"])
-			{
-				$arComponent = $arComponents[$i];
-				break;
-			}
-		}
-		if ($nLineTo > $src_line)
-			break;
-	}
+	$arComponent = PHPParser::FindComponent($_GET["component_name"], $filesrc, $src_line);
 }
 
 if ($arComponent === false)

@@ -6,7 +6,7 @@ import { ChatsModel } from './nested-modules/chats/chats';
 import { MessagesModel } from './nested-modules/messages/messages';
 import { RolesModel } from './nested-modules/roles/roles';
 import { VotesModel } from './nested-modules/votes/votes';
-import { formatFieldsWithConfig, type ImModelCopilotAIModel } from '../registry';
+import { formatFieldsWithConfig, type ImModelCopilotAIModel, type ImModelCopilotGreeting } from '../registry';
 
 type CopilotModelState = {
 	recommendedRoles: string[],
@@ -17,7 +17,11 @@ type CopilotModelState = {
 	name: string,
 	agentName: string,
 	widgetDialogId: string,
+	sentChatDialogId: string,
+	activatedChatDialogId: string,
 	suggests: string[],
+	greetings: ImModelCopilotGreeting[],
+	greetingWeekHolidays: number[],
 };
 
 /* eslint-disable no-param-reassign */
@@ -46,7 +50,11 @@ export class CopilotModel extends BuilderModel
 			name: '',
 			agentName: '',
 			widgetDialogId: '',
+			sentChatDialogId: '',
+			activatedChatDialogId: '',
 			suggests: [],
+			greetings: [],
+			greetingWeekHolidays: [],
 		};
 	}
 
@@ -93,9 +101,27 @@ export class CopilotModel extends BuilderModel
 			isChatOpenedInWidget: (state: CopilotModelState) => (dialogId: string): boolean => {
 				return state.widgetDialogId !== '' && state.widgetDialogId === dialogId;
 			},
+			// the chat just opened by sending from the widget start screen; only that swap cross-fades
+			/** @function copilot/isWidgetChatOpenedBySend */
+			isWidgetChatOpenedBySend: (state: CopilotModelState) => (dialogId: string): boolean => {
+				return state.sentChatDialogId !== '' && state.sentChatDialogId === dialogId;
+			},
+			// the central BitrixGPT chat just opened by activating the draft with a send; only that swap cross-fades
+			/** @function copilot/isChatOpenedBySend */
+			isChatOpenedBySend: (state: CopilotModelState) => (dialogId: string): boolean => {
+				return state.activatedChatDialogId !== '' && state.activatedChatDialogId === dialogId;
+			},
 			/** @function copilot/getSuggests */
 			getSuggests: (state: CopilotModelState): string[] => {
 				return state.suggests;
+			},
+			/** @function copilot/getGreetings */
+			getGreetings: (state: CopilotModelState): ImModelCopilotGreeting[] => {
+				return state.greetings;
+			},
+			/** @function copilot/getGreetingWeekHolidays */
+			getGreetingWeekHolidays: (state: CopilotModelState): number[] => {
+				return state.greetingWeekHolidays;
 			},
 		};
 	}
@@ -145,6 +171,14 @@ export class CopilotModel extends BuilderModel
 			setWidgetDialogId: (store: Store, payload: string) => {
 				store.commit('setWidgetDialogId', payload ?? '');
 			},
+			/** @function copilot/setSentChatDialogId */
+			setSentChatDialogId: (store: Store, payload: string) => {
+				store.commit('setSentChatDialogId', payload ?? '');
+			},
+			/** @function copilot/setActivatedChatDialogId */
+			setActivatedChatDialogId: (store: Store, payload: string) => {
+				store.commit('setActivatedChatDialogId', payload ?? '');
+			},
 			/** @function copilot/setSuggests */
 			setSuggests: (store: Store, payload: string[]) => {
 				if (!Type.isArray(payload))
@@ -153,6 +187,24 @@ export class CopilotModel extends BuilderModel
 				}
 
 				store.commit('setSuggests', payload);
+			},
+			/** @function copilot/setGreetings */
+			setGreetings: (store: Store, payload: ImModelCopilotGreeting[]) => {
+				if (!Type.isArray(payload))
+				{
+					return;
+				}
+
+				store.commit('setGreetings', payload);
+			},
+			/** @function copilot/setGreetingWeekHolidays */
+			setGreetingWeekHolidays: (store: Store, payload: number[]) => {
+				if (!Type.isArray(payload))
+				{
+					return;
+				}
+
+				store.commit('setGreetingWeekHolidays', payload);
 			},
 		};
 	}
@@ -175,8 +227,20 @@ export class CopilotModel extends BuilderModel
 			setWidgetDialogId: (state: CopilotModelState, payload: string) => {
 				state.widgetDialogId = payload;
 			},
+			setSentChatDialogId: (state: CopilotModelState, payload: string) => {
+				state.sentChatDialogId = payload;
+			},
+			setActivatedChatDialogId: (state: CopilotModelState, payload: string) => {
+				state.activatedChatDialogId = payload;
+			},
 			setSuggests: (state: CopilotModelState, payload: string[]) => {
 				state.suggests = payload;
+			},
+			setGreetings: (state: CopilotModelState, payload: ImModelCopilotGreeting[]) => {
+				state.greetings = payload;
+			},
+			setGreetingWeekHolidays: (state: CopilotModelState, payload: number[]) => {
+				state.greetingWeekHolidays = payload;
 			},
 		};
 	}

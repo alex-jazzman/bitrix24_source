@@ -28,6 +28,17 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 		die();
 	}
 
+	/*
+	 * The quick panel names no card of its own and is answered for CRM as a whole: it stores its settings
+	 * under a form id rather than under a card, so there is nothing in the request an entity type could
+	 * be resolved from.
+	 */
+	$canEditCommonView = static fn(): bool => \Bitrix\Crm\Service\Container::getInstance()
+		->getUserPermissions()
+		->entityEditor()
+		->canEditCommonView(null, null)
+	;
+
 	$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 	if($action === 'saveconfig')
 	{
@@ -72,7 +83,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 			$options['bottom'] = $config['bottom'];
 		}
 
-		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
+		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && $canEditCommonView())
 		{
 			if(isset($_POST['delete']) && $_POST['delete'] === 'Y')
 			{
@@ -84,7 +95,7 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	}
 	elseif($action == 'resetconfig')
 	{
-		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityEditor()->canEditCommonView())
+		if(isset($_POST['forAllUsers']) && $_POST['forAllUsers'] === 'Y' && $canEditCommonView())
 		{
 			CUserOptions::DeleteOptionsByName('crm.entity.quickpanelview', $guid);
 		}

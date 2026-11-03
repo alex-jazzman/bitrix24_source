@@ -115,6 +115,20 @@ if($action === 'SAVE_ENTITY')
 
 	$ID = isset($data['ID']) ? intval($data['ID']) : 0;
 	$isNew = $ID <= 0;
+	if(!$isNew)
+	{
+		$present = CCrmActivity::GetByID($ID, false);
+		if(!is_array($present))
+		{
+			__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_NOT_FOUND', array('#ID#' => $ID))));
+		}
+
+		if(!CCrmActivity::CheckItemUpdatePermission($present))
+		{
+			__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACCESS_DENIED')));
+		}
+	}
+
 	$typeID = isset($data['TYPE_ID']) ? intval($data['TYPE_ID']) : CCrmActivityType::Activity;
 	if($typeID === CCrmActivityType::Call || $typeID === CCrmActivityType::Meeting)
 	{
@@ -264,13 +278,6 @@ if($action === 'SAVE_ENTITY')
 		}
 		else
 		{
-			$dbPresent = CCrmActivity::GetList(array(), array('ID'=>$ID), false, false, array('OWNER_ID', 'OWNER_TYPE_ID'));
-			$presentFields = $dbPresent->Fetch();
-			if(!is_array($presentFields))
-			{
-				__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_NOT_FOUND', array('#ID#' => $ID))));
-			}
-
 			if($responsibleID > 0)
 			{
 				$fields['RESPONSIBLE_ID'] = $responsibleID;
@@ -472,13 +479,6 @@ if($action === 'SAVE_ENTITY')
 		}
 		else
 		{
-			$dbPresent = CCrmActivity::GetList(array(), array('ID'=>$ID), false, false, array('OWNER_ID', 'OWNER_TYPE_ID'));
-			$presentFields = $dbPresent->Fetch();
-			if(!is_array($presentFields))
-			{
-				__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ACTIVITY_NOT_FOUND', array('#ID#' => $ID))));
-			}
-
 			$fields['BINDINGS'] = array_values($bindings);
 			if($responsibleID > 0)
 			{

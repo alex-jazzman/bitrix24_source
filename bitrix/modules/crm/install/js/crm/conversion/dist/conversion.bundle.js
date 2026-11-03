@@ -1013,6 +1013,7 @@ this.BX = this.BX || {};
 		#isAutoConversionEnabled;
 		#analytics = {};
 		#waiting = false;
+		#onMenuStateChange;
 		constructor(converter, params) {
 			this.#converter = converter;
 			this.#entityId = Number(params.entityId);
@@ -1021,6 +1022,7 @@ this.BX = this.BX || {};
 			this.#label = document.getElementById(params.labelId);
 			this.#menuId = `crm_conversion_scheme_selector_${this.#entityId}_${main_core.Text.getRandom()}`;
 			this.#isAutoConversionEnabled = false;
+			this.#onMenuStateChange = main_core.Type.isFunction(params.onMenuStateChange) ? params.onMenuStateChange : () => {};
 			if (main_core.Type.isStringFilled(params.analytics.c_element)) {
 				this.#analytics.c_element = params.analytics.c_element;
 			}
@@ -1116,11 +1118,16 @@ this.BX = this.BX || {};
 				items: this.#getMenuItems(),
 				closeByEsc: true,
 				cacheable: false,
-				offsetLeft: -anchorPos.width
+				offsetLeft: -anchorPos.width,
+				events: {
+					onPopupShow: () => this.#onMenuStateChange(true),
+					onPopupClose: () => this.#onMenuStateChange(false)
+				}
 			});
 		}
 		#closeMenu() {
 			main_popup.MenuManager.destroy(this.#menuId);
+			this.#onMenuStateChange(false);
 		}
 		#getMenuItems() {
 			const scheme = this.#converter.getConfig().getScheme();

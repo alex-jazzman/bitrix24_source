@@ -51,6 +51,42 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 			];
 		}
 
+		getEmptyEntityScreenConfig()
+		{
+			const imageParams = this.getEmptyImage();
+			const description = this.getEmptyEntityScreenDescriptionText();
+			const title = this.getEmptyScreenTitle();
+			const parentWidget = this.getParentWidget();
+
+			if (env.isAdmin)
+			{
+				const list = this.getEmptyEntityScreenList();
+
+				return {
+					image: Image(imageParams),
+					title,
+					list,
+				};
+			}
+
+			return {
+				image: Image(imageParams),
+				title,
+				description,
+				onDescriptionLinkClick: (params) => this.showFeatureBanner(parentWidget, params?.url),
+			};
+		}
+
+		getEmptyScreenTitle()
+		{
+			if (env.isAdmin)
+			{
+				return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_${this.getName()}_ADMIN`);
+			}
+
+			return this.getLastMessageVer(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_TITLE2_${this.getName()}_MSGVER_1`);
+		}
+
 		getEmptySearchScreenConfig()
 		{
 			const config = super.getEmptySearchScreenConfig();
@@ -61,6 +97,29 @@ jn.define('crm/entity-tab/type/entities/deal', (require, exports, module) => {
 			}
 
 			return config;
+		}
+
+		getEmptyEntityScreenDescriptionText()
+		{
+			return Loc.getMessage(`M_CRM_ENTITY_TAB_ENTITY_EMPTY_${this.getName()}_DESCRIPTION`);
+		}
+
+		getEmptyEntityScreenList()
+		{
+			return [
+				{
+					icon: Icon.HANDSHAKE,
+					text: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_1'),
+				},
+				{
+					icon: Icon.LOGIN_HISTORY,
+					text: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_2'),
+				},
+				{
+					icon: Icon.CRM,
+					text: Loc.getMessage('M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_FEATURE_3'),
+				},
+			];
 		}
 
 		getMenuActions()

@@ -11,13 +11,30 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
+	// The collection mutations of the model are shared by two sources: the seed of a server page
+	// (`setCollection`), which has to be saved, and the restore from the local database
+	// (`setCollectionFromLocalDatabase`), which must not be written back.
+	const COLLECTION_SAVE_ACTIONS = new Set([
+		'setCollection',
+	]);
+
 	class DialogWriter extends Writer
 	{
+		initRouters()
+		{
+			super.initRouters();
+
+			this.addCollectionRouter = this.addCollectionRouter.bind(this);
+			this.updateCollectionRouter = this.updateCollectionRouter.bind(this);
+		}
+
 		subscribeEvents()
 		{
 			this.storeManager
 				.on('dialoguesModel/add', this.addRouter)
 				.on('dialoguesModel/update', this.updateRouter)
+				.on('dialoguesModel/addCollection', this.addCollectionRouter)
+				.on('dialoguesModel/updateCollection', this.updateCollectionRouter)
 				.on('dialoguesModel/delete', this.deleteRouter)
 			;
 		}
@@ -27,6 +44,8 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 			this.storeManager
 				.off('dialoguesModel/add', this.addRouter)
 				.off('dialoguesModel/update', this.updateRouter)
+				.off('dialoguesModel/addCollection', this.addCollectionRouter)
+				.off('dialoguesModel/updateCollection', this.updateCollectionRouter)
 				.off('dialoguesModel/delete', this.deleteRouter)
 			;
 		}
@@ -124,6 +143,70 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 			}
 
 			this.repository.dialog.saveFromModel([dialog]);
+		}
+
+		/**
+		 * @param {MutationPayload<DialoguesAddCollectionData, DialoguesAddActions>} mutation.payload
+		 */
+		addCollectionRouter(mutation)
+		{
+			this.#saveCollection(mutation, mutation?.payload?.data?.addItems);
+		}
+
+		/**
+		 * @param {MutationPayload<DialoguesUpdateCollectionData, DialoguesUpdateActions>} mutation.payload
+		 */
+		updateCollectionRouter(mutation)
+		{
+			this.#saveCollection(mutation, mutation?.payload?.data?.updateItems);
+		}
+
+		/**
+		 * The whole page reaches the tables in one call: `saveFromModel` takes a list, so the write
+		 * costs a pair of statements per page instead of a pair per dialogue.
+		 *
+		 * @param {object} mutation
+		 * @param {Array<{dialogId: string}>} [items]
+		 */
+		#saveCollection(mutation, items)
+		{
+			if (this.checkIsValidMutation(mutation) === false)
+			{
+				return;
+			}
+
+			if (!COLLECTION_SAVE_ACTIONS.has(mutation?.payload?.actionName) || !Type.isArrayFilled(items))
+			{
+				return;
+			}
+
+			const dialogList = [];
+			items.forEach((item) => {
+				if (!item.dialogId)
+				{
+					return;
+				}
+
+				const dialog = this.store.getters['dialoguesModel/getById'](item.dialogId);
+				if (!dialog)
+				{
+					Logger.warn(`DialogWriter.#saveCollection: there is no dialog with dialogId "${item.dialogId}" in model`);
+
+					return;
+				}
+
+				if (DialogHelper.createByModel(dialog)?.isLocalStorageSupported)
+				{
+					dialogList.push(dialog);
+				}
+			});
+
+			if (dialogList.length === 0)
+			{
+				return;
+			}
+
+			this.repository.dialog.saveFromModel(dialogList);
 		}
 
 		/**

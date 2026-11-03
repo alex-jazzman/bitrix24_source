@@ -71,12 +71,20 @@
 	opacity: 1 !important;
 }
 
+/* a native button: the site template may leave the browser defaults on, the layer only lays it out */
 .landing-designer-block-node-hover-add {
 	position: absolute;
 	width: 100%;
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
 }
 
 .landing-ui-hide-controls .landing-designer-block-node-hover-add {
@@ -97,8 +105,38 @@
 	cursor: pointer;
 }
 
+/* the canvas document is styled by the site template, which may drop outlines */
+.landing-design-mode [data-landing-designer-a11y]:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff) !important;
+	outline-offset: -2px !important;
+}
+
+.landing-design-mode .landing-designer-block-node-hover-add:focus-visible,
+.landing-design-mode .landing-designer-block-node-hover .landing-ui-button-card-action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff) !important;
+	outline-offset: 2px !important;
+}
+
 .landing-designer-block-pseudo-last {
 	height: 1px;
+}
+
+/* A strip one pixel tall wears a ring nobody can find, and it is a stop of the keyboard walk now.
+   The ring is grown outwards by the offset rather than by giving the strip a height: an outline is
+   drawn outside the box and takes no space, so the content of the card does not jump the moment the
+   focus arrives. */
+.landing-design-mode .landing-designer-block-pseudo-last:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff) !important;
+	outline-offset: 5px !important;
+}
+
+/* The ring of a preset card is drawn by the extension that owns the card, and bound there to
+   `role="gridcell"`. The panel is a list of options now, so that rule no longer matches and the
+   browser hairline takes over - a 1px default where the rest of the editor draws the accent ring.
+   Restored here, for this panel only, instead of widening a selector in a file another team owns. */
+.landing-ui-panel-repo .landing-ui-card[role="option"]:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
 }
 
 .landing-designer-block-drop-place {

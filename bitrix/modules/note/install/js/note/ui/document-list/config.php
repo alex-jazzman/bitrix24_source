@@ -15,6 +15,7 @@ return [
 		'note.ui.loader',
 		'note.ui.theme-context',
 		'ui.hint',
+		'ui.icon-set.actions',
 		'ui.icon-set.api.vue',
 		'ui.icon-set.outline',
 		'ui.system.checkbox',

@@ -10,6 +10,7 @@ return [
 	'js' => 'dist/transfer-to-intranet.bundle.js',
 	'rel' => [
 		'intranet.department-control',
+		'intranet.user.department-popup',
 		'main.core',
 		'main.core.events',
 		'main.popup',
@@ -20,7 +21,4 @@ return [
 		'ui.lottie',
 	],
 	'skip_core' => false,
-	'settings' => [
-		'isRenamedIntegrator' => \Bitrix\Intranet\Public\Service\IntegratorService::createByDefault()->isRenamedIntegrator(),
-	]
 ];

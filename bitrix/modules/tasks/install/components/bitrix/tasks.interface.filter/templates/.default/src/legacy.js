@@ -136,8 +136,28 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 			}
 		};
 
+		var updateSelectorButton = function(text)
+		{
+			var node = BX(selectorId);
+			if (!node)
+			{
+				return;
+			}
+
+			BX.UI.ButtonManager.createFromNode(node).setText(text);
+
+			if (messages.TASKS_FILTER_GROUP_BTN_ARIA_LABEL)
+			{
+				node.setAttribute(
+					"aria-label",
+					messages.TASKS_FILTER_GROUP_BTN_ARIA_LABEL.replace("#NAME#", function() {
+						return text;
+					})
+				);
+			}
+		};
+
 		currentGroup.id = parseInt(currentGroup.id);
-		currentGroup.text = BX.util.htmlspecialchars(currentGroup.text);
 
 		setTaskAddHref(currentGroup.id);
 
@@ -185,10 +205,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 						text: item.text
 					};
 					setTaskAddHref(item.id);
-					if (BX(selectorId + "_text"))
-					{
-						BX(selectorId + "_text").innerHTML = item.text;
-					}
+					updateSelectorButton(item.text);
 					BX.onCustomEvent(this, "onTasksGroupSelectorChange", [currentGroup]);
 				};
 
@@ -197,7 +214,7 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 				{
 					menuItems.push({
 						id: parseInt(groups[i]["id"]),
-						text: BX.util.htmlspecialchars(groups[i]["text"]),
+						text: groups[i]["text"],
 						class: 'menu-popup-item-none',
 						onclick: BX.delegate(clickHandler, this)
 					});
@@ -259,7 +276,17 @@ if (typeof(BX.TasksGroupsSelectorInit) === "undefined")
 					{
 						autoHide: true,
 						closeByEsc: true,
-						offsetLeft: offsetLeft
+						offsetLeft: offsetLeft,
+						events: {
+							onShow: function()
+							{
+								BX(selectorId).setAttribute("aria-expanded", "true");
+							},
+							onClose: function()
+							{
+								BX(selectorId).setAttribute("aria-expanded", "false");
+							}
+						}
 					}
 				);
 			}
@@ -348,6 +375,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 					compactView: true,
 					showAvatars: false,
 					cacheable: false,
+					ariaLabel: params.messages.TASKS_FILTER_SPRINT_DIALOG_ARIA_LABEL,
 					preselectedItems: [['sprint-selector' , params.sprintId]],
 					entities: [
 						{
@@ -378,11 +406,31 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 								]
 							);
 
-							buttonSelector.setText(selectedItem.customData.get('label'));
+							var label = selectedItem.customData.get('label');
+							buttonSelector.setText(label);
+							BX(containerId).setAttribute(
+								'aria-label',
+								params.messages.TASKS_FILTER_SPRINT_BTN_ARIA_LABEL.replace('#RANGE#', function() {
+									return label;
+								})
+							);
 						},
 					},
+					popupOptions: {
+						focusTrap: true,
+						className: 'tasks-interface-filter-popup-adaptive',
+						events: {
+							onShow: function() {
+								BX(containerId).setAttribute('aria-expanded', 'true');
+							},
+							onClose: function() {
+								BX(containerId).setAttribute('aria-expanded', 'false');
+							}
+						}
+					}
 				});
 
+				sprintsSelectorDialog.getPopup().getPopupContainer().setAttribute('aria-modal', 'true');
 				sprintsSelectorDialog.show();
 			}
 		);

@@ -25,7 +25,7 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 	} = require('statemanager/redux/slices/whats-new');
 	const { ACTION_TYPE, BOTTOM_DESCRIPTION_TYPE } = require('statemanager/redux/slices/whats-new/meta');
 	const { Loc } = require('loc');
-	const { ShimmedSafeImage } = require('layout/ui/safe-image');
+	const { SafeImage } = require('layout/ui/safe-image');
 	const { chain, transition } = require('animation');
 	const { ShimmerView } = require('layout/polyfill');
 	const { WhatsNewAnalytics } = require('layout/ui/whats-new/analytics');
@@ -306,9 +306,10 @@ jn.define('layout/ui/whats-new/items/whats-new/redux-content', (require, exports
 						},
 					);
 				case BOTTOM_DESCRIPTION_TYPE.image:
-					return ShimmedSafeImage(
+					return SafeImage(
 						{
 							testId: `${this.testId}-bottom-description-${type}`,
+							withShimmer: true,
 							style: {
 								width: '100%',
 								height: 196,

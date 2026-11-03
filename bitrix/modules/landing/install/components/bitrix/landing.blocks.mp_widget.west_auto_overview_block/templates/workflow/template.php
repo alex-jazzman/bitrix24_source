@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arResult */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Landing\Vibe\Vibe;
 use Bitrix\Landing\Copilot\Services\NameService;
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens.air',
@@ -17,7 +18,7 @@ use Bitrix\Landing\Copilot\Services\NameService;
 
 $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 $isChineseZone = in_array(
-	\CBitrix24::getPortalZone(),
+	Vibe::getPortalZone(),
 	['cn', 'sc', 'tc'],
 	true,
 );

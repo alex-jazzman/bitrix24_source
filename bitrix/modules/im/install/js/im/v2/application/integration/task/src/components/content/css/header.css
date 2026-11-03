@@ -24,6 +24,8 @@
 }
 
 .bx-im-task-chat-header__title {
+	display: flex;
+	align-items: center;
 	margin-bottom: 3px;
 	font: var(--im-font-size-lg)/18px var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
@@ -33,4 +35,15 @@
 .bx-im-task-chat-header__user-counter {
 	font: var(--im-font-size-sm)/16px var(--im-font-family-system);
 	color: var(--im-task-chat-header__font-color_user-counter);
+}
+
+.bx-im-task-chat-header__muted-icon {
+	height: 18px;
+	width: 18px;
+	min-width: 18px;
+	margin-left: 2px;
+	background-image: url('./images/mute.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
 }

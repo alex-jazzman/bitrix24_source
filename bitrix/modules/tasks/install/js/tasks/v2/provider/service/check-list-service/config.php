@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/check-list-service.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.core.events',
 		'tasks.v2.const',
 		'tasks.v2.core',
 		'tasks.v2.lib.api-client',

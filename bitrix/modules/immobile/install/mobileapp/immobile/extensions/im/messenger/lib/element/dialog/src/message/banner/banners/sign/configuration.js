@@ -15,7 +15,7 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 	const { inAppUrl } = require('in-app-url');
 
 	/**
-	 * @type {SignMetaData}
+	 * @type {SignBannerMetaData}
 	 */
 	const SignMetaData = {
 		[Await.inviteCompany]: {
@@ -250,12 +250,55 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 				],
 			},
 		},
+		[Await.byEmployeeReceivedByCompany]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+				imageName: ImageName.docAwaitSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+				buttons: [
+					{
+						id: Await.byEmployeeReceivedByCompany,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_BY_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
+			},
+		},
 		[Await.inviteB2bDocumentSigning]: {
 			banner: {
 				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_TITLE'),
 				imageName: ImageName.docSuccessSign,
 				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_INVITE_B2B_DOCUMENT_SIGNING_DESCRIPTION_V2'),
 				button: null,
+			},
+		},
+		[Await.annulmentCanceledToEmployee]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_TITLE'),
+				imageName: ImageName.docAwaitSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_EMPLOYEE_DESCRIPTION'),
+			},
+		},
+		[Await.annulmentCanceledToInitiator]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_TITLE'),
+				imageName: ImageName.docAwaitSign,
+				description: (annulledCount) => Loc.getMessagePlural(
+					'IMMOBILE_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_DESCRIPTION',
+					annulledCount,
+					{ '#COUNT#': annulledCount },
+				),
+				buttons: [
+					{
+						id: Await.annulmentCanceledToInitiator,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_ANNULMENT_CANCELED_TO_INITIATOR_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
 			},
 		},
 		[Success.doneCompany]: {
@@ -328,6 +371,22 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 				imageName: ImageName.docSuccessSign,
 				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION'),
 				button: null,
+			},
+		},
+		[Success.doneEmployeeReceivedByCompany]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_TITLE'),
+				imageName: ImageName.docSuccessSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_DESCRIPTION'),
+				buttons: [
+					{
+						id: Success.doneEmployeeReceivedByCompany,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DONE_EMPLOYEE_RECEIVED_BY_COMPANY_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
 			},
 		},
 		[Success.doneB2bDocumentSigning]: {
@@ -731,6 +790,36 @@ jn.define('im/messenger/lib/element/dialog/message/banner/banners/sign/configura
 					{
 						id: Failure.documentCancelled,
 						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_CANCELLED_BUTTON_TEXT'),
+						height: ButtonSize.S.getName(),
+						callback,
+						design: ButtonDesignType.outlineAccent2,
+					},
+				],
+			},
+		},
+		[Failure.documentAnnulledToEmployee]: {
+			banner: {
+				title: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_TITLE'),
+				imageName: ImageName.docFailureSign,
+				description: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_EMPLOYEE_DESCRIPTION'),
+			},
+		},
+		[Failure.documentAnnulledToInitiator]: {
+			banner: {
+				title: (annulledCount) => Loc.getMessagePlural(
+					'IMMOBILE_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_TITLE',
+					annulledCount,
+				),
+				imageName: ImageName.docFailureSign,
+				description: (annulledCount) => Loc.getMessagePlural(
+					'IMMOBILE_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_DESCRIPTION',
+					annulledCount,
+					{ '#COUNT#': annulledCount },
+				),
+				buttons: [
+					{
+						id: Failure.documentAnnulledToInitiator,
+						text: Loc.getMessage('IMMOBILE_MESSAGE_SIGN_DOCUMENT_ANNULLED_TO_INITIATOR_BUTTON_TEXT'),
 						height: ButtonSize.S.getName(),
 						callback,
 						design: ButtonDesignType.outlineAccent2,

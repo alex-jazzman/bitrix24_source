@@ -436,7 +436,7 @@ CREATE TABLE IF NOT EXISTS b_tasks_scorer (
 );
 
 CREATE TABLE IF NOT EXISTS b_tasks_scorer_queue (
-	`ID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`ID` BIGINT(20) NOT NULL AUTO_INCREMENT,
 	`USER_ID` INT(10) UNSIGNED NOT NULL,
 	`TYPE` VARCHAR(32) NOT NULL DEFAULT '',
 	`TASK_ID` INT(10) UNSIGNED NOT NULL,
@@ -944,7 +944,8 @@ create table if not exists b_tasks_onboarding_queue
 	primary key (ID),
 	index ix_b_tasks_onboarding_queue_execution_processed (NEXT_EXECUTION, IS_PROCESSED),
 	index ix_b_tasks_onboarding_queue_user_id_task_id_type (USER_ID, TASK_ID, TYPE),
-	index ix_b_tasks_onboarding_queue_type (TYPE)
+	index ix_b_tasks_onboarding_queue_type (TYPE),
+	index ix_b_tasks_onboarding_queue_task_id (TASK_ID)
 );
 
 create table if not exists b_tasks_onboarding_queue_job_count
@@ -1038,4 +1039,11 @@ CREATE TABLE IF NOT EXISTS b_tasks_viewed_absence (
 	PRIMARY KEY (ID),
 	UNIQUE INDEX ix_tasks_viewed_absence_unique (VIEWED_BY, USER_ID, ABSENCE_ID),
 	INDEX ix_tasks_viewed_absence_end (ABSENCE_END)
+);
+
+CREATE TABLE b_tasks_checklist_revision (
+	ENTITY_ID int not null,
+	ENTITY_TYPE varchar(50) not null,
+	REVISION int not null default 0,
+	PRIMARY KEY (ENTITY_ID, ENTITY_TYPE)
 );

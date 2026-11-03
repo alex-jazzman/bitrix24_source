@@ -73,3 +73,4 @@ $MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES_MSGVER_1"] = "Сохрани�
 $MESS["CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
 
 $MESS["CRM_ACT_EMAIL_DRAFT_LOAD_ERROR"] = "Не удалось загрузить черновик. Чтобы не потерять изменения, сохраните письмо вручную";
+$MESS['CRM_ACT_EMAIL_TEMPLATE_APPLY_ERROR'] = 'Не удалось применить шаблон, попробуйте ещё раз';

@@ -28,14 +28,11 @@
 	font-size: 14px;
 }
 
-.sale-order-detail-more-info-more,
-.sale-order-detail-more-info-less {
+.sale-order-detail-more-info-more {
 	border-bottom: 1px dashed;
 	text-decoration: none !important;
 	font-size: 13px;
 }
-
-.sale-order-detail-more-info-less { display: none; }
 
 .sale-order-detail-more-info-details-title {
 	color: #888;
@@ -66,15 +63,12 @@
 
 .sale-order-detail-payment-options-methods-info-change-link:hover,
 .sale-order-detail-show-link:hover,
-.sale-order-detail-hide-link:hover,
 .sale-order-list-cancel-payment:hover,
 .sale-order-detail-payment-options-methods-info-change-link:active,
 .sale-order-detail-show-link:active,
-.sale-order-detail-hide-link:active,
 .sale-order-list-cancel-payment:active,
 .sale-order-detail-payment-options-methods-info-change-link:visited,
 .sale-order-detail-show-link:visited,
-.sale-order-detail-hide-link:visited,
 .sale-order-list-cancel-payment:visited { text-decoration: none !important; }
 
 .sale-order-detail-section-comments { padding: 0 15px; }
@@ -151,6 +145,7 @@ div.sale-order-detail-payment-options-methods {
 .sale-order-detail-payment-options-info-total-price span { white-space: nowrap; }
 
 .sale-order-detail-payment-options-methods-information-block {
+	visibility: visible;
 	opacity: 1;
 	transition: opacity .5s .3s ease;
 }
@@ -222,9 +217,13 @@ div.sale-order-detail-payment-options-methods {
 
 .sale-order-detail-payment-options-methods-template { }
 
+/* The hidden copy stays in its place out of the flow: moved aside it would stretch the page sideways
+ * whenever the payment row stops clipping, and only `visibility` takes it out of the tab order. It
+ * turns hidden and visible at once, as the copy moved aside did: the closing one leaves the tab order
+ * and the pointer the moment it goes, the coming one can take the focus, and only `opacity` fades. */
 div.sale-order-detail-payment-options-methods-template {
 	position: absolute;
-	left: 1000px;
+	visibility: hidden;
 	margin: 0;
 	padding: 24px 38px 24px 38px;
 	border: 1px solid #3bc8f5;
@@ -236,18 +235,14 @@ div.sale-order-detail-payment-options-methods-template {
 .sale-order-detail-active-event .sale-order-detail-payment-options-methods-template {
 	position: relative;
 	left: 0;
+	visibility: visible;
 	opacity: 1;
 }
 
 .sale-order-detail-active-event .sale-order-detail-payment-options-methods-information-block {
 	position: absolute;
-	left: 1000px;
+	visibility: hidden;
 	opacity: 0;
-}
-
-.sale-order-detail-active-event .sale-order-detail-payment-options-methods-template.sale-paysystem-close {
-	position: absolute;
-	left: 1000px;
 }
 
 /* shipment */
@@ -273,15 +268,12 @@ div.sale-order-detail-payment-options-methods-template {
 }
 
 .sale-order-detail-show-link,
-.sale-order-detail-hide-link,
 .sale-order-detail-payment-options-methods-info-change-link {
 	display: inline;
 	border-bottom: 1px dashed;
 	cursor: pointer;
 	transition: border-bottom .3s ease;
 }
-
-.sale-order-detail-hide-link { display: none; }
 
 .sale-order-payment-cancel:hover,
 .sale-order-detail-payment-options-methods-info-change-link:hover { text-decoration: none; }
@@ -472,3 +464,90 @@ div.sale-order-detail-payment-options-methods-template {
 
 	.sale-order-detail-payment-options-shipment-button-element { text-align: center; }
 }
+
+/*region Focus ring*/
+/* Outweighs `.block-wrapper [tabindex]:not([tabindex="-1"]):focus-visible` (0,4,0) of the landing
+ * store theme, whose stylesheet comes later: every stop of the order, the payment form and the result
+ * of a payment change that arrive into it included, lies in the column of the root. */
+.row.sale-order-detail .col a:focus-visible,
+.row.sale-order-detail .col .btn:focus-visible,
+.row.sale-order-detail .col button:focus-visible,
+.row.sale-order-detail .col input:focus-visible,
+.row.sale-order-detail .col select:focus-visible,
+.row.sale-order-detail .col textarea:focus-visible,
+.row.sale-order-detail .col [tabindex]:not([tabindex="-1"]):focus-visible,
+.row.sale-order-detail .col [role="button"]:focus-visible,
+.row.sale-order-detail .col [role="radio"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+	box-shadow: none;
+}
+
+/* The script parks the focus on these nodes, and `[tabindex="-1"]:focus { outline: 0 !important }`
+ * of the landing store theme (`landing24/assets/vendor/bootstrap/bootstrap.css:73`) is answered by
+ * nothing but `!important`. */
+.sale-order-detail .sale-order-detail-payment-options-methods-template[tabindex="-1"]:focus-visible,
+.sale-order-detail .sale-order-detail-payment-options-methods-info[tabindex="-1"]:focus-visible,
+.sale-order-detail h1[id^="sale-order-detail-order-"][tabindex="-1"]:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-base-1, #333333) !important;
+	outline-offset: var(--ui-focus-outline-offset, 2px) !important;
+}
+
+/* Both levels of the payment row clip their content, the ring of every control of the row with it. */
+div.payment-options-methods-row:has(:focus-visible),
+div.sale-order-detail-payment-options-methods:has(:focus-visible) {
+	overflow: visible;
+}
+
+/* The theme animates every property of a button, the ring with them, and a ring that fades in cannot
+ * be followed. The inherited `visibility` of a hidden copy is taken at once as well: animated, it keeps
+ * "Pay" hidden for a moment after the form closes, and the focus given to it is lost. */
+.row.sale-order-detail .col .btn {
+	transition: all .2s ease, visibility 0s, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+.row.sale-order-detail .col .form-control {
+	transition: border-color .15s ease-in-out, outline 0s, outline-offset 0s, box-shadow 0s;
+}
+
+/* `ui.bootstrap4`, brought by the search of the header, paints the fill and the border of a focused
+ * button (0,2,0), the theme repaints the text of a focused link (0,1,1), and bootstrap underlines a
+ * focused `.btn-link`. The resting values are put back, and the hovered ones over a hovered or
+ * pressed focused button. A disabled button keeps its resting fill under the mouse as well. */
+.row.sale-order-detail .col .btn.btn-primary:focus {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: #fff;
+}
+
+.row.sale-order-detail .col .btn.btn-primary:not(.disabled):focus:hover,
+.row.sale-order-detail .col .btn.btn-primary:not(.disabled):focus:active {
+	background-color: var(--primary-darken-1, var(--primary));
+	border-color: var(--primary-darken-1, var(--primary));
+	color: #fff;
+}
+
+.row.sale-order-detail .col .btn.btn-success:focus {
+	background-color: #28a745;
+	border-color: #28a745;
+	color: #fff;
+}
+
+.row.sale-order-detail .col .btn.btn-success:focus:hover,
+.row.sale-order-detail .col .btn.btn-success:focus:active {
+	background-color: #218838;
+	border-color: #1e7e34;
+	color: #fff;
+}
+
+.row.sale-order-detail .col .btn.btn-link:focus {
+	color: #007bff;
+	text-decoration: none;
+}
+
+.row.sale-order-detail .col .btn.btn-link:focus:hover,
+.row.sale-order-detail .col .btn.btn-link:focus:active {
+	color: #0056b3;
+	text-decoration: underline;
+}
+/*endregion*/

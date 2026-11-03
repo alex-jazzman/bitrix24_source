@@ -2,7 +2,13 @@
 	--im-list-recent-create-chat__background-color_not-active: var(--im-color-palette-blue-15);
 	--im-list-recent-create-chat__font-color_header: var(--im-color-palette-white-base);
 
+	position: relative;
 	margin: 4px 4px 6px;
+}
+
+/* Reserve room for the absolutely-positioned cancel control so the title/subtitle never run under it. */
+.bx-im-list-recent-create-chat__container .bx-im-list-recent-item__content_container {
+	padding-right: 28px;
 }
 
 .bx-im-list-recent-create-chat__container .bx-im-list-recent-item__wrap:not(.--selected) {
@@ -24,16 +30,39 @@
 	color: var(--im-list-recent-create-chat__font-color_header);
 }
 
-.bx-im-list-recent-create-chat__icon-close {
-	--ui-icon-set__icon-size: 20px;
+/* Sibling of the row button (not nested inside it - nested interactive controls fail axe).
+   The focus ring lives on this non-masked wrapper: the child BIcon renders a single .ui-icon-set
+   element painted via -webkit-mask, and Blink clips the element's own outline to that mask, so a
+   ring drawn on the icon is masked away. Mirrors the list slider's close-container wrapper. */
+.bx-im-list-recent-create-chat__icon-close-button {
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
 
+	position: absolute;
+	top: 3px;
+	right: 6px;
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	padding: 2px;
+	border: none;
+	background: none;
 	cursor: pointer;
-	padding: 0;
-	margin-top: 5px;
 }
 
-.bx-im-list-recent-item__wrap.--selected .bx-im-list-recent-create-chat__icon-close {
+.bx-im-messenger__scope .bx-im-list-recent-create-chat__icon-close-button.--focus-visible:focus-visible {
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	border-radius: var(--ui-border-radius-xs);
+}
+
+.bx-im-list-recent-create-chat__icon-close {
+	--ui-icon-set__icon-size: 20px;
+}
+
+/* Selected draft row recolors the cross to white. Set on the wrapper; the icon inherits it, since
+   the .ui-icon-set element declares no --ui-icon-set__icon-color of its own (only a base-color fallback). */
+.bx-im-list-recent-item__wrap.--selected + .bx-im-list-recent-create-chat__icon-close-button {
 	--ui-icon-set__icon-color: var(--ui-color-base-8);
 }
 

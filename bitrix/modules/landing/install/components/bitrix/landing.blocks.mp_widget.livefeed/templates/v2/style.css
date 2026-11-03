@@ -16,10 +16,14 @@
 	padding: 24px 45px 17px 45px;
 }
 
+/* the title stands on an h2, so the margin of a heading is set here; the font shorthand below
+   already carries the size and the weight */
 .landing-widget-v2-title {
 	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-stack-xs) var(--ui-space-inline-lg);
 	align-items: center;
-	margin-bottom: 22px;
+	margin: 0 0 22px;
 	padding-bottom: 0;
 	font: var(--ui-font-weight-medium) 28px var(--ui-font-family-primary, var(--ui-font-family-system));
 	color: var(--widget-color-h-v2);
@@ -48,7 +52,8 @@
 }
 
 .landing-widget-v2-title .landing-widget-v2-badge {
-	margin-left: 20px;
+	flex-shrink: 0;
+	white-space: nowrap;
 	margin-top: auto;
 	margin-bottom: auto;
 }
@@ -189,6 +194,15 @@
 	overflow: hidden;
 }
 
+/* the box around the name clips its content to keep the name on one line, and in the sidebar it
+   stands right against the text: a ring drawn outward is cut off on the way out. An unresolved var
+   makes the whole outline invalid at computed-value time, and the browser then drops its own ring
+   as well, so every token here carries a fallback of the value it holds */
+.landing-widget-v2-user-text:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset-inset, -2px);
+}
+
 .landing-widget-v2-bottom {
 	display: flex;
 	justify-content: space-between;
@@ -236,6 +250,17 @@
 	display: flex;
 	justify-content: flex-end;
 	margin-top: 34px;
+}
+
+/* the shared .landing-widget-button:focus rule drops the border and the box shrinks by 2px,
+   which would move the ring below on keyboard focus: the border is kept here */
+.landing-widget-v2 .landing-widget-button.view-all-button:focus {
+	border: 1px solid var(--ui-color-background-transparent);
+}
+
+.landing-widget-v2 .landing-widget-button.view-all-button:focus-visible {
+	outline: var(--ui-focus-outline-width, 2px) solid var(--ui-color-focus-outline, #4A9DFF);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
 }
 
 /* sidebar */

@@ -1,0 +1,7 @@
+/*
+ * Sits between the rules card header and the first rule preview, which carries no top margin.
+ * The live region stays in the DOM while empty, so only the filled one takes space.
+ */
+.editor-chart-unreachable-outputs-alert.--filled {
+	margin-bottom: var(--ui-space-stack-sm);
+}

@@ -226,7 +226,10 @@ type ImageSize = {
 	height: number;
 	animated?: boolean;
 	orientation?: number;
+	contentFormat?: ImageFormat;
 };
+
+type ImageFormat = 'gif' | 'png' | 'bmp' | 'jpeg' | 'webp';
 
 type ImageData = ImageBitmap | HTMLImageElement | {
 	width: number;
@@ -237,6 +240,11 @@ type ResizedImageSizeResult = {
 	targetWidth: number;
 	targetHeight: number;
 	useOriginalSize: boolean;
+};
+
+type FileDescription = {
+	name: string;
+	type: string;
 };
 
 type VideoPreviewResult = {
@@ -673,7 +681,7 @@ declare namespace BX.UI.Uploader {
 
 	const loadImage: (file: File | Blob) => Promise<unknown>;
 
-	const isValidFileType: (file: File, fileTypes: string[]) => boolean;
+	const isValidFileType: (file: FileDescription, fileTypes: string[]) => boolean;
 
 	const canAppendFileToForm: () => boolean;
 

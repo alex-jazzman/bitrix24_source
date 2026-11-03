@@ -1,0 +1,25 @@
+<?php
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_DESCRIPTION'] = 'Подсказывает, какие графики и фильтры нужны для контроля показателей';
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_PROMPT'] = 'Помоги подготовить структуру BI-дашборда. Если нужно, уточни цель дашборда, аудиторию, метрики, фильтры и источники данных.';
+$MESS['BICONNECTOR_AI_AGENTS_CONFIGURE_DASHBOARD_TITLE'] = 'Настройка дашборда';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_DESCRIPTION'] = 'Помогает оформить понятные определения метрик для команды';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_PROMPT'] = 'Помоги описать BI-метрики понятным языком для команды. Если нужно, уточни список метрик, формулы расчёта, источники данных и примеры использования.';
+$MESS['BICONNECTOR_AI_AGENTS_DESCRIBE_METRICS_TITLE'] = 'Описание метрик';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_DESCRIPTION'] = 'Помогает найти возможные причины роста или падения метрик';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_PROMPT'] = 'Помоги разобраться в динамике BI-показателей и возможных причинах роста или падения. Если нужно, уточни отчёт, метрику, период, сегмент и источник данных.';
+$MESS['BICONNECTOR_AI_AGENTS_EXPLAIN_TRENDS_TITLE'] = 'Объяснение динамики';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_DESCRIPTION'] = 'Помогает обнаружить аномалии, просадки и резкие изменения в показателях';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_PROMPT'] = 'Проанализируй BI-отчёты и помоги найти заметные отклонения в ключевых показателях. Если для анализа нужно выбрать конкретный отчёт, метрику или период, задай мне уточняющий вопрос.';
+$MESS['BICONNECTOR_AI_AGENTS_FIND_ANOMALIES_TITLE'] = 'Поиск отклонений';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_DESCRIPTION'] = 'Помогает превратить данные дашборда в короткие выводы для встречи или отчёта';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_PROMPT'] = 'Помоги подготовить краткие выводы по BI-данным для руководителя или встречи. Если нужно, уточни, какой отчёт, период, аудиторию и ключевые показатели.';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_INSIGHTS_TITLE'] = 'Подготовка выводов';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_DESCRIPTION'] = 'Помогает выбрать метрики, поля и структуру отчёта под бизнес-задачу';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_PROMPT'] = 'Помоги подготовить BI-отчёт под бизнес-задачу. Если нужно, уточни цель отчёта, аудиторию, ключевые метрики, период и источники данных.';
+$MESS['BICONNECTOR_AI_AGENTS_PREPARE_REPORT_TITLE'] = 'Подготовка отчёта';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_DESCRIPTION'] = 'Помогает понять, какие данные посмотреть, чтобы подтвердить или опровергнуть гипотезу';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_PROMPT'] = 'Помоги проверить бизнес-гипотезу через BI-данные. Если гипотеза, метрика, период или сегмент не указаны, задай уточняющие вопросы перед анализом.';
+$MESS['BICONNECTOR_AI_AGENTS_TEST_HYPOTHESES_TITLE'] = 'Проверка гипотез';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_DESCRIPTION'] = 'Помогает разобраться, какие данные нужны и как их связать между собой';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_PROMPT'] = 'Помоги определить, какие данные и датасеты нужны для BI-задачи. Если не хватает контекста, уточни бизнес-вопрос, элементы, поля и связи между данными.';
+$MESS['BICONNECTOR_AI_AGENTS_WORK_WITH_DATASETS_TITLE'] = 'Работа с датасетами';

@@ -2,6 +2,8 @@ import {Dom} from 'main.core';
 import {BaseField} from 'landing.ui.field.basefield';
 import {MenuForm} from 'landing.ui.form.menuform';
 
+import './css/style.css';
+
 /**
  * @memberOf BX.Landing.UI.Field
  */

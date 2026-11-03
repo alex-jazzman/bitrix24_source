@@ -18,19 +18,43 @@ jn.define('ui-system/popups/aha-moment/src/spotlight', (require, exports, module
 		}
 
 		/**
-		 * @param {object} targetParams
-		 * @returns {object}
+		 * createSpotlight() may return nothing, and then every method below throws.
+		 * Consumers ask this instead of reaching for the native instance themselves.
+		 *
+		 * @returns {boolean}
 		 */
-		setTarget(targetParams = {})
+		get isCreated()
+		{
+			return Boolean(this.spotlight);
+		}
+
+		/**
+		 * Resolves with the measured target rect, and with an empty one when the target is not on
+		 * screen: there the native resolves with null, which every reader of the rect destructures
+		 * and blows up on — the deprecated setTarget() returned undefined and so defaulted cleanly.
+		 *
+		 * That setTarget() is also the fallback for native builds that predate the async method:
+		 * it measures a target given by string id before the view settles, but a misplaced ear
+		 * beats no aha-moments at all.
+		 *
+		 * @param {object} targetParams
+		 * @returns {Promise<object>}
+		 */
+		async setTargetAsync(targetParams = {})
 		{
 			const { disableHideByOutsideClick = true } = this.options;
-
-			return this.spotlight.setTarget(this.targetRef, {
+			const params = {
 				useHighlight: false,
 				type: 'rectangle',
 				disableHideByOutsideClick,
 				...targetParams,
-			});
+			};
+
+			const measuredTarget = this.spotlight.setTargetAsync
+				? await this.spotlight.setTargetAsync(this.targetRef, params)
+				: this.spotlight.setTarget(this.targetRef, params);
+
+			return measuredTarget ?? {};
 		}
 
 		/**

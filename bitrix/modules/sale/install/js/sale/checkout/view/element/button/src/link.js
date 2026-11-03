@@ -2,17 +2,10 @@ import { BitrixVue } from 'ui.vue';
 
 BitrixVue.component('sale-checkout-view-element-button-shipping-link', {
 	props: ['url'],
-	methods:
-	{
-		clickAction()
-		{
-			document.location.href = this.url
-		}
-	},
 	// language=Vue
 	template: `
-      <div class="btn btn-checkout-order-status-link" @click="clickAction">
-	  		<slot name="link-title"/>
-	  </div>
+		<a class="btn btn-checkout-order-status-link" :href="url" data-testid="sale-checkout-shipping-link">
+			<slot name="link-title"/>
+		</a>
 	`
 });

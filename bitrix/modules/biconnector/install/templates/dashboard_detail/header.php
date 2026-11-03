@@ -17,7 +17,7 @@ Main\UI\Extension::load([
 	'intranet.sidepanel.air',
 ]);
 
-$bitrixGptIsAvailable = Main\Loader::includeModule('biconnector') && BitrixGptChat::isAvailable();
+$bitrixGptIsAvailable = Main\Loader::includeModule('biconnector') && BitrixGptChat::isAvailableOnCurrentPage();
 $bitrixGptLayoutStyle = '';
 if ($bitrixGptIsAvailable)
 {
@@ -32,7 +32,7 @@ if ($bitrixGptIsAvailable)
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="<?= LANGUAGE_ID ?>">
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=<?= SITE_CHARSET ?>"/>
 	<?php $APPLICATION->ShowHead(); ?>

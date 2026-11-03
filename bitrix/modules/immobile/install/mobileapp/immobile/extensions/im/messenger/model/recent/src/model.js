@@ -10,12 +10,15 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const {
 		DialogType,
 		RecentTab,
+		RecentSectionCode,
 		RecentTabByNavigationTab,
 		NavigationTabByRecentTab,
 		NavigationTabId,
 		ROOT_PARENT_CHAT_ID,
+		SUBTREE_MAX_DEPTH,
 	} = require('im/messenger/const');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ModelUtils } = require('im/messenger/lib/utils');
 	const { recentDefaultElement } = require('im/messenger/model/recent/default-element');
@@ -28,6 +31,12 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	const logger = getLogger('model--recent');
 
 	const FIRST_PAGE_SIZE = 50;
+
+	/**
+	 * A dialogId of a private chat is the numeric user id, a dialogId of a group chat is
+	 * `chat{chatId}`. The distinction decides how the ids compare, see compareByIdDesc.
+	 */
+	const NUMERIC_DIALOG_ID = /^\d+$/;
 
 	/**
 	 * Recent sections whose items must also be propagated to ROOT_PARENT_CHAT_ID
@@ -43,7 +52,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		RecentTab.tasksTask,
 	]);
 
-	const RecentTabValues = new Set(Object.values(RecentTab));
+	// Every recent section the server may send: tab sections plus composition-only sections.
+	const RecentSectionValues = new Set([
+		...Object.values(RecentTab),
+		...Object.values(RecentSectionCode),
+	]);
 
 	/** @type {RecentMessengerModel} */
 	const recentModel = {
@@ -60,16 +73,22 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @function recentModel/getIdCollection
 			 * @param {string} tabId
 			 * @param {number} [parentChatId]
+			 * @param {SectionRecentValue|null} [recentSection]
 			 * @return {Set<string>}
 			 */
 			/**
 			 * @return {recentModelGetByChatId}
 			 */
-			getIdCollection: (state, getters, rootState, rootGetters) => (tabId, parentChatId = ROOT_PARENT_CHAT_ID) => {
+			getIdCollection: (state, getters, rootState, rootGetters) => (
+				tabId,
+				parentChatId = ROOT_PARENT_CHAT_ID,
+				recentSection = null,
+			) => {
 				const hasSelectedFilter = rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](tabId, parentChatId);
 				if (!hasSelectedFilter)
 				{
-					const rawCollection = getSectionSet(state, RecentTabByNavigationTab[tabId], parentChatId);
+					const section = recentSection ?? RecentTabByNavigationTab[tabId];
+					const rawCollection = getSectionSet(state, section, parentChatId);
 
 					return rawCollection ? new Set(rawCollection) : new Set();
 				}
@@ -197,6 +216,27 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
+			 * @function recentModel/getAllFirstPage
+			 * @description Aggregated first page across chats, tasks, collabs, channels and copilot.
+			 *   The id-collections are unioned into a single Set (deduplicated by id),
+			 *   then paged via getFirstPageByIdCollection with the default pinned-first sorter.
+			 *   Copilot joins only while it is enabled: locally cached copilot chats must not
+			 *   leak into the aggregate once the portal turns the copilot off.
+			 * @return {Array<RecentModelState>}
+			 */
+			getAllFirstPage: (state, getters) => () => {
+				const idCollection = new Set([
+					...getters.getChatIdCollection(),
+					...getters.getTaskIdCollection(),
+					...getters.getCollabIdCollection(),
+					...getters.getChannelIdCollection(),
+					...(Feature.isCopilotEnabled ? getters.getCopilotIdCollection() : []),
+				]);
+
+				return getters.getFirstPageByIdCollection(idCollection);
+			},
+
+			/**
 			 * @function recentModel/getFirstPageByIdCollection
 			 * @return {Array<RecentModelState>}
 			 */
@@ -216,6 +256,47 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const sorter = sortFunction?.(rootGetters) ?? sortByAggregatedActivityDateWithPinned(rootGetters);
 
 				return items.sort(sorter).slice(0, FIRST_PAGE_SIZE);
+			},
+
+			/**
+			 * Union of the top-level buckets of the given recent sections, keeping only true roots.
+			 * A chat present in several sections is returned once.
+			 *
+			 * The root check reads parentChatId from dialoguesModel, not from the bucket key:
+			 * sections with top-level propagation (SectionsWithTopLevelPropagation) write nested
+			 * chats into the ROOT_PARENT_CHAT_ID bucket, so the key alone would let them through.
+			 *
+			 * @function recentModel/getRootUnionIdCollection
+			 * @param {Iterable<string>} sections
+			 * @return {Set<string>}
+			 */
+			getRootUnionIdCollection: (state, getters, rootState, rootGetters) => (sections) => {
+				const union = new Set();
+				if (!Type.isArrayFilled(sections) && !Type.isSet(sections))
+				{
+					return union;
+				}
+
+				for (const section of sections)
+				{
+					const bucket = getSectionSet(state, section, ROOT_PARENT_CHAT_ID);
+					if (!bucket)
+					{
+						continue;
+					}
+
+					for (const dialogId of bucket)
+					{
+						const dialog = rootGetters['dialoguesModel/getById'](dialogId);
+						const realParentChatId = dialog?.parentChatId ?? ROOT_PARENT_CHAT_ID;
+						if (realParentChatId === ROOT_PARENT_CHAT_ID)
+						{
+							union.add(dialogId);
+						}
+					}
+				}
+
+				return union;
 			},
 
 			/**
@@ -239,6 +320,33 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 */
 			getCollection: (state) => () => {
 				return Object.values(state.collection).map((item) => ({ ...item }));
+			},
+
+			/**
+			 * chatIds of recent items that belong to recentSection (optionally bounded to a parent subtree).
+			 * Used to clear anchors on "read all by recent section": anchors of type REACTION don't bump a
+			 * counter, so the set of chats with anchors is the recent section itself, not just chats with counters.
+			 * @function recentModel/getChatIdListByRecentSection
+			 * @param {string} recentSection
+			 * @param {?number} [parentChatId]
+			 * @return {Array<number>}
+			 */
+			getChatIdListByRecentSection: (state, getters, rootState, rootGetters) => (
+				recentSection,
+				parentChatId = null,
+			) => {
+				const recentIds = collectIdsForReadByRecentSection({ state, rootGetters }, recentSection, parentChatId);
+
+				const chatIdList = [];
+				recentIds.forEach((dialogId) => {
+					const chatId = rootGetters['dialoguesModel/getById'](dialogId)?.chatId;
+					if (Type.isNumber(chatId))
+					{
+						chatIdList.push(chatId);
+					}
+				});
+
+				return chatIdList;
 			},
 
 			/**
@@ -276,19 +384,6 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				});
 
 				return recentList;
-			},
-
-			/**
-			 * @function recentModel/getTabsContainsItem
-			 * @return {Array<string>} // value NavigationTabId properties
-			 */
-			getTabsContainsItem: (state) => (id) => {
-				const topLevel = state.nestedIdCollection[ROOT_PARENT_CHAT_ID] ?? {};
-
-				return Object.entries(topLevel)
-					.filter(([, set]) => set?.has(id))
-					.map(([recentTab]) => NavigationTabByRecentTab[recentTab])
-					.filter(Boolean);
 			},
 
 			/**
@@ -351,28 +446,6 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				return Object.values(state.collection).filter((item) => {
 					return !item.id.startsWith('chat') && rootGetters['usersModel/getById'](item.id);
 				}).sort((userItemA, userItemB) => sortByLastActivityDateOnly(userItemA, userItemB));
-			},
-
-			/**
-			 * @typedef {Function} recentModelHasItemInTab
-			 * @param {string} dialogId
-			 * @param {string} navigationTabId
-			 * @return {boolean}
-			 * @alias recentModel/hasItemInTab
-			 */
-			/**
-			 * @return {recentModelHasItemInTab}
-			 */
-			hasItemInTab: (state) => (dialogId, navigationTabId) => {
-				const collection = getSectionSet(state, RecentTabByNavigationTab[navigationTabId]);
-				if (!collection)
-				{
-					logger.error('recentModel/hasItemInTab invalid navigationTabId', navigationTabId);
-
-					return false;
-				}
-
-				return collection.has(dialogId);
 			},
 
 			/**
@@ -493,11 +566,13 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					return;
 				}
 
-				const baseIds = getSectionSet(store.state, RecentTabByNavigationTab[tabId], parentChatId) || new Set();
+				const ownSection = RecentTabByNavigationTab[tabId];
+				const sections = payload.sections ?? new Set(ownSection === undefined ? [] : [ownSection]);
+				const baseIds = getFilterBaseIdCollection(store, ownSection, sections, parentChatId);
 				const currentFilterId = store.getters['recentFilteredModel/getCurrentFilterId'](tabId, parentChatId);
 				const rootGetters = store.rootGetters;
 				const resolver = filterResolvers[currentFilterId];
-				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters, parentChatId) : baseIds;
+				const filteredIds = resolver ? resolver(tabId, baseIds, rootGetters, parentChatId, sections) : baseIds;
 
 				await store.dispatch('recentFilteredModel/setIdCollection', {
 					tabId,
@@ -729,55 +804,6 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
-			 * @function recentModel/setByNavigationTabs
-			 * @param {MessengerStore<RecentMessengerModel>} store
-			 * @param {RecentModelActionParams['recentModel/setByNavigationTabs']} payload
-			 */
-			setByNavigationTabs: async (store, payload) => {
-				const {
-					tabs,
-					actionName = 'setByNavigationTabs',
-				} = payload;
-				let { itemList } = payload;
-
-				if (!Type.isArrayFilled(tabs))
-				{
-					return;
-				}
-
-				if (!Type.isArray(itemList))
-				{
-					itemList = [itemList];
-				}
-				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
-
-				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
-
-				tabs.forEach((tab) => {
-					const recentSection = RecentTabByNavigationTab[tab];
-					if (!recentSection)
-					{
-						logger.error('RecentModel.setByNavigationTabs invalid tab:', tab);
-
-						return;
-					}
-
-					store.commit('setNestedIdCollection', {
-						actionName,
-						data: {
-							recentSection,
-							itemIds,
-							parentChatId,
-						},
-					});
-
-					propagateToTopLevelIfNeeded(store, recentSection, itemIds, parentChatId, actionName);
-				});
-
-				await store.dispatch('set', uniqBy(itemList, 'id'));
-			},
-
-			/**
 			 * @function recentModel/setByRecentConfigTabs
 			 * @param {MessengerStore<RecentMessengerModel>} store
 			 * @param {RecentModelActionParams['recentModel/setByRecentConfigTabs']} payload
@@ -799,7 +825,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
 
 				sections.forEach((recentSection) => {
-					if (!RecentTabValues.has(recentSection))
+					if (!RecentSectionValues.has(recentSection))
 					{
 						logger.error('RecentModel.setByRecentConfigTabs invalid section:', recentSection);
 
@@ -853,7 +879,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 					const parentChatId = rawParentChatId ?? ROOT_PARENT_CHAT_ID;
 
 					sections.forEach((recentSection) => {
-						if (!RecentTabValues.has(recentSection))
+						if (!RecentSectionValues.has(recentSection))
 						{
 							logger.error('RecentModel.setByRecentConfigTabsBatch invalid section:', recentSection);
 
@@ -1037,75 +1063,6 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			},
 
 			/**
-			 * @function recentModel/deleteOpenChannel
-			 * @param {MessengerStore<RecentMessengerModel>} store
-			 * @param {RecentModelActionParams['recentModel/deleteOpenChannel']} payload
-			 */
-			deleteOpenChannel: (store, payload) => {
-				const existingItem = store.state.collection[payload.id];
-				if (!existingItem)
-				{
-					return;
-				}
-				const actionName = payload.actionName || 'deleteOpenChannel';
-
-				store.commit('deleteFromNestedIdCollection', {
-					data: {
-						recentSection: RecentTab.chat,
-						id: existingItem.id,
-						parentChatId: payload.parentChatId ?? ROOT_PARENT_CHAT_ID,
-					},
-					actionName,
-				});
-			},
-
-			/**
-			 * @function recentModel/hideByNavigationTabs
-			 * @param {MessengerStore<RecentMessengerModel>} store
-			 * @param {RecentModelActionParams['recentModel/hideByNavigationTabs']} payload
-			 */
-			hideByNavigationTabs: (store, payload) => {
-				const {
-					id,
-					fromTabs,
-					actionName = 'hideByNavigationTabs',
-				} = payload;
-				const existingItem = store.state.collection[id];
-				if (!existingItem)
-				{
-					return;
-				}
-
-				if (!Type.isArrayFilled(fromTabs))
-				{
-					return;
-				}
-
-				fromTabs.forEach((tabId) => {
-					const recentSection = RecentTabByNavigationTab[tabId];
-					if (!recentSection)
-					{
-						logger.log(`hide action. unknown tabId: ${tabId}. skip `, tabId);
-
-						return;
-					}
-
-					const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
-
-					store.commit('deleteFromNestedIdCollection', {
-						actionName,
-						data: {
-							recentSection,
-							id,
-							parentChatId,
-						},
-					});
-
-					hideFromTopLevelIfNeeded(store, recentSection, id, parentChatId, actionName);
-				});
-			},
-
-			/**
 			 * @function recentModel/hideByRecentConfigTabs
 			 * @param {MessengerStore<RecentMessengerModel>} store
 			 * @param {RecentModelActionParams['recentModel/hideByRecentConfigTabs']} payload
@@ -1126,7 +1083,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
 
 				fromSections.forEach((recentSection) => {
-					if (!RecentTabValues.has(recentSection))
+					if (!RecentSectionValues.has(recentSection))
 					{
 						logger.error('RecentModel.hideByRecentConfigTabs invalid section:', recentSection);
 
@@ -1227,24 +1184,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 
 			/** @function recentModel/readByRecentSection */
 			readByRecentSection: (store, payload) => {
-				const { recentSection } = payload;
-				const idCollection = getSectionSet(store.state, recentSection);
-				if (!idCollection)
-				{
-					return;
-				}
-
-				const recentItemList = Object.values(store.state.collection)
-					.filter((recentItem) => {
-						return recentItem.unread === true && idCollection.has(recentItem.id);
-					})
-					.map((recentItem) => ({
-						fields: {
-							id: recentItem.id,
-							unread: false,
-						},
-					}))
-				;
+				const { recentSection, parentChatId = null } = payload;
+				const idsToUnread = collectIdsForReadByRecentSection(store, recentSection, parentChatId);
+				const recentItemList = buildUnreadUpdateList(store.state.collection, idsToUnread);
 
 				if (!Type.isArrayFilled(recentItemList))
 				{
@@ -1412,6 +1354,169 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	}
 
 	/**
+	 * Base set the filter of the tab is applied to, resolved by the composition of that tab.
+	 *
+	 * A tab with a section of its own keeps reading that section at the top level: the union
+	 * drops the chats lifted there from a nested section, and such a tab has to keep them.
+	 * A composite tab has no section of its own and takes the very union its list is built
+	 * from, so the filtered set stays a subset of what the list shows.
+	 *
+	 * @param {MessengerStore<RecentMessengerModel>} store
+	 * @param {string|undefined} ownSection
+	 * @param {Set<string>} sections
+	 * @param {number} parentChatId
+	 * @returns {Set<string>}
+	 */
+	function getFilterBaseIdCollection(store, ownSection, sections, parentChatId)
+	{
+		if (parentChatId !== ROOT_PARENT_CHAT_ID)
+		{
+			const nestedIds = new Set();
+			for (const section of sections)
+			{
+				getSectionSet(store.state, section, parentChatId)?.forEach((dialogId) => nestedIds.add(dialogId));
+			}
+
+			return nestedIds;
+		}
+
+		if (ownSection !== undefined)
+		{
+			return getSectionSet(store.state, ownSection, ROOT_PARENT_CHAT_ID) ?? new Set();
+		}
+
+		return store.getters.getRootUnionIdCollection(sections);
+	}
+
+	/**
+	 * Dispatches to the right id collector based on parentChatId semantics.
+	 * @param {object} store
+	 * @param {string} recentSection
+	 * @param {?number} parentChatId
+	 * @returns {Set<string>}
+	 */
+	function collectIdsForReadByRecentSection(store, recentSection, parentChatId)
+	{
+		if (parentChatId === null || Type.isUndefined(parentChatId))
+		{
+			return collectIdsFromAllBuckets(store.state, recentSection);
+		}
+
+		if (parentChatId === ROOT_PARENT_CHAT_ID)
+		{
+			return collectIdsFromRootBucket(store.state, recentSection);
+		}
+
+		return collectIdsFromSubtree(store, recentSection, parentChatId);
+	}
+
+	/**
+	 * Every recent id of recentSection across all parent buckets.
+	 * @param {object} state
+	 * @param {string} recentSection
+	 * @returns {Set<string>}
+	 */
+	function collectIdsFromAllBuckets(state, recentSection)
+	{
+		const ids = new Set();
+		for (const bucketKey of Object.keys(state.nestedIdCollection))
+		{
+			const set = state.nestedIdCollection[bucketKey]?.[recentSection];
+			if (set)
+			{
+				set.forEach((id) => ids.add(id));
+			}
+		}
+
+		return ids;
+	}
+
+	/**
+	 * Recent ids of recentSection only in the top-level bucket.
+	 * @param {object} state
+	 * @param {string} recentSection
+	 * @returns {Set<string>}
+	 */
+	function collectIdsFromRootBucket(state, recentSection)
+	{
+		const ids = new Set();
+		const set = getSectionSet(state, recentSection, ROOT_PARENT_CHAT_ID);
+		if (set)
+		{
+			set.forEach((id) => ids.add(id));
+		}
+
+		return ids;
+	}
+
+	/**
+	 * Recent ids for the parentChatId subtree filtered by recentSection. Mirrors the backend
+	 * ChatAncestorFilter that applies typeCondition to every subtree level — without this filter
+	 * we would clear chats from other sections under the same parent (e.g. collabChat/calendar
+	 * when reading the task subtab).
+	 *
+	 * Note: server starts the subtree filter at depth=1, so the entry chat is never cleared
+	 * on the backend. We mirror that and only clear the entry's dialogId locally when it
+	 * itself belongs to the requested section.
+	 *
+	 * The traversal is bounded by SUBTREE_MAX_DEPTH: the same bound the counters clear uses.
+	 * Without it a recent item deeper than the server's ChatTreeScope would lose its unread flag
+	 * while its counter stays untouched, which leaves the list contradicting the badges.
+	 * @param {object} store
+	 * @param {string} recentSection
+	 * @param {number} parentChatId
+	 * @returns {Set<string>}
+	 */
+	function collectIdsFromSubtree(store, recentSection, parentChatId)
+	{
+		const ids = new Set();
+
+		const entryCounter = store.rootGetters['counterModel/getByChatId'](parentChatId);
+		if (entryCounter && store.rootGetters['counterModel/belongsToRecentSection'](entryCounter, recentSection))
+		{
+			const entryDialogId = store.rootGetters['dialoguesModel/getByChatId'](parentChatId)?.dialogId;
+			if (entryDialogId)
+			{
+				ids.add(entryDialogId);
+			}
+		}
+
+		const subtreeChatIds = new Set([parentChatId]);
+		const descendants = store.rootGetters['counterModel/getDescendantChatIds'](parentChatId, SUBTREE_MAX_DEPTH);
+		descendants.forEach((id) => subtreeChatIds.add(id));
+
+		for (const chatId of subtreeChatIds)
+		{
+			const set = store.state.nestedIdCollection[chatId]?.[recentSection];
+			if (set)
+			{
+				set.forEach((id) => ids.add(id));
+			}
+		}
+
+		return ids;
+	}
+
+	/**
+	 * Maps recent ids to the mutation payload that flips unread to false.
+	 * @param {Record<string, RecentModelState>} collection
+	 * @param {Set<string>} idsToUnread
+	 * @returns {Array<{fields: {id: string, unread: false}}>}
+	 */
+	function buildUnreadUpdateList(collection, idsToUnread)
+	{
+		return [...idsToUnread]
+			.map((id) => collection[id])
+			.filter((item) => item && item.unread === true)
+			.map((item) => ({
+				fields: {
+					id: item.id,
+					unread: false,
+				},
+			}));
+	}
+
+	/**
 	 * @param {object} state
 	 * @param {string} recentSection
 	 * @param {number} [parentChatId]
@@ -1524,7 +1629,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const defaultUserElement = (
 					recentItem.options
 					&& recentItem.options.defaultUserRecord
-					&& !recentItem.invitation
+					&& !recentItem.invitation?.isActive
 				);
 
 				if (defaultUserElement)
@@ -1562,10 +1667,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			return -1;
 		}
 
-		const aLastActivityDate = getLastActivityDate(a, rootGetters);
-		const bLastActivityDate = getLastActivityDate(b, rootGetters);
-
-		return bLastActivityDate - aLastActivityDate;
+		return compareByAggregatedActivityDate(a, b, rootGetters);
 	};
 
 	/**
@@ -1573,10 +1675,49 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 	 * @returns {(a: RecentModelState, b: RecentModelState) => number}
 	 */
 	const sortByAggregatedActivityDate = (rootGetters) => (a, b) => {
-		const aLastActivityDate = getLastActivityDate(a, rootGetters);
-		const bLastActivityDate = getLastActivityDate(b, rootGetters);
+		return compareByAggregatedActivityDate(a, b, rootGetters);
+	};
 
-		return bLastActivityDate - aLastActivityDate;
+	/**
+	 * @desc Descending activity date with a deterministic tie breaker. Both sorters share it: a
+	 * difference between them would itself reorder the list between the pages built by each.
+	 * @param {RecentModelState} a
+	 * @param {RecentModelState} b
+	 * @param {MessengerStore<RecentMessengerModel>['rootGetters']} rootGetters
+	 * @returns {number}
+	 */
+	const compareByAggregatedActivityDate = (a, b, rootGetters) => {
+		const difference = getLastActivityDate(b, rootGetters) - getLastActivityDate(a, rootGetters);
+
+		return difference === 0 ? compareByIdDesc(a, b) : difference;
+	};
+
+	/**
+	 * @desc Reproduces the tie breaker of the server. `Recent::getRecent` sorts its result by
+	 * `['PINNED' => SORT_DESC, 'MESSAGE' => SORT_DESC, 'ID' => SORT_DESC]`, where `ID` is the
+	 * dialogId, and `array_multisort` compares with SORT_REGULAR: two numeric ids compare as
+	 * numbers, anything else compares as strings. Without a tie breaker the order of rows with the
+	 * same activity date is the insertion order, so the local first page disagrees with the server
+	 * wave and the list is reordered the moment the wave arrives.
+	 * @param {RecentModelState} a
+	 * @param {RecentModelState} b
+	 * @returns {number}
+	 */
+	const compareByIdDesc = (a, b) => {
+		const first = String(a.id);
+		const second = String(b.id);
+
+		if (NUMERIC_DIALOG_ID.test(first) && NUMERIC_DIALOG_ID.test(second))
+		{
+			return Number(second) - Number(first);
+		}
+
+		if (first === second)
+		{
+			return 0;
+		}
+
+		return first < second ? 1 : -1;
 	};
 
 	/**
@@ -1639,5 +1780,9 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 		));
 	};
 
-	module.exports = { recentModel };
+	module.exports = {
+		recentModel,
+		sortByAggregatedActivityDateWithPinned,
+		getLastActivityDate,
+	};
 });

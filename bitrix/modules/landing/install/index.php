@@ -60,7 +60,7 @@ class Landing extends \CModule
 
 	/**
 	 * Call all install methods.
-	 * @returm void
+	 * @return void
 	 */
 	public function doInstall()
 	{
@@ -77,7 +77,7 @@ class Landing extends \CModule
 
 	/**
 	 * Call all uninstall methods, include several steps.
-	 * @returm void
+	 * @return void
 	 */
 	public function doUninstall()
 	{
@@ -132,7 +132,6 @@ class Landing extends \CModule
 		// templates
 		if (\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
-			\Bitrix\Landing\Integration\AiAssistant\Trigger\AiSiteChatTriggerRegistrar::register();
 			$this->installTemplates();
 			$this->setOptions();
 		}
@@ -458,7 +457,7 @@ class Landing extends \CModule
 		// templates
 		$this->setSiteTemplates(false);
 
-		// delete files finaly
+		// delete files finally
 		if (isset($arParams['savedata']) && !$arParams['savedata'])
 		{
 			$res = \Bitrix\Main\FileTable::getList(array(

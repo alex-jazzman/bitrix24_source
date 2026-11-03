@@ -165,7 +165,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				$limitManager,
 			);
 
-			if (!$resultQuery->isSuccess())
+			if (!$resultQuery->isSuccess() && !($resultQuery->getData()['errorStreamed'] ?? false))
 			{
 				foreach ($resultQuery->getErrorCollection() as $error)
 				{

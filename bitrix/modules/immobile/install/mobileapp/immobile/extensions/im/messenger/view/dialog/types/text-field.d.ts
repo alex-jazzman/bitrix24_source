@@ -6,6 +6,10 @@ declare class DialogTextField {
 	on<T extends keyof DialogTextFieldEvents>(eventType: T, handler: DialogTextFieldEvents[T]): void;
 	off<T extends keyof DialogTextFieldEvents>(eventType: T, handler: DialogTextFieldEvents[T]): void;
 	once<T extends keyof DialogTextFieldEvents>(eventType: T, handler: DialogTextFieldEvents[T]): void;
+
+	setSendButton(model: SendButtonModel): void;
+	setSendButtonState(stateId: SendButtonStateId): void;
+	setSendButtonToForcedState(flag: boolean): void;
 }
 
 declare interface JNChatTextField extends JNChatBaseClassInterface<DialogTextFieldEvents>
@@ -37,7 +41,19 @@ declare interface JNChatTextField extends JNChatBaseClassInterface<DialogTextFie
 	removeAssistantButton(id: AssistantButton['id']): Promise<any>;
 	setTextActions(actions: TextAction[]): void;
 	setSelectionRange(startIndex: number, endIndex: number): void;
+	setSendButton(model: SendButtonModel): void;
+	setSendButtonState(stateId: SendButtonStateId): void;
+	setSendButtonToForcedState(flag: boolean): void;
 }
+
+declare type SendButtonStateId = 'disabled' | 'filled' | 'edit' | 'stop';
+
+declare type SendButtonModel = {
+	id: SendButtonStateId,
+	iconName: string,
+	height: string,
+	design: string,
+};
 
 declare type DialogTextFieldEvents = {
 	changeState: (text: string, inputCharacters: string, cursorPosition: number) => any,

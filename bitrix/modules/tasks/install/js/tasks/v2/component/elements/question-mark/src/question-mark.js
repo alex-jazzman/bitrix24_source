@@ -1,3 +1,4 @@
+import { defineComponent } from 'ui.vue3';
 import { hint, type HintParams } from 'ui.vue3.directives.hint';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
@@ -6,8 +7,7 @@ import { tooltip } from 'tasks.v2.component.elements.hint';
 
 import './question-mark.css';
 
-// @vue/component
-export const QuestionMark = {
+export const QuestionMark = defineComponent({
 	name: 'UiQuestionMark',
 	components: {
 		BIcon,
@@ -52,6 +52,13 @@ export const QuestionMark = {
 		},
 	},
 	template: `
-		<BIcon v-hint="tooltip" class="b24-question-mark" :name="Outline.QUESTION" :size/>
+		<BIcon
+			v-hint="tooltip"
+			class="b24-question-mark"
+			:name="Outline.QUESTION"
+			:size
+			:role="hintText ? 'img' : null"
+			:aria-label="hintText || null"
+		/>
 	`,
-};
+});

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.CRM = this.BX.CRM || {};
-(function (exports, crm_kanban_restriction, crm_toolbarComponent, main_core, main_kanban, main_popup, ui_designTokens, ui_fonts_opensans, ls, ui_entitySelector, ui_tour, ui_notification, crm_integration_analytics, pull_queuemanager, crm_autorun, ui_analytics, crm_activity_addingPopup, crm_badge, main_date, main_sidepanel, ui_system_label, ui_hint, crm_activity_planner, currency_currencyCore, main_loader, ui_buttons, crm_dialog, crm_kanban_sort) {
+(function (exports, ls, main_core, main_core_events, main_kanban, main_popup, ui_a11y, pull_queuemanager, ui_designTokens, ui_entitySelector, ui_fonts_opensans, ui_notification, ui_tour, crm_kanban_restriction, crm_toolbarComponent, crm_integration_analytics, crm_autorun, ui_analytics, crm_activity_addingPopup, crm_badge, main_date, main_sidepanel, ui_iconSet_api_core, ui_system_label, ui_hint, ui_iconSet_main, crm_activity_planner, main_loader, ui_buttons, currency_currencyCore, crm_stage_color, crm_dialog, crm_kanban_sort) {
 	'use strict';
 
 	const NAMESPACE$3 = main_core.Reflection.namespace('BX.CRM.Kanban.Actions');
@@ -222,12 +222,22 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 		#onResolve(response) {
 			const dropZone = this.#dropZone;
-			if (dropZone) {
-				this.#prepareDropZone();
+			if (dropZone && this.#grid.getDropZoneArea().getDropZones().every(zone => zone.droppedItem === null)) {
+				this.#grid.dropZonesShow = false;
 			}
-			this.#prepareGrid();
+			if (!dropZone || this.#canResetDropZones()) {
+				if (dropZone) {
+					this.#prepareDropZone();
+				}
+				this.#prepareGrid();
+			}
 			this.#unHideUndeletedItems(response);
 			this.#showResult(response);
+		}
+		#canResetDropZones() {
+			return this.#grid.getDragMode() === BX.Kanban.DragMode.NONE && this.#grid.getDropZoneArea().getDropZones().every(dropZone => {
+				return dropZone.droppedItem === null || this.#ids.includes(Number(dropZone.droppedItem.getId()));
+			});
 		}
 		#getDeletedItems() {
 			if (this.#deletedItems === null) {
@@ -538,6 +548,75 @@ this.BX.CRM = this.BX.CRM || {};
 	}
 	NAMESPACE.StageLabels = StageLabels;
 
+	function getStageType(stage) {
+		return stage?.type ?? stage?.TYPE ?? '';
+	}
+	function getStageRealSort(stage) {
+		const sort = parseInt(stage?.real_sort ?? stage?.sort, 10);
+		return main_core.Type.isNumber(sort) ? sort : null;
+	}
+	function getColumnRealSort(columnData) {
+		const sort = parseInt(columnData?.real_sort, 10);
+		return main_core.Type.isNumber(sort) ? sort : null;
+	}
+	function normalizeStageRealSorts(columns) {
+		let previousRealSort = null;
+		let hasRealSortInversion = false;
+		for (const column of columns) {
+			const data = column.getData();
+			if (!main_core.Type.isStringFilled(getStageType(data)) || getStageType(data) === 'WIN') {
+				continue;
+			}
+			const currentRealSort = getStageRealSort(data);
+			if (currentRealSort === null) {
+				continue;
+			}
+			if (previousRealSort !== null && currentRealSort < previousRealSort) {
+				hasRealSortInversion = true;
+				break;
+			}
+			previousRealSort = currentRealSort;
+		}
+		let realSort = 0;
+		for (const column of columns) {
+			const data = column.getData();
+			if (!main_core.Type.isStringFilled(getStageType(data))) {
+				continue;
+			}
+			const lowerBound = hasRealSortInversion ? 0 : getStageRealSort(data) ?? 0;
+			realSort = Math.max(realSort + 10, lowerBound);
+			column.setData({
+				...data,
+				real_sort: realSort
+			});
+		}
+	}
+	function getStageTargetColumn(stage, columns, ignoredColumn = null) {
+		if (getStageType(stage) === 'WIN') {
+			return null;
+		}
+		const stageSort = getStageRealSort(stage);
+		let winColumn = null;
+		for (const column of columns) {
+			if (column === ignoredColumn) {
+				continue;
+			}
+			const columnData = column.getData();
+			if (getStageType(columnData) === 'WIN') {
+				winColumn ??= column;
+				continue;
+			}
+			const columnSort = getColumnRealSort(columnData);
+			if (stageSort !== null && columnSort !== null && columnSort > stageSort) {
+				return column;
+			}
+		}
+		return winColumn;
+	}
+	function getStageTargetColumnId(stage, columns, ignoredColumn = null) {
+		return getStageTargetColumn(stage, columns, ignoredColumn)?.getId();
+	}
+
 	const ViewMode = {
 		MODE_STAGES: 'STAGES',
 		MODE_ACTIVITIES: 'ACTIVITIES',
@@ -553,6 +632,342 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 	};
 	Object.freeze(ViewMode);
+
+	const SLIDER_INTERACTION_EVENTS = ['pointerdown', 'click', 'keydown', 'input', 'change', 'submit'];
+	function getSliderFromEvent(event) {
+		const sliderEvent = main_core.Type.isFunction(event?.getData) ? event.getData()?.[0] ?? event : event;
+		if (sliderEvent?.slider) {
+			return sliderEvent.slider;
+		}
+		if (main_core.Type.isFunction(sliderEvent?.getSlider)) {
+			return sliderEvent.getSlider();
+		}
+		return null;
+	}
+	function isMainGridTransportIframe(frame) {
+		if (frame?.nodeName?.toLowerCase() !== 'iframe' || !frame.id?.startsWith('main-grid-tmp-frame-') || !frame.isConnected || frame.hasAttribute('srcdoc') || frame.ownerDocument?.activeElement === frame) {
+			return false;
+		}
+		try {
+			const source = frame.getAttribute('src');
+			if (source !== null && source.trim() !== '' && source.trim().toLowerCase() !== 'about:blank') {
+				return false;
+			}
+			const rect = frame.getBoundingClientRect();
+			return rect.width === 0 && rect.height === 0;
+		} catch {
+			return false;
+		}
+	}
+	function containsUnsupportedIframe(node) {
+		if (node?.nodeName?.toLowerCase() === 'iframe') {
+			return !isMainGridTransportIframe(node);
+		}
+		if (!main_core.Type.isFunction(node?.querySelectorAll)) {
+			return false;
+		}
+		for (const frame of node.querySelectorAll('iframe')) {
+			if (!isMainGridTransportIframe(frame)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	function containsIframe(node) {
+		return node?.nodeName?.toLowerCase() === 'iframe' || main_core.Type.isFunction(node?.querySelectorAll) && node.querySelectorAll('iframe').length > 0;
+	}
+	function isGridTransportAttributeMutation(record) {
+		const frame = record.target;
+		if (frame?.nodeName?.toLowerCase() !== 'iframe') {
+			return false;
+		}
+		const id = frame.id;
+		const previousId = record.attributeName === 'id' ? record.oldValue : null;
+		return id?.startsWith('main-grid-tmp-frame-') || previousId?.startsWith('main-grid-tmp-frame-');
+	}
+	function mutationAddsOrRemovesIframe(records) {
+		for (const record of records) {
+			if (record.type === 'attributes' && isGridTransportAttributeMutation(record)) {
+				return true;
+			}
+			for (const node of record.addedNodes) {
+				if (containsUnsupportedIframe(node)) {
+					return true;
+				}
+			}
+			for (const node of record.removedNodes) {
+				if (containsIframe(node)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	class SliderViewObserver {
+		#observations = new Map();
+		#getEntityPath;
+		#eventHandlers;
+		constructor(getEntityPath) {
+			this.#getEntityPath = getEntityPath;
+			this.#eventHandlers = {
+				'SidePanel.Slider:onOpenStart': this.#handleOpenStart.bind(this),
+				'SidePanel.Slider:onLoad': this.#handleLoad.bind(this),
+				'SidePanel.Slider:onReload': this.#handleReload.bind(this),
+				'SidePanel.Slider:onCloseComplete': this.#handleCloseComplete.bind(this),
+				'SidePanel.Slider:onDestroy': this.#handleDestroy.bind(this)
+			};
+			for (const [eventName, handler] of Object.entries(this.#eventHandlers)) {
+				main_core_events.EventEmitter.subscribe(eventName, handler);
+			}
+		}
+		destroy() {
+			for (const [eventName, handler] of Object.entries(this.#eventHandlers)) {
+				main_core_events.EventEmitter.unsubscribe(eventName, handler);
+			}
+			for (const slider of this.#observations.keys()) {
+				this.#cleanupObservation(slider);
+			}
+		}
+		#handleOpenStart(event) {
+			const slider = getSliderFromEvent(event);
+			if (!slider) {
+				return;
+			}
+			for (const [activeSlider, state] of this.#observations) {
+				if (activeSlider !== slider) {
+					this.#invalidateObservation(state);
+				}
+			}
+			this.#cleanupObservation(slider);
+			const entityId = this.getEntityId(slider);
+			if (!entityId || parseInt(entityId, 10) <= 0) {
+				return;
+			}
+			const state = {
+				slider,
+				entityId,
+				frameWindow: null,
+				document: null,
+				listeners: [],
+				mutationObserver: null,
+				installed: false,
+				interacted: false,
+				invalid: false
+			};
+			this.#observations.set(slider, state);
+			if (main_core.Type.isFunction(slider.isLoaded) && slider.isLoaded()) {
+				this.#observeFrame(state);
+			}
+		}
+		#handleLoad(event) {
+			const slider = getSliderFromEvent(event);
+			const state = slider ? this.#observations.get(slider) : null;
+			if (state) {
+				this.#observeFrame(state);
+			}
+		}
+		#handleReload(event) {
+			const slider = getSliderFromEvent(event);
+			const state = slider ? this.#observations.get(slider) : null;
+			if (state) {
+				this.#invalidateObservation(state);
+			}
+		}
+		#handleCloseComplete(event) {
+			this.#cleanupObservation(getSliderFromEvent(event));
+		}
+		#handleDestroy(event) {
+			this.#cleanupObservation(getSliderFromEvent(event));
+		}
+		getEntityId(slider) {
+			if (!main_core.Type.isFunction(slider?.getUrl)) {
+				return null;
+			}
+			try {
+				const sliderUrl = slider.getUrl();
+				if (!main_core.Type.isStringFilled(sliderUrl)) {
+					return null;
+				}
+				const maskUrl = this.#getEntityPath().replace(/#([^#]+)#/, '([\\d]+)');
+				const match = sliderUrl.match(new RegExp(maskUrl));
+				return match && match[1] ? match[1] : null;
+			} catch {
+				return null;
+			}
+		}
+		#observeFrame(state) {
+			const observation = state;
+			const {
+				slider,
+				entityId,
+				document: observedDocument,
+				installed,
+				invalid
+			} = observation;
+			if (invalid || !this.#isCurrentObservation(observation)) {
+				return false;
+			}
+			let frameWindow = null;
+			let frameDocument = null;
+			try {
+				if (!main_core.Type.isFunction(slider.getFrameWindow) || !main_core.Type.isFunction(slider.isLoaded) || !slider.isLoaded()) {
+					return false;
+				}
+				frameWindow = slider.getFrameWindow();
+				if (!frameWindow) {
+					return false;
+				}
+				frameDocument = frameWindow.document;
+				if (!frameDocument?.documentElement || frameDocument.defaultView !== frameWindow) {
+					return false;
+				}
+				if (observedDocument) {
+					if (observedDocument === frameDocument && installed) {
+						return true;
+					}
+					this.#invalidateObservation(observation);
+					return false;
+				}
+				if (this.getEntityId(slider) !== entityId || containsUnsupportedIframe(frameDocument)) {
+					this.#invalidateObservation(observation);
+					return false;
+				}
+				if (!main_core.Type.isFunction(frameWindow.MutationObserver)) {
+					return false;
+				}
+				return this.#attachFrameObservation(observation, frameWindow, frameDocument);
+			} catch {
+				return false;
+			}
+		}
+		#attachFrameObservation(observation, frameWindow, frameDocument) {
+			let mutationObserver = null;
+			const listeners = [];
+			try {
+				mutationObserver = new frameWindow.MutationObserver(records => {
+					if (this.#isCurrentObservation(observation) && mutationAddsOrRemovesIframe(records)) {
+						this.#invalidateObservation(observation);
+					}
+				});
+				mutationObserver.observe(frameDocument.documentElement, {
+					attributeFilter: ['class', 'height', 'id', 'src', 'srcdoc', 'style', 'tabindex', 'width'],
+					attributeOldValue: true,
+					attributes: true,
+					childList: true,
+					subtree: true
+				});
+				const handleInteraction = () => {
+					if (this.#isCurrentObservation(observation)) {
+						Object.assign(observation, {
+							interacted: true
+						});
+					}
+				};
+				for (const eventName of SLIDER_INTERACTION_EVENTS) {
+					main_core.Event.bind(frameWindow, eventName, handleInteraction, true);
+					listeners.push({
+						target: frameWindow,
+						eventName,
+						handler: handleInteraction
+					});
+				}
+				const handlePageHide = () => {
+					if (this.#isCurrentObservation(observation)) {
+						this.#invalidateObservation(observation);
+					}
+				};
+				main_core.Event.bind(frameWindow, 'pagehide', handlePageHide, true);
+				listeners.push({
+					target: frameWindow,
+					eventName: 'pagehide',
+					handler: handlePageHide
+				});
+				Object.assign(observation, {
+					frameWindow,
+					document: frameDocument,
+					listeners,
+					mutationObserver,
+					installed: true
+				});
+				return true;
+			} catch {
+				for (const listener of listeners) {
+					main_core.Event.unbind(listener.target, listener.eventName, listener.handler, true);
+				}
+				mutationObserver?.disconnect();
+				return false;
+			}
+		}
+		#isCurrentObservation(state) {
+			return this.#observations.get(state.slider) === state;
+		}
+		canSkipCloseRefresh(slider, entityId) {
+			const state = this.#observations.get(slider);
+			if (!state || state.entityId !== entityId || !state.installed || state.interacted || state.invalid || !this.#isCurrentObservation(state)) {
+				return false;
+			}
+			try {
+				if (!main_core.Type.isFunction(slider.isLoaded) || !slider.isLoaded()) {
+					return false;
+				}
+				const frameWindow = slider.getFrameWindow();
+				if (frameWindow !== state.frameWindow || frameWindow.document !== state.document) {
+					this.#invalidateObservation(state);
+					return false;
+				}
+				if (mutationAddsOrRemovesIframe(state.mutationObserver.takeRecords()) || containsUnsupportedIframe(state.document)) {
+					this.#invalidateObservation(state);
+					return false;
+				}
+			} catch {
+				this.#invalidateObservation(state);
+				return false;
+			}
+			return true;
+		}
+		#invalidateObservation(state) {
+			const observation = state;
+			if (observation.invalid) {
+				return;
+			}
+			observation.invalid = true;
+			this.#removeObservationListeners(observation);
+		}
+		#removeObservationListeners(state) {
+			const observation = state;
+			for (const listener of observation.listeners) {
+				main_core.Event.unbind(listener.target, listener.eventName, listener.handler, true);
+			}
+			observation.mutationObserver?.disconnect();
+			Object.assign(observation, {
+				listeners: [],
+				mutationObserver: null,
+				installed: false
+			});
+		}
+		#cleanupObservation(slider) {
+			const state = slider ? this.#observations.get(slider) : null;
+			if (!state) {
+				return;
+			}
+			this.#removeObservationListeners(state);
+			this.#observations.delete(slider);
+		}
+	}
+
+	let stageEditorLoadPromise = null;
+
+	// Kanban::BLOCK_SIZE: the answer of the server never carries more items than this.
+	const LOAD_NEW_PORTION_SIZE = 20;
+	function loadStageEditor() {
+		stageEditorLoadPromise ??= main_core.Runtime.loadExtension('crm.stage.editor').then(({
+			StageEditor
+		}) => StageEditor).catch(error => {
+			stageEditorLoadPromise = null;
+			throw error;
+		});
+		return stageEditorLoadPromise;
+	}
 
 	/**
 	 * @param options
@@ -586,6 +1001,21 @@ this.BX.CRM = this.BX.CRM || {};
 		handleHideHintForNotVisibleItems = null;
 		canUpdateItemAtItsPosition = false;
 		stageAnalyticsLabels = null;
+		suppressLoadAnnounce = false;
+		pendingMoveFocus = null;
+		pendingMoveAnnounce = null;
+		stageEditor = null;
+		stageEditorClass = null;
+		stageEditorColumnId = null;
+		stageEditorDraftColumnId = null;
+		stageEditorExternalConflict = false;
+		stageEditorExternalSnapshot = null;
+		stageEditorPreviewFrameId = null;
+		stageEditorPendingPreview = null;
+		stageEditorOpenRequestId = 0;
+		currentLiveFilterAjaxParams = {};
+		liveFilterRequestId = 0;
+		sliderViewObserver = null;
 		constructor(options) {
 			BX.Event.EventEmitter.setMaxListeners('Kanban.Grid:onFirstRender', 50);
 			super(options);
@@ -602,6 +1032,7 @@ this.BX.CRM = this.BX.CRM || {};
 			BX.addCustomEvent(this, "Kanban.Grid:onColumnRemovedAsync", this.onColumnRemovedAsync.bind(this));
 			BX.addCustomEvent(this, "Kanban.Grid:onColumnLoadAsync", this.onColumnLoadAsync.bind(this));
 			BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.onItemDragStartHandler.bind(this));
+			BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.closeStageDescriptionTooltips.bind(this));
 			BX.addCustomEvent(this, "Kanban.Grid:onItemDragStart", this.setKanbanDragMode.bind(this));
 			BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", this.unSetKanbanDragMode.bind(this));
 			BX.addCustomEvent("BX.Main.Filter:apply", this.onApplyFilter.bind(this));
@@ -610,6 +1041,7 @@ this.BX.CRM = this.BX.CRM || {};
 			BX.addCustomEvent("onPullEvent-im", this.onPullEventHandlerCrm.bind(this));
 			BX.addCustomEvent("onCrmActivityTodoChecked", this.onCrmActivityTodoChecked.bind(this));
 			BX.addCustomEvent("SidePanel.Slider:onClose", this.onSliderClose.bind(this));
+			this.sliderViewObserver = new SliderViewObserver(() => this.getData().entityPath);
 			BX.addCustomEvent("BX.CRM.Kanban.Item.select", this.startActionPanel.bind(this));
 			BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", this.onItemUnselect.bind(this));
 			BX.addCustomEvent("BX.UI.ActionPanel:clickResetAllBlock", this.resetMultiSelectMode.bind(this));
@@ -630,6 +1062,503 @@ this.BX.CRM = this.BX.CRM || {};
 
 			this.stageAnalyticsLabels = new StageLabels(options.stageAnalyticsLabels);
 			Grid.Instance = this;
+			this.initCurrentLiveFilterAjaxParams();
+		}
+		initCurrentLiveFilterAjaxParams() {
+			const gridId = this.getData().gridId;
+			const filterManager = BX.Main?.filterManager;
+			if (!main_core.Type.isStringFilled(gridId) || !main_core.Type.isObject(filterManager) || !main_core.Type.isFunction(filterManager.getById)) {
+				return;
+			}
+			this.currentLiveFilterAjaxParams = this.getLiveFilterAjaxParams(filterManager.getById(gridId));
+		}
+
+		/**
+		 * Accessible name of the board. Overridable name hook. Returns the category
+		 * name so a screen reader announces the board as a named one.
+		 *
+		 * @returns {string}
+		 */
+		getBoardAriaLabel() {
+			const categoryName = this.getCategoryName();
+			if (categoryName === '') {
+				return super.getBoardAriaLabel();
+			}
+			return main_core.Loc.getMessage('CRM_KANBAN_BOARD_ARIA_LABEL', {
+				'#NAME#': categoryName
+			});
+		}
+
+		/**
+		 * Name of the current category of the board: a funnel for deals, a direction
+		 * for dynamic entities. Empty string when the entity type has no categories
+		 * or the current one is unknown.
+		 *
+		 * @returns {string}
+		 */
+		getCategoryName() {
+			const gridData = this.getData();
+			const categories = main_core.Type.isArray(gridData.categories) ? gridData.categories : [];
+			if (categories.length === 0) {
+				return '';
+			}
+
+			// The category list comes from the server with upper-case keys, the same way
+			// the category switcher of the group actions panel reads it.
+			const categoryId = main_core.Text.toInteger(gridData.params?.CATEGORY_ID ?? 0);
+			const category = categories.find(item => main_core.Text.toInteger(item.ID) === categoryId);
+			return main_core.Type.isStringFilled(category?.NAME) ? category.NAME : '';
+		}
+		closeStageDescriptionTooltips() {
+			this.getColumns().forEach(column => {
+				if (main_core.Type.isFunction(column.closeStageDescriptionTooltip)) {
+					column.closeStageDescriptionTooltip();
+				}
+			});
+		}
+		ensureStageEditorAccess() {
+			const gridData = this.getData();
+			const canEdit = this.hasStageEditorAccess();
+			if (canEdit) {
+				return true;
+			}
+			if (gridData.isLockedEntity) {
+				this.showLockedEntitySlider();
+			} else if (!main_core.Type.isUndefined(BX.Intranet)) {
+				this.accessNotify();
+			}
+			return false;
+		}
+		hasStageEditorAccess() {
+			return Boolean(this.getData().rights?.areStagesEditable);
+		}
+		isStageEditorOpenRequestCurrent(requestId, column, isDraft = false) {
+			const columnId = column.getId();
+			return this.stageEditorOpenRequestId === requestId && this.hasStageEditorAccess() && this.getColumn(columnId) === column && this.stageEditorColumnId === columnId && (isDraft ? this.stageEditorDraftColumnId === columnId : this.stageEditorDraftColumnId === null);
+		}
+		openStageEditorForEdit(column) {
+			if (!column) {
+				return;
+			}
+			if (!this.ensureStageEditorAccess()) {
+				return;
+			}
+			this.closeStageDescriptionTooltips();
+			this.stageEditor?.close();
+			this.stageEditorColumnId = column.getId();
+			this.stageEditorDraftColumnId = null;
+			this.stageEditorExternalConflict = false;
+			this.stageEditorExternalSnapshot = null;
+			const requestId = ++this.stageEditorOpenRequestId;
+			const openStageEditor = async () => {
+				let StageEditorClass = this.stageEditorClass;
+				if (!StageEditorClass) {
+					try {
+						StageEditorClass = await loadStageEditor();
+					} catch {
+						if (this.stageEditorOpenRequestId === requestId) {
+							this.clearStageEditorState();
+						}
+						return;
+					}
+				}
+				const snapshot = this.getStageEditorStageData(column);
+				if (!this.isStageEditorOpenRequestCurrent(requestId, column)) {
+					return;
+				}
+				this.stageEditor = StageEditorClass.open({
+					stage: snapshot,
+					entityTextContext: this.getStageEditorEntityTextContext(),
+					mode: 'edit',
+					anchor: this.getStageEditorAnchor(column),
+					canEdit: true,
+					canDelete: this.canDeleteStage(column),
+					deleteBlockReasons: this.getDeleteBlockReasons(column),
+					onChange: (payload, field) => {
+						this.applyStageEditorPreview(column, payload, field);
+					},
+					onSave: payload => {
+						return this.saveStageEditorStage(column, payload);
+					},
+					onDelete: () => {
+						return this.deleteStageFromEditor(column);
+					},
+					onCancel: () => {
+						this.restoreStageEditorSnapshot(column, this.stageEditorExternalSnapshot ?? snapshot);
+						this.clearStageEditorState();
+					}
+				});
+			};
+			return openStageEditor();
+		}
+		openStageEditorForCreate(afterColumn) {
+			if (!afterColumn) {
+				return;
+			}
+			if (!this.ensureStageEditorAccess()) {
+				return;
+			}
+			this.closeStageDescriptionTooltips();
+			this.stageEditor?.close();
+			const draftColumn = this.addColumn({
+				id: `kanban-new-column-${BX.util.getRandomString(5)}`,
+				type: 'BX.CRM.Kanban.DraftColumn',
+				name: main_core.Loc.getMessage('CRM_KANBAN_STAGE_DEFAULT_NAME'),
+				color: afterColumn.getColor(),
+				canSort: false,
+				canAddItem: false,
+				droppable: false,
+				data: {
+					description: '',
+					sort: this.getDraftColumnSort(afterColumn)
+				},
+				targetId: this.getNextColumnSibling(afterColumn)
+			});
+			if (!draftColumn) {
+				return;
+			}
+			this.stageEditorColumnId = draftColumn.getId();
+			this.stageEditorDraftColumnId = draftColumn.getId();
+			this.stageEditorExternalConflict = false;
+			const requestId = ++this.stageEditorOpenRequestId;
+			const snapshot = this.getStageEditorStageData(draftColumn);
+			const openStageEditor = async () => {
+				let StageEditorClass = this.stageEditorClass;
+				if (!StageEditorClass) {
+					try {
+						StageEditorClass = await loadStageEditor();
+					} catch {
+						if (this.getColumn(draftColumn.getId()) === draftColumn) {
+							this.removeColumn(draftColumn);
+						}
+						if (this.stageEditorOpenRequestId === requestId) {
+							this.clearStageEditorState();
+						}
+						return;
+					}
+				}
+				if (!this.isStageEditorOpenRequestCurrent(requestId, draftColumn, true)) {
+					if (this.getColumn(draftColumn.getId()) === draftColumn) {
+						this.removeColumn(draftColumn);
+					}
+					return;
+				}
+				this.stageEditor = StageEditorClass.open({
+					stage: snapshot,
+					entityTextContext: this.getStageEditorEntityTextContext(),
+					mode: 'create',
+					anchor: this.getStageEditorAnchor(draftColumn),
+					canEdit: true,
+					canDelete: false,
+					deleteBlockReasons: [main_core.Loc.getMessage('CRM_KANBAN_STAGE_DELETE_BLOCKED')],
+					onChange: (payload, field) => {
+						this.applyStageEditorPreview(draftColumn, payload, field);
+					},
+					onSave: payload => {
+						return this.createStageFromEditor(draftColumn, afterColumn, payload);
+					},
+					onDelete: () => Promise.resolve(),
+					onCancel: () => {
+						this.removeColumn(draftColumn);
+						this.clearStageEditorState();
+					}
+				});
+			};
+			const gridContainer = this.getGridContainer();
+			const maxScrollLeft = gridContainer.scrollWidth - gridContainer.clientWidth;
+			if (this.getNextColumnSibling(draftColumn) === null && gridContainer.scrollLeft < maxScrollLeft) {
+				gridContainer.scrollLeft = gridContainer.scrollWidth;
+				requestAnimationFrame(openStageEditor);
+				return;
+			}
+			return openStageEditor();
+		}
+		getStageEditorAnchor(column) {
+			return column.layout?.info || column.getContainer();
+		}
+		getStageEditorEntityTextContext() {
+			const gridData = this.getData();
+			return {
+				entityTypeId: main_core.Text.toInteger(gridData.entityTypeInt),
+				entityTypeName: main_core.Type.isStringFilled(gridData.entityType) ? gridData.entityType : ''
+			};
+		}
+		getStageEditorStageData(column) {
+			const data = column.getData();
+			return {
+				...data,
+				id: column.getId(),
+				statusId: data.statusId ?? data.id ?? column.getId(),
+				name: column.getName(),
+				color: column.getColor(),
+				description: main_core.Type.isString(data.description) ? data.description : ''
+			};
+		}
+		getDraftColumnSort(afterColumn) {
+			const sort = parseInt(afterColumn.getData().sort, 10);
+			return main_core.Type.isNumber(sort) ? sort + 10 : 0;
+		}
+		canDeleteStage(column) {
+			return column.isRemovable() && column.getTotal() <= 0;
+		}
+		getDeleteBlockReasons(column) {
+			const reasons = [];
+			if (column.getTotal() > 0) {
+				reasons.push(main_core.Loc.getMessage('CRM_KANBAN_STAGE_DELETE_HAS_ITEMS'));
+			}
+			if (!column.isRemovable()) {
+				reasons.push(main_core.Loc.getMessage('CRM_KANBAN_STAGE_DELETE_BLOCKED'));
+			}
+			return reasons;
+		}
+		applyStageEditorPreview(column, payload, field) {
+			if (field === 'description') {
+				return;
+			}
+			this.stageEditorPendingPreview = {
+				column,
+				payload
+			};
+			if (this.stageEditorPreviewFrameId !== null) {
+				return;
+			}
+			this.stageEditorPreviewFrameId = window.requestAnimationFrame(() => {
+				const pendingPreview = this.stageEditorPendingPreview;
+				this.stageEditorPreviewFrameId = null;
+				this.stageEditorPendingPreview = null;
+				if (pendingPreview) {
+					this.previewStageColumnFromStageData(pendingPreview.column, {
+						...this.getStageEditorStageData(pendingPreview.column),
+						...pendingPreview.payload
+					});
+				}
+			});
+		}
+		restoreStageEditorSnapshot(column, snapshot) {
+			if (this.getColumn(column.getId())) {
+				this.updateStageColumnFromStageData(column, snapshot);
+			}
+		}
+		previewStageColumnFromStageData(column, stage) {
+			const data = {
+				...column.getData(),
+				...stage,
+				description: main_core.Type.isString(stage.description) ? stage.description : ''
+			};
+			column.setOptions({
+				id: column.getId(),
+				name: stage.name,
+				color: stage.color,
+				total: column.getTotal(),
+				data
+			});
+			column.renderTitle();
+			const container = column.getContainer();
+			const ariaLabel = column.getColumnAriaLabel();
+			if (ariaLabel) {
+				container.setAttribute('aria-label', ariaLabel);
+			} else {
+				container.removeAttribute('aria-label');
+			}
+		}
+		updateStageColumnFromStageData(column, stage) {
+			const data = {
+				...column.getData(),
+				...stage,
+				description: main_core.Type.isString(stage.description) ? stage.description : ''
+			};
+			this.updateColumn(column, {
+				id: column.getId(),
+				name: stage.name,
+				color: stage.color,
+				total: column.getTotal(),
+				data
+			});
+		}
+		isStageEditorAccessDeniedResponse(data) {
+			return main_core.Type.isPlainObject(data) && (data.ERROR_CODE === 'ACCESS_DENIED' || data.errorCode === 'ACCESS_DENIED');
+		}
+		isStageEditorStageResponse(data) {
+			if (!main_core.Type.isPlainObject(data) || data.error || data.ERROR) {
+				return false;
+			}
+			const stageId = data.id ?? data.statusId;
+			return stageId !== null && !main_core.Type.isUndefined(stageId) && String(stageId).length > 0 && main_core.Type.isStringFilled(data.name) && main_core.Type.isStringFilled(data.color) && main_core.Type.isNumber(parseInt(data.sort, 10));
+		}
+		isStageEditorDeleteResponse(data) {
+			return main_core.Type.isPlainObject(data) && !data.error && !data.ERROR && (data.success === true || data.SUCCESS === true);
+		}
+		getStageEditorResponseError(data) {
+			const message = data?.error || data?.ERROR;
+			return new Error(main_core.Type.isStringFilled(message) ? message : main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA'));
+		}
+		handleStageEditorAccessDenied(data, onFailure) {
+			if (!this.isStageEditorAccessDeniedResponse(data)) {
+				return false;
+			}
+			onFailure();
+			this.accessNotify();
+			return true;
+		}
+		saveStageEditorStage(column, payload) {
+			if (this.getColumn(column.getId()) !== column) {
+				return Promise.reject(new Error(main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA')));
+			}
+			return new Promise((resolve, reject) => {
+				this.ajax({
+					action: 'modifyStage',
+					eventId: pull_queuemanager.QueueManager.registerRandomEventId(),
+					columnId: column.getId(),
+					columnName: payload.name,
+					columnColor: payload.color,
+					columnDescription: payload.description
+				}, data => {
+					if (this.handleStageEditorAccessDenied(data, () => this?.stageAnalyticsLabels.sendRenameFailure())) {
+						reject(this.getStageEditorResponseError(data));
+						return;
+					}
+					if (this.isStageEditorStageResponse(data)) {
+						this?.stageAnalyticsLabels.sendRenameSuccess();
+						this.resetActionPanel();
+						this.replaceStageColumnWithDto(column, this.getStageEditorSavedStage(data));
+						BX.onCustomEvent('Crm.Stage.DescriptionChanged', [{
+							entityType: this.getData()?.entityType ?? '',
+							categoryId: this.getData()?.params?.CATEGORY_ID ?? 0,
+							stageId: column.getId(),
+							description: data.description
+						}]);
+						this.notifyStageEditorExternalConflict();
+						this.clearStageEditorState();
+						resolve(data);
+					} else {
+						this?.stageAnalyticsLabels.sendRenameFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				}, error => {
+					this?.stageAnalyticsLabels.sendRenameFailure();
+					reject(new Error(`Error: ${error}`));
+				});
+			});
+		}
+		createStageFromEditor(draftColumn, afterColumn, payload) {
+			const afterColumnId = afterColumn && this.getColumn(afterColumn.getId()) ? afterColumn.getId() : 0;
+			return new Promise((resolve, reject) => {
+				this.ajax({
+					action: 'modifyStage',
+					eventId: pull_queuemanager.QueueManager.registerRandomEventId(),
+					columnName: payload.name,
+					columnColor: payload.color,
+					columnDescription: payload.description,
+					afterColumnId
+				}, data => {
+					if (this.handleStageEditorAccessDenied(data, () => this?.stageAnalyticsLabels.sendCreateFailure())) {
+						reject(this.getStageEditorResponseError(data));
+						return;
+					}
+					if (this.isStageEditorStageResponse(data)) {
+						this?.stageAnalyticsLabels.sendCreateSuccess();
+						this.resetActionPanel();
+						this.removeColumn(draftColumn);
+						this.addColumn({
+							...this.getStageColumnOptionsFromDto(this.getStageEditorSavedStage(data)),
+							targetId: getStageTargetColumnId(data, this.getColumns())
+						});
+						normalizeStageRealSorts(this.getColumns());
+						this.clearStageEditorState();
+						resolve(data);
+					} else {
+						this?.stageAnalyticsLabels.sendCreateFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				}, error => {
+					this?.stageAnalyticsLabels.sendCreateFailure();
+					reject(new Error(`Error: ${error}`));
+				});
+			});
+		}
+		getStageEditorSavedStage(stage) {
+			return stage;
+		}
+		deleteStageFromEditor(column) {
+			return new Promise((resolve, reject) => {
+				this.ajax({
+					action: 'modifyStage',
+					eventId: pull_queuemanager.QueueManager.registerRandomEventId(),
+					columnId: column.getId(),
+					delete: 1
+				}, data => {
+					if (this.handleStageEditorAccessDenied(data, () => this?.stageAnalyticsLabels.sendDeleteFailure())) {
+						reject(this.getStageEditorResponseError(data));
+						return;
+					}
+					if (this.isStageEditorDeleteResponse(data)) {
+						this?.stageAnalyticsLabels.sendDeleteSuccess();
+						this.resetActionPanel();
+						this.removeColumn(column);
+						this.clearStageEditorState();
+						resolve();
+					} else {
+						this?.stageAnalyticsLabels.sendDeleteFailure();
+						reject(this.getStageEditorResponseError(data));
+					}
+				}, error => {
+					this?.stageAnalyticsLabels.sendDeleteFailure();
+					reject(new Error(`Error: ${error}`));
+				});
+			});
+		}
+		replaceStageColumnWithDto(column, stage) {
+			this.updateColumn(column, this.getStageColumnOptionsFromDto(stage));
+		}
+		getStageColumnOptionsFromDto(stage) {
+			return {
+				id: stage.id,
+				name: stage.name,
+				color: stage.color,
+				data: {
+					...stage,
+					description: main_core.Type.isString(stage.description) ? stage.description : '',
+					type: stage.type ?? stage.TYPE,
+					sort: parseInt(stage.sort, 10)
+				}
+			};
+		}
+		isStageEditorOpenedFor(stageId) {
+			return String(this.stageEditorColumnId) === String(stageId);
+		}
+		markStageEditorExternalConflict(stageId, stage = null) {
+			if (this.isStageEditorOpenedFor(stageId)) {
+				this.stageEditorExternalConflict = true;
+				this.stageEditorExternalSnapshot = main_core.Type.isPlainObject(stage) ? stage : null;
+			}
+		}
+		handleStageEditorExternalDelete(stageId) {
+			if (!this.isStageEditorOpenedFor(stageId)) {
+				return;
+			}
+			const stageEditor = this.stageEditor;
+			this.clearStageEditorState();
+			stageEditor?.close();
+		}
+		notifyStageEditorExternalConflict() {
+			if (this.stageEditorExternalConflict) {
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('CRM_KANBAN_STAGE_EDITOR_EXTERNAL_UPDATE')
+				});
+			}
+		}
+		clearStageEditorState() {
+			this.stageEditorOpenRequestId++;
+			if (this.stageEditorPreviewFrameId !== null) {
+				window.cancelAnimationFrame(this.stageEditorPreviewFrameId);
+			}
+			this.stageEditorPreviewFrameId = null;
+			this.stageEditorPendingPreview = null;
+			this.stageEditor = null;
+			this.stageEditorColumnId = null;
+			this.stageEditorDraftColumnId = null;
+			this.stageEditorExternalConflict = false;
+			this.stageEditorExternalSnapshot = null;
 		}
 
 		/**
@@ -697,6 +1626,8 @@ this.BX.CRM = this.BX.CRM || {};
 					autoHide: false,
 					overlay: true,
 					maxWidth: 350,
+					focusTrap: true,
+					ariaLabel: main_core.Loc.getMessage('CRM_KANBAN_A11Y_MESSAGE_DIALOG_LABEL'),
 					buttons: [new main_popup.PopupWindowButton({
 						text: 'OK',
 						className: 'ui-btn ui-btn-primary',
@@ -868,6 +1799,15 @@ this.BX.CRM = this.BX.CRM || {};
 		setAjaxParams(data) {
 			this.ajaxParams = data;
 		}
+		getRequestContext() {
+			const gridData = this.getData();
+			return {
+				extra: gridData.params,
+				entity_type: gridData.entityType,
+				viewMode: gridData.viewMode,
+				version: 2
+			};
+		}
 
 		/**
 		 * Perform ajax query.
@@ -882,11 +1822,9 @@ this.BX.CRM = this.BX.CRM || {};
 			if (main_core.Type.isUndefined(dataType)) {
 				dataType = 'json';
 			}
+			const [handleSuccess, handleFailure] = this.pendingMoveAnnounce !== null && data.action === 'status' ? this.wrapPendingMoveCallbacks(onsuccess, onfailure) : [onsuccess, onfailure];
 			data.sessid = BX.bitrix_sessid();
-			data.extra = gridData.params;
-			data.entity_type = gridData.entityType;
-			data.viewMode = gridData.viewMode;
-			data.version = 2;
+			Object.assign(data, this.getRequestContext());
 			data.ajaxParams = this.ajaxParams;
 			data.entityPath = gridData.entityPath;
 			this.setAjaxParams({});
@@ -906,8 +1844,8 @@ this.BX.CRM = this.BX.CRM || {};
 					dataType,
 					url,
 					data,
-					onsuccess,
-					onfailure
+					onsuccess: handleSuccess,
+					onfailure: handleFailure
 				});
 			}
 		}
@@ -967,17 +1905,19 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @returns {void}
 		 */
 		accessNotify() {
-			if (typeof BX.Intranet !== "undefined" && typeof BX.Intranet.NotifyDialog !== "undefined") {
-				if (this.accessNotifyDialog === null) {
-					var gridData = this.getData();
+			if (typeof BX.Intranet !== 'undefined' && typeof BX.Intranet.NotifyDialog !== 'undefined') {
+				const accessNotifyPopup = this.accessNotifyDialog?.popup ?? null;
+				const isAccessNotifyPopupDestroyed = accessNotifyPopup !== null && main_core.Type.isFunction(accessNotifyPopup.isDestroyed) && accessNotifyPopup.isDestroyed();
+				if (this.accessNotifyDialog === null || main_core.Type.isUndefined(this.accessNotifyDialog) || isAccessNotifyPopupDestroyed) {
 					this.accessNotifyDialog = new BX.Intranet.NotifyDialog({
 						listUserData: this.getData().admins,
-						notificationHandlerUrl: this.getAjaxHandlerPath() + "?action=notifyAdmin&version=2&entity_type=" + gridData.entityType,
+						notificationHandlerUrl: this.getAjaxHandlerPath() + '?action=notifyAdmin',
+						postData: this.getRequestContext(),
 						popupTexts: {
-							sendButton: main_core.Loc.getMessage("CRM_KANBAN_NOTIFY_BUTTON"),
-							title: main_core.Loc.getMessage("CRM_KANBAN_NOTIFY_TITLE"),
-							header: main_core.Loc.getMessage("CRM_KANBAN_NOTIFY_HEADER"),
-							description: main_core.Loc.getMessage("CRM_KANBAN_NOTIFY_TEXT2")
+							sendButton: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_BUTTON'),
+							title: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_TITLE'),
+							header: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_HEADER'),
+							description: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_TEXT2')
 						}
 					});
 				}
@@ -994,12 +1934,15 @@ this.BX.CRM = this.BX.CRM || {};
 			var promise = new BX.Promise();
 			var targetColumn = this.getPreviousColumnSibling(column);
 			var targetColumnId = targetColumn ? targetColumn.getId() : 0;
-			this.ajax({
+			const request = {
 				action: "modifyStage",
 				columnName: column.getName(),
 				columnColor: column.getColor(),
-				afterColumnId: targetColumnId
-			}, function (data) {
+				columnDescription: main_core.Type.isString(column.getData().description) ? column.getData().description : '',
+				afterColumnId: targetColumnId,
+				beforeColumnId: this.getNextColumnSibling(column)?.getId() ?? 0
+			};
+			this.ajax(request, function (data) {
 				if (data && !data.error) {
 					this?.stageAnalyticsLabels.sendCreateSuccess();
 					this.resetActionPanel();
@@ -1079,12 +2022,12 @@ this.BX.CRM = this.BX.CRM || {};
 			}
 			column.setLoadingInProgress();
 			const page = pagination.getPage() + 1;
-			this.ajax({
+			this.ajax(Object.assign({
 				action: 'page',
 				page,
 				column: column.getId(),
 				onlyItems: page > 1 ? 'Y' : 'N'
-			}, data => {
+			}, this.currentLiveFilterAjaxParams), data => {
 				this.updateConfig(data);
 				if (data && !data.error && (Array.isArray(data) || Array.isArray(data.items))) {
 					const items = Array.isArray(data) ? data : data.items;
@@ -1188,14 +2131,14 @@ this.BX.CRM = this.BX.CRM || {};
 				return this.moveManyItems(item, targetColumn, beforeItem, usePromise);
 			}
 			item.beforeItem = beforeItem;
-			currentColumn.removeItem(item).then(() => {
+			const movePromise = currentColumn.removeItem(item).then(() => {
 				targetColumn.addItem(item, item.beforeItem);
 			});
 			this.stopActionPanel();
 			if (usePromise) {
-				return Promise.resolve({
+				return movePromise.then(() => ({
 					status: true
-				});
+				}));
 			}
 			return true;
 		}
@@ -1253,6 +2196,14 @@ this.BX.CRM = this.BX.CRM || {};
 			if (error) {
 				const gridData = this.getData();
 				this.showNotCompletedPopup(gridData);
+				this.resetMultiSelectMode();
+				this.stopActionPanel();
+				if (usePromise) {
+					return Promise.resolve({
+						status: false
+					});
+				}
+				return;
 			}
 			const removePromises = [];
 			const currentColumns = new Map();
@@ -1291,28 +2242,23 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @returns {Promise}
 		 */
 		loadNew(id, force, forceUpdate, onlyItems, useAnimation) {
-			var gridData = this.getData();
-			var entityIds = typeof id !== 'undefined' ? Array.isArray(id) ? id : [id] : 0;
 			if (document.hidden) {
 				return Promise.reject(new Error('Tab is not active'));
 			}
-			var loadItemsCount = 0;
-			loadItemsCount = entityIds.reduce(function (count, current, index, arr) {
-				var item = this.getItem(current);
-				if (item && item.getData().updateRestrictionCallback) {
-					delete arr[index];
-					return count;
-				}
-				return ++count;
-			}.bind(this), 0);
-			if (!loadItemsCount) {
+			const gridData = this.getData();
+			const entityIds = (main_core.Type.isNil(id) ? [] : Array.isArray(id) ? id : [id]).filter(entityId => {
+				const item = this.getItem(entityId);
+				return !(item && item.getData().updateRestrictionCallback);
+			});
+			if (entityIds.length === 0) {
 				return Promise.resolve();
 			}
+			const byId = Boolean(entityIds[0]);
 			useAnimation = main_core.Type.isBoolean(useAnimation) ? useAnimation : false;
-			return new Promise(function (resolve, reject) {
-				this.ajax(entityIds[0] ? {
+			const loadPortion = portionIds => new Promise((resolve, reject) => {
+				this.ajax(byId ? {
 					action: "get",
-					entity_id: entityIds,
+					entity_id: portionIds,
 					force: force === true ? "Y" : "N",
 					onlyItems: onlyItems === true ? 'Y' : 'N'
 				} : {
@@ -1320,13 +2266,15 @@ this.BX.CRM = this.BX.CRM || {};
 					min_entity_id: gridData.lastId,
 					force: force === true ? "Y" : "N",
 					onlyItems: onlyItems === true ? 'Y' : 'N'
-				}, function (data) {
+				}, data => {
 					if (!data) {
 						resolve(data);
+						return;
 					}
+					const itemUpdatePromises = [];
 					this.updateConfig(data);
 					if (data.items) {
-						var worked = false;
+						const loadedIds = {};
 						if (data.items.length) {
 							var titlesForRender = {};
 							for (var i = data.items.length - 1; i >= 0; i--) {
@@ -1336,7 +2284,7 @@ this.BX.CRM = this.BX.CRM || {};
 								if (item.id <= 0) {
 									continue;
 								}
-								worked = true;
+								loadedIds[String(item.id)] = true;
 								if (existItem) {
 									var existData = existItem.getData();
 									var existColumn = existItem.getColumn();
@@ -1353,10 +2301,10 @@ this.BX.CRM = this.BX.CRM || {};
 											if (beforeItem) {
 												item.targetId = beforeItem.getId();
 											}
-											this.updateItem(item.id, item);
+											itemUpdatePromises.push(this.updateItem(item.id, item, true));
 											titlesForRender[newColumn.getId()] = newColumn;
 										} else if (newColumn.getPreviousItemSibling(existItem) !== beforeItem) {
-											this.moveItem(existItem, newColumn, beforeItem);
+											itemUpdatePromises.push(this.moveItem(existItem, newColumn, beforeItem, true));
 										}
 									} else {
 										this.removeItem(existItem);
@@ -1366,7 +2314,7 @@ this.BX.CRM = this.BX.CRM || {};
 								} else if (item.id) {
 									this.addItemTop(item);
 								}
-								if (!entityIds[0]) {
+								if (!byId) {
 									gridData.lastId = item.id;
 									this.setData(gridData);
 								}
@@ -1375,21 +2323,45 @@ this.BX.CRM = this.BX.CRM || {};
 								titlesForRender[key].renderSubTitle();
 							}
 						}
-						if (!worked && entityIds[0]) {
-							var item = this.getItem(entityIds[0]);
-							if (item) {
-								var itemData = item.getData();
-								var column = item.getColumn();
-								column.decPrice(itemData.price);
-								this.removeItem(entityIds[0]);
-							}
+
+						// An item asked for by id and not sent back no longer belongs to
+						// the board: it left the filter, or the event drew it from its
+						// own payload before the server was asked at all.
+						if (byId) {
+							portionIds.forEach(entityId => {
+								if (loadedIds[String(entityId)]) {
+									return;
+								}
+								const missedItem = this.getItem(entityId);
+								if (!missedItem) {
+									return;
+								}
+								const missedColumn = missedItem.getColumn();
+								missedColumn.decPrice(missedItem.getData().price);
+								this.removeItem(entityId);
+							});
 						}
 					}
-					resolve(data);
-				}.bind(this), function (error) {
+					Promise.all(itemUpdatePromises).then(() => resolve(data)).catch(reject);
+				}, () => {
 					reject();
-				}.bind(this));
-			}.bind(this));
+				});
+			});
+			if (!byId) {
+				return loadPortion([]);
+			}
+
+			// The server answers with at most Kanban::BLOCK_SIZE items whatever the number
+			// of ids asked for, so a longer batch goes portion by portion: a card is taken
+			// off the board only by the answer to the portion it was asked in. The first
+			// portion leaves synchronously, as it did before batching: callers close the
+			// editor and read the board right after the call.
+			let chain = null;
+			for (let index = 0; index < entityIds.length; index += LOAD_NEW_PORTION_SIZE) {
+				const portionIds = entityIds.slice(index, index + LOAD_NEW_PORTION_SIZE);
+				chain = chain === null ? loadPortion(portionIds) : chain.then(() => loadPortion(portionIds));
+			}
+			return chain;
 		}
 		updateConfig(data) {
 			if (!main_core.Type.isObject(data.config) || Object.keys(data.config).length === 0) {
@@ -1422,13 +2394,15 @@ this.BX.CRM = this.BX.CRM || {};
 		 *
 		 * @param {Number} item
 		 * @param {BX.CRM.Kanban.Item} options
-		 * @returns {boolean}
+		 * @param {boolean} usePromise
+		 * @returns {boolean|Promise<boolean>}
 		 */
-		updateItem(item, options) {
+		updateItem(item, options, usePromise = false) {
 			item = this.getItem(item);
 			if (!item) {
-				return false;
+				return usePromise ? Promise.resolve(false) : false;
 			}
+			let movePromise = Promise.resolve();
 			if (BX.Kanban.Utils.isValidId(options.columnId) && options.columnId !== item.getColumn().getId()) {
 				if (options.notChangeTotal) {
 					item.notChangeTotal = options.notChangeTotal;
@@ -1436,7 +2410,7 @@ this.BX.CRM = this.BX.CRM || {};
 				if (options.useAnimation) {
 					item.useAnimation = options.useAnimation;
 				}
-				this.moveItem(item, this.getColumn(options.columnId), this.getItem(options.targetId));
+				movePromise = this.moveItem(item, this.getColumn(options.columnId), this.getItem(options.targetId), usePromise);
 			}
 			var eventArgs = ['UPDATE', {
 				task: item,
@@ -1445,7 +2419,10 @@ this.BX.CRM = this.BX.CRM || {};
 			BX.onCustomEvent(window, 'tasksTaskEvent', eventArgs);
 			item.setOptions(options);
 			item.render();
-			return true;
+			// The redraw goes through render(), not renderLayout(), so the accessible
+			// name is rewritten explicitly for the new data.
+			item.refreshAriaLabel();
+			return usePromise ? Promise.resolve(movePromise).then(() => true) : true;
 		}
 
 		/**
@@ -1580,10 +2557,14 @@ this.BX.CRM = this.BX.CRM || {};
 		 */
 		onBeforeItemMoved(event) {
 			if (this.isBlockedIncomingMoving(event.targetColumn)) {
+				const blockedMessage = main_core.Loc.getMessage('CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2');
 				BX.UI.Notification.Center.notify({
-					content: main_core.Loc.getMessage('CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2'),
+					content: blockedMessage,
 					autoHideDelay: 5000
 				});
+
+				// Echo the denial to the live region so screen readers hear it.
+				ui_a11y.LiveAnnouncer.announce(blockedMessage, 'assertive');
 				event.denyAction();
 				return;
 			}
@@ -1773,9 +2754,6 @@ this.BX.CRM = this.BX.CRM || {};
 				} else {
 					this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR_FILLING_FIELDS);
 				}
-				if (this.getData().useItemPlanner && !this.itemMoving?.groupIds && crm_kanban_restriction.Restriction.Instance.isTodoActivityCreateAvailable()) {
-					setTimeout(() => this.showItemPlannerMenu(item), 500);
-				}
 				const {
 					items
 				} = data;
@@ -1783,9 +2761,11 @@ this.BX.CRM = this.BX.CRM || {};
 					isShouldUpdateCard
 				} = data;
 				if (main_core.Type.isArrayFilled(items)) {
-					this.updateItem(itemId, items[0]);
+					this.showItemPlannerAfterUpdate(item, this.updateItem(itemId, items[0], true));
 					return;
 				}
+				let itemUpdatePromise = Promise.resolve();
+				let isItemReloaded = false;
 				const prevColumnId = item.getLastPosition()?.columnId;
 				if (prevColumnId) {
 					const prevColumn = this.getColumn(prevColumnId);
@@ -1798,12 +2778,25 @@ this.BX.CRM = this.BX.CRM || {};
 				}
 				item.setDataKey('columnId', targetColumnId);
 				if (isShouldUpdateCard) {
-					void this.loadNew(itemId, false, true, true, true);
+					itemUpdatePromise = this.loadNew(itemId, false, true, true, true);
+					isItemReloaded = true;
 				}
+				this.showItemPlannerAfterUpdate(item, itemUpdatePromise, isItemReloaded);
 			}, error => {
+				void this.loadNew(ids, false, true, true, ids.length <= 1);
 				this.registerAnalyticsChangeStageEvent(item, columnType, ids, this._analyticsDictionary.STATUS_ERROR);
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			});
+		}
+		showItemPlannerAfterUpdate(item, updatePromise, isItemReloaded = false) {
+			if (!this.getData().useItemPlanner || this.itemMoving?.groupIds || !crm_kanban_restriction.Restriction.Instance.isTodoActivityCreateAvailable()) {
+				return;
+			}
+			let plannerUpdatePromise = Promise.resolve(updatePromise);
+			if (!isItemReloaded && this.getData().viewMode === ViewMode.MODE_ACTIVITIES) {
+				plannerUpdatePromise = plannerUpdatePromise.then(() => this.loadNew(item.getId(), false, true, true, true));
+			}
+			void plannerUpdatePromise.then(() => this.showItemPlannerMenu(item), () => this.showItemPlannerMenu(item));
 		}
 
 		/**
@@ -1968,6 +2961,8 @@ this.BX.CRM = this.BX.CRM || {};
 			var message;
 			if (gridData.isDynamicEntity) {
 				message = main_core.Loc.getMessage("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1");
+			} else if (gridData.entityType === 'SMART_INVOICE') {
+				message = main_core.Loc.getMessage('CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_INVOICE_MSGVER_1');
 			} else {
 				message = main_core.Loc.getMessage("CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_" + gridData.entityType + '_MSGVER_1');
 			}
@@ -1983,23 +2978,57 @@ this.BX.CRM = this.BX.CRM || {};
 			var columnId = column.getId();
 			var title = column.getName();
 			var color = column.getColor();
-			this.ajax({
-				action: "modifyStage",
-				columnId: columnId,
+			const request = {
+				action: 'modifyStage',
+				columnId,
 				columnName: title,
 				columnColor: color
-			}, function (data) {
+			};
+			if (main_core.Type.isString(column.getData().description)) {
+				request.columnDescription = column.getData().description;
+			}
+			var editModeSnapshot = this.getColumnEditModeSnapshot(column);
+			this.setColumnStageUpdateInProgress(column, true);
+			this.ajax(request, function (data) {
 				if (data && data.error) {
 					this?.stageAnalyticsLabels.sendRenameFailure();
+					this.setColumnStageUpdateInProgress(column, false);
+					this.restoreColumnEditModeSnapshot(column, editModeSnapshot);
 					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
 				} else {
 					this?.stageAnalyticsLabels.sendRenameSuccess();
+					this.setColumnStageUpdateInProgress(column, false);
+					this.clearColumnEditModeSnapshot(column, editModeSnapshot);
 					this.resetActionPanel();
 				}
 			}.bind(this), function (error) {
 				this?.stageAnalyticsLabels.sendRenameFailure();
+				this.setColumnStageUpdateInProgress(column, false);
+				this.clearColumnEditModeSnapshot(column, editModeSnapshot);
+				this.reload();
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this));
+		}
+		getColumnEditModeSnapshot(column) {
+			if (main_core.Type.isFunction(column?.getEditModeSnapshot)) {
+				return column.getEditModeSnapshot();
+			}
+			return null;
+		}
+		setColumnStageUpdateInProgress(column, inProgress) {
+			if (main_core.Type.isFunction(column?.setStageUpdateInProgress)) {
+				column.setStageUpdateInProgress(inProgress);
+			}
+		}
+		restoreColumnEditModeSnapshot(column, snapshot) {
+			if (main_core.Type.isFunction(column?.restoreEditModeSnapshot)) {
+				column.restoreEditModeSnapshot(snapshot);
+			}
+		}
+		clearColumnEditModeSnapshot(column, snapshot) {
+			if (main_core.Type.isFunction(column?.clearEditModeSnapshot)) {
+				column.clearEditModeSnapshot(snapshot);
+			}
 		}
 
 		/**
@@ -2012,17 +3041,22 @@ this.BX.CRM = this.BX.CRM || {};
 			var columnId = column.getId();
 			var afterColumn = this.getPreviousColumnSibling(column);
 			var afterColumnId = afterColumn ? afterColumn.getId() : 0;
-			this.ajax({
-				action: "modifyStage",
-				columnId: columnId,
-				afterColumnId: afterColumnId
-			}, function (data) {
+			const request = {
+				action: 'modifyStage',
+				columnId,
+				afterColumnId
+			};
+			if (main_core.Type.isString(column.getData().description)) {
+				request.columnDescription = column.getData().description;
+			}
+			this.ajax(request, function (data) {
 				if (data && data.error) {
 					this?.stageAnalyticsLabels.sendUpdateFailure();
 					BX.Kanban.Utils.showErrorDialog(data.error, true);
 				} else {
 					this?.stageAnalyticsLabels.sendUpdateSuccess();
 					this.resetActionPanel();
+					normalizeStageRealSorts(this.getColumns());
 				}
 			}.bind(this), function (error) {
 				this?.stageAnalyticsLabels.sendUpdateFailure();
@@ -2040,14 +3074,34 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @returns {void}
 		 */
 		onApplyFilter(filterId, values, filterInstance, promise, params) {
+			// Every reload of the board goes through here, the global filter event being
+			// only one of its callers.
+			BX.Event.EventEmitter.emit(this, 'Kanban.Grid:onApplyFilter');
 			this.clearItemMoving();
 			this.fadeOut();
+
+			// Announce board (re)loading. A move that reloads the board
+			// suppresses this so the "N moved to stage X" message is not duplicated.
+			if (this.suppressLoadAnnounce !== true) {
+				ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessage('CRM_KANBAN_A11Y_BOARD_LOADING'));
+			}
 			if (main_core.Type.isObject(params)) {
 				params.autoResolve = false;
 			}
-			this.ajax({
-				action: 'get'
-			}, data => {
+			const liveFilterAjaxParams = this.getLiveFilterAjaxParams(filterInstance);
+			const liveFilterRequestId = ++this.liveFilterRequestId;
+			const ajaxParams = {
+				action: 'get',
+				...liveFilterAjaxParams
+			};
+			this.ajax(ajaxParams, data => {
+				if (liveFilterRequestId !== this.liveFilterRequestId) {
+					if (typeof promise !== "undefined") {
+						promise.reject();
+					}
+					return;
+				}
+				this.currentLiveFilterAjaxParams = liveFilterAjaxParams;
 				const gridData = this.getData();
 				if (!main_core.Type.isUndefined(data.customFields)) {
 					gridData.customFields = data.customFields;
@@ -2105,6 +3159,20 @@ this.BX.CRM = this.BX.CRM || {};
 				}
 				this.fadeIn();
 				this.resetMultiSelectMode();
+
+				// Announce that loading finished with the stage count,
+				// unless this reload followed a move (already announced its result).
+				if (this.suppressLoadAnnounce === true) {
+					this.suppressLoadAnnounce = false;
+				} else {
+					const stageCount = this.getColumns().length;
+					ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessagePlural('CRM_KANBAN_A11Y_BOARD_LOADED', stageCount, {
+						'#COUNT#': stageCount
+					}));
+				}
+
+				// Return focus to the moved card / target stage after a keyboard move.
+				this.restorePendingMoveFocus();
 				setTimeout(() => {
 					if (this.hasOnlyNotVisibleColumnsWithItems()) {
 						this.showHintForNotVisibleItems();
@@ -2114,11 +3182,36 @@ this.BX.CRM = this.BX.CRM || {};
 					promise.fulfill();
 				}
 			}, error => {
+				if (liveFilterRequestId !== this.liveFilterRequestId) {
+					if (typeof promise !== "undefined") {
+						promise.reject();
+					}
+					return;
+				}
 				if (typeof promise !== "undefined") {
 					promise.reject();
 				}
+
+				// The board was not redrawn: nothing is left to announce or to focus.
+				this.cancelPendingMove();
 				this.fadeIn();
 			});
+		}
+		getLiveFilterAjaxParams(filterInstance) {
+			if (!main_core.Type.isObject(filterInstance)) {
+				return Object.assign({}, this.currentLiveFilterAjaxParams);
+			}
+			const ajaxParams = {};
+			if (main_core.Type.isFunction(filterInstance.getPreset)) {
+				const preset = filterInstance.getPreset();
+				if (main_core.Type.isObject(preset) && main_core.Type.isFunction(preset.getCurrentPresetId)) {
+					ajaxParams.filterPresetId = preset.getCurrentPresetId();
+				}
+			}
+			if (main_core.Type.isFunction(filterInstance.getFilterFieldsValues)) {
+				ajaxParams.filterFields = Object.assign({}, filterInstance.getFilterFieldsValues());
+			}
+			return ajaxParams;
 		}
 		handleHintForNotVisibleColumns() {
 			if (this.hintForNotVisibleItems || !this.hasOnlyNotVisibleColumnsWithItems()) {
@@ -2668,19 +3761,20 @@ this.BX.CRM = this.BX.CRM || {};
 			// if drop area
 			if (this.itemMoving.newColumn instanceof BX.Kanban.DropZone) {
 				this.itemMoving.newColumn.captureItem(this.itemMoving.item);
-			} else {
-				// // move visual and save
-				// this.onItemMoved(
-				// 	this.itemMoving.item,
-				// 	this.itemMoving.newColumn,
-				// 	this.itemMoving.newNextSibling
-				// );
-				if (!stilError) {
-					if (this.itemMoving?.oldColumn?.id) {
-						this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
-					}
-					this.moveItem(this.itemMoving.item, this.itemMoving.newColumn, this.itemMoving.newNextSibling);
+			} else if (!stilError) {
+				if (this.itemMoving?.oldColumn?.id) {
+					this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
 				}
+				const {
+					entityData
+				} = eventParams;
+				const targetColumnId = entityData?.STAGE_ID ?? entityData?.STATUS_ID;
+				const columnAfterEditor = targetColumnId && targetColumnId !== this.itemMoving.oldColumn?.id ? this.getColumn(targetColumnId) : this.itemMoving.newColumn;
+				if (!columnAfterEditor) {
+					void this.loadNew(this.itemMoving.item.getId(), false, true, true, true);
+					return;
+				}
+				this.moveItem(this.itemMoving.item, columnAfterEditor, this.itemMoving.newNextSibling);
 			}
 		}
 
@@ -2690,6 +3784,10 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @returns {string[]}
 		 */
 		getRequiredFieldsForColumnId(columnId, itemData) {
+			// the delete zone is not a stage, deleting an item never asks for its fields
+			if (columnId === 'DELETED') {
+				return [];
+			}
 			return [...(itemData.required?.[columnId] ?? []), ...(itemData.required?.ALL ?? [])];
 		}
 
@@ -2772,14 +3870,18 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @returns {void}
 		 */
 		onSliderClose(SliderEvent) {
-			var gridData = this.getData();
-			var maskUrl = gridData.entityPath;
-			var sliderUrl = SliderEvent.slider.getUrl();
-			maskUrl = maskUrl.replace(/\#([^\#]+)\#/, '([\\d]+)');
-			var match = sliderUrl.match(new RegExp(maskUrl));
-			if (match && match[1]) {
-				this.loadNew(match[1], false, true, true, true);
+			const slider = getSliderFromEvent(SliderEvent);
+			const matchedEntityId = slider ? this.sliderViewObserver.getEntityId(slider) : null;
+			if (!matchedEntityId) {
+				return;
 			}
+
+			// The creation card keeps 0 in its url, so items created in it are loaded by the grid tail.
+			const entityId = parseInt(matchedEntityId, 10) > 0 ? matchedEntityId : 0;
+			if (entityId !== 0 && this.sliderViewObserver.canSkipCloseRefresh(slider, entityId)) {
+				return;
+			}
+			this.loadNew(entityId, false, true, true, true);
 		}
 
 		/**
@@ -3012,7 +4114,7 @@ this.BX.CRM = this.BX.CRM || {};
 					text: BX.util.htmlspecialchars(categories[i].name),
 					onclick: function (i, item) {
 						item.menuWindow.close();
-						BX.CRM.Kanban.Actions.changeColumn(this, item.column);
+						this.moveCheckedItemsToColumn(item.column);
 					}.bind(this)
 				});
 			}
@@ -3020,7 +4122,7 @@ this.BX.CRM = this.BX.CRM || {};
 				id: "kanban_column",
 				text: main_core.Loc.getMessage("CRM_KANBAN_PANEL_STAGE"),
 				items: items,
-				icon: gridData.entityType === "DEAL" || gridData.isDynamicEntity ? "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-stage.svg" : "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-status.svg"
+				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-status.svg"
 			});
 			/* endregion */
 
@@ -3219,6 +4321,208 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 
 		/**
+		 * Keyboard counterpart of onContainerClick selection: toggles the item's
+		 * selection through the same check/uncheck flow the mouse uses, then moves
+		 * focus predictably between the board and the group-actions panel.
+		 *
+		 * Selecting can be deferred: an open quick form editor is closed first, and the
+		 * editor may refuse to close. The returned promise settles when the selection
+		 * state is final and tells whether it has changed, so the caller can report the
+		 * result instead of guessing when it is ready.
+		 *
+		 * @param {BX.CRM.Kanban.Item} item
+		 * @returns {Promise<boolean>} whether the selection state has changed
+		 */
+		toggleItemSelectionFromKeyboard(item) {
+			if (item.checked) {
+				this.unCheckItem(item);
+				const stillChecked = main_core.Type.isArrayFilled(this.getChecked());
+				if (!stillChecked) {
+					this.resetMultiSelectMode();
+					this.stopActionPanel();
+				}
+				this.calculateTotalCheckItems();
+				if (stillChecked) {
+					this.focusActionPanel();
+				} else {
+					// Selection cleared: keep focus on the card so navigation continues.
+					item.getContainer().focus();
+				}
+				return Promise.resolve(true);
+			}
+			const openColumn = this.getColumnWithOpenEditor();
+			const editorClosePromise = openColumn ? openColumn.closeQuickFormEditor() : Promise.resolve(true);
+			return editorClosePromise.then(closed => {
+				if (!closed) {
+					return false;
+				}
+				this.checkItem(item);
+				this.onMultiSelectMode();
+				this.startActionPanel();
+				this.calculateTotalCheckItems();
+				this.focusActionPanel();
+				return true;
+			});
+		}
+
+		/**
+		 * Moves keyboard focus to the group-actions panel (its first action item), so
+		 * a keyboard user lands on the panel right after selecting a card.
+		 */
+		focusActionPanel() {
+			const panel = this.actionPanel;
+			// A custom panel can be set from outside, and the method is a recent addition
+			// to ui.actionpanel: without it there is simply nothing to focus.
+			if (!panel || typeof panel.focusFirstItem !== 'function') {
+				return;
+			}
+			panel.focusFirstItem();
+		}
+
+		/**
+		 * Starts a group stage move chosen in the actions panel: remembers what has
+		 * to be announced and where focus should return, then hands the move over to
+		 * the regular action. The announcement waits for the server answer.
+		 *
+		 * Focus is restored for every way of choosing the menu item, mouse included,
+		 * and that is deliberate. The menu closes and the board is redrawn, so the
+		 * node that held focus is gone and focus falls back to the document body -
+		 * a loss that hurts the next Tab press no matter how the item was activated.
+		 * Telling a mouse click from a keyboard activation would mean tracking the
+		 * input method through the whole move, which buys nothing: focus lands on the
+		 * cards the user has just moved, which is where the attention already is.
+		 *
+		 * @param {Object} column target stage
+		 */
+		moveCheckedItemsToColumn(column) {
+			this.pendingMoveAnnounce = {
+				stageName: column.name,
+				count: this.getCheckedId().length
+			};
+			this.rememberMoveFocusTarget(column);
+			this.suppressLoadAnnounce = true;
+			BX.CRM.Kanban.Actions.changeColumn(this, column);
+		}
+
+		/**
+		 * Wraps the transport callbacks of the stage change request, so the move is
+		 * announced only once the server has confirmed it, and the state prepared for
+		 * the move never outlives a request that failed.
+		 *
+		 * @param {Function} onsuccess
+		 * @param {Function} onfailure
+		 * @returns {Function[]} wrapped callbacks, in the same order
+		 */
+		wrapPendingMoveCallbacks(onsuccess, onfailure) {
+			const pending = this.pendingMoveAnnounce;
+			this.pendingMoveAnnounce = null;
+			return [result => {
+				if (result && !result.error) {
+					this.announceItemsMoved(pending.stageName, pending.count);
+				} else {
+					this.announceItemsMoveFailed(pending.stageName, pending.count, result ? result.error : '');
+					this.cancelPendingMove();
+				}
+				onsuccess(result);
+			}, error => {
+				this.announceItemsMoveFailed(pending.stageName, pending.count);
+				this.cancelPendingMove();
+				onfailure(error);
+			}];
+		}
+
+		/**
+		 * Drops the state prepared for a stage move that did not happen: the next
+		 * unrelated board reload has to announce itself and must not move focus to
+		 * items that were never moved.
+		 */
+		cancelPendingMove() {
+			this.pendingMoveAnnounce = null;
+			this.pendingMoveFocus = null;
+			this.suppressLoadAnnounce = false;
+		}
+
+		/**
+		 * Announces the result of a menu/keyboard stage move via the live region,
+		 * e.g. "N cards moved to stage X".
+		 *
+		 * @param {String} stageName name of the target stage
+		 * @param {Number} count number of moved items
+		 */
+		announceItemsMoved(stageName, count) {
+			if (count <= 0) {
+				return;
+			}
+			ui_a11y.LiveAnnouncer.announce(main_core.Loc.getMessagePlural('CRM_KANBAN_A11Y_ITEMS_MOVED', count, {
+				'#COUNT#': count,
+				'#STAGE#': stageName
+			}));
+		}
+
+		/**
+		 * Announces that a stage move did not happen: the board only reloads after a
+		 * refusal, so without this the user believes the move went through.
+		 *
+		 * The error dialog of the shared layer voices its own text once it takes
+		 * focus, and does not take focus at all while the focus trap is off. The
+		 * reason therefore joins the announcement only in the latter case, so it is
+		 * never heard twice.
+		 *
+		 * @param {String} stageName name of the target stage
+		 * @param {Number} count number of items that were to be moved
+		 * @param {String} [reason] error text from the server, if it sent one
+		 */
+		announceItemsMoveFailed(stageName, count, reason) {
+			if (count <= 0) {
+				return;
+			}
+			const message = main_core.Loc.getMessagePlural('CRM_KANBAN_A11Y_ITEMS_MOVE_FAILED', count, {
+				'#COUNT#': count,
+				'#STAGE#': stageName
+			});
+			const isReasonVoicedByDialog = main_popup.Popup.shouldUseFocusTrapByDefault();
+			ui_a11y.LiveAnnouncer.announce(main_core.Type.isStringFilled(reason) && !isReasonVoicedByDialog ? `${message}: ${reason}` : message, 'assertive');
+		}
+
+		/**
+		 * Records where focus should return after the board reloads following a stage
+		 * move: the moved cards and the target stage as a fallback.
+		 *
+		 * @param {Object} column target stage
+		 */
+		rememberMoveFocusTarget(column) {
+			this.pendingMoveFocus = {
+				columnId: column.id,
+				itemIds: this.getCheckedId()
+			};
+		}
+
+		/**
+		 * Restores focus after a stage move once the board has been redrawn:
+		 * a moved card in its new column, else the target stage column, else nothing.
+		 */
+		restorePendingMoveFocus() {
+			const pending = this.pendingMoveFocus;
+			if (!pending) {
+				return;
+			}
+			this.pendingMoveFocus = null;
+			for (let i = 0; i < pending.itemIds.length; i++) {
+				const movedItem = this.getItem(pending.itemIds[i]);
+				const container = movedItem && typeof movedItem.getContainer === 'function' ? movedItem.getContainer() : null;
+				if (container && typeof container.focus === 'function') {
+					container.focus();
+					return;
+				}
+			}
+			const column = this.getColumn(pending.columnId);
+			const columnContainer = column && typeof column.getContainer === 'function' ? column.getContainer() : null;
+			if (columnContainer && typeof columnContainer.focus === 'function') {
+				columnContainer.focus();
+			}
+		}
+
+		/**
 		 * @param {BX.UI.ActionPanel} actionPanel
 		 */
 		setCustomActionPanel(actionPanel) {
@@ -3398,6 +4702,32 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 	}
 
+	// One decoder for the whole module: it is only ever written to and read back, so
+	// a card does not need its own. Creating an element per call was measurable on a
+	// board redraw, where the name of every card is built.
+	let entityDecoder = null;
+	const POPUP_ANGLE_HALF_WIDTH = 17;
+
+	/**
+	 * Reads an html-formatted string back as plain text. A textarea is parsed as raw
+	 * text, so the browser decodes every entity without building any element from
+	 * the string.
+	 *
+	 * The result is no longer escaped: it belongs in a text or an attribute context
+	 * (textContent, setAttribute, a live region) and must never be interpolated into
+	 * markup. Every getter built on top of this one says so in its name.
+	 *
+	 * @param {string} html
+	 * @returns {string}
+	 */
+	function decodeEntities(html) {
+		if (entityDecoder === null) {
+			entityDecoder = main_core.Dom.create('textarea');
+		}
+		entityDecoder.innerHTML = html;
+		return entityDecoder.value;
+	}
+
 	/**
 	 *
 	 * @param options
@@ -3411,6 +4741,8 @@ this.BX.CRM = this.BX.CRM || {};
 		container = null;
 		timer = null;
 		popupTooltip = null;
+		fieldHintPopup = null;
+		fieldHintPopupCloseTimeout = null;
 		plannerCurrent = null;
 		fieldsWrapper = null;
 		badgesWrapper = null;
@@ -3428,9 +4760,40 @@ this.BX.CRM = this.BX.CRM || {};
 			columnId: null,
 			targetId: null
 		};
-		checked = false;
+		checkedState = false;
 		constructor(options) {
 			super(options);
+		}
+		dispose() {
+			this.hideFieldHint();
+			super['dispose']();
+		}
+
+		/**
+		 * Selection flag of the card. Both the grid and the card itself assign it
+		 * directly, so it is an accessor that keeps the selection state readable for
+		 * assistive tech.
+		 *
+		 * @returns {boolean}
+		 */
+		get checked() {
+			return this.checkedState;
+		}
+		set checked(value) {
+			this.checkedState = Boolean(value);
+
+			// The name reports the selection state, and selection is changed both by
+			// the mouse and from the keyboard without redrawing the card. Before the
+			// layout is built there is no node to name yet.
+			if (this.container) {
+				this.refreshAriaLabel();
+			}
+		}
+		refreshAriaLabel() {
+			const refreshAriaLabel = BX.Kanban.Item.prototype.refreshAriaLabel;
+			if (main_core.Type.isFunction(refreshAriaLabel)) {
+				refreshAriaLabel.call(this);
+			}
 		}
 		setOptions(options) {
 			if (!options) {
@@ -3513,6 +4876,7 @@ this.BX.CRM = this.BX.CRM || {};
 			this.prepareContactTypeElements();
 			this.appendLastActivity(data);
 			if (this.needRenderFields()) {
+				this.hideFieldHint();
 				this.fieldsWrapper.innerHTML = null;
 				this.layoutFields();
 			}
@@ -3631,6 +4995,14 @@ this.BX.CRM = this.BX.CRM || {};
 			`;
 				main_core.Dom.append(element, importListNode);
 			});
+			const closeButton = main_core.Tag.render`
+			<div
+				class="crm-kanban-item-industry-close"
+				data-testid="crm-kanban-item-industry-close-btn"
+				onclick="${this.onIndustryCloseButtonClick.bind(this)}"
+			></div>
+		`;
+			this.makeCardActionAccessible(closeButton, main_core.Loc.getMessage('CRM_KANBAN_ITEM_INDUSTRY_CLOSE_ARIA_LABEL'));
 			return main_core.Tag.render`
 			<div class="crm-kanban-item-industry">
 				<div class="crm-kanban-item-industry-title">
@@ -3642,7 +5014,7 @@ this.BX.CRM = this.BX.CRM || {};
 				<span class="ui-btn ui-btn-sm ui-btn-primary ui-btn-round crm-kanban-sidepanel" data-url="rest_demo">
 					${main_core.Loc.getMessage('CRM_KANBAN_REST_DEMO_SETUP')}
 				</span>
-				<div class="crm-kanban-item-industry-close" onclick="${this.onIndustryCloseButtonClick.bind(this)}"></div>
+				${closeButton}
 			</div>
 		`;
 		}
@@ -3679,6 +5051,132 @@ this.BX.CRM = this.BX.CRM || {};
 			if (this.totalPrice) {
 				this.totalPrice.innerHTML = data.price_formatted;
 			}
+		}
+
+		/**
+		 * Accessible name of the card. Overridable name hook: title, amount,
+		 * client, stage and selection state, so a screen reader announces a
+		 * meaningful card name even when the visible title is clipped. Parts that are
+		 * empty are skipped.
+		 *
+		 * @returns {string}
+		 */
+		getItemAriaLabel() {
+			const data = this.getData();
+
+			// Placeholder cards (contact center, industry solutions) hold no entity:
+			// an entity name would misname them, so they keep the name their own
+			// content gives them.
+			if (data.special_type) {
+				return '';
+			}
+			const parts = [];
+			const name = this.getUnescapedName();
+			if (name !== '') {
+				parts.push(main_core.Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_NAME', {
+					'#NAME#': name
+				}));
+			}
+			const amount = this.getUnescapedAmount();
+			if (amount !== '') {
+				parts.push(amount);
+			}
+			const client = this.getUnescapedClientName();
+			if (client !== '') {
+				parts.push(main_core.Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_CLIENT', {
+					'#CLIENT#': client
+				}));
+			}
+			const stage = this.getColumn()?.getName() ?? '';
+			if (stage !== '') {
+				parts.push(main_core.Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_STAGE', {
+					'#STAGE#': stage
+				}));
+			}
+			if (this.checked) {
+				parts.push(main_core.Loc.getMessage('CRM_KANBAN_ITEM_ARIA_LABEL_SELECTED'));
+			}
+			return parts.join(', ');
+		}
+
+		/**
+		 * The card is opened through its title link, so that link is the interactive
+		 * node of the card: it takes the board focus and the accessible name, while
+		 * the card container stays a plain list item. Placeholder cards (contact
+		 * center, industry solutions) have no link and keep focus on the container,
+		 * and so do cards whose field set hides the title.
+		 *
+		 * @returns {HTMLElement}
+		 */
+		getFocusableNode() {
+			return this.isTitleLinkDisplayed() ? this.link : super.getFocusableNode();
+		}
+
+		/**
+		 * The title link is rendered hidden when the card shows a configured set of
+		 * fields and is shown back only when that set contains the title, so it is
+		 * not always displayed. A node with display: none takes neither focus nor an
+		 * accessible name, so the card falls back to its container then.
+		 *
+		 * @returns {boolean}
+		 */
+		isTitleLinkDisplayed() {
+			if (!main_core.Type.isDomNode(this.link)) {
+				return false;
+			}
+
+			// Only the inline style is read, never the computed one. The link is hidden
+			// and shown through inline display alone: createTitleLink() writes
+			// display: none for a card with a configured field set, and layoutField()
+			// shows it back through switchVisible(); no stylesheet sets display for the
+			// title link. A computed style read here would be a read right after the
+			// card was written to and would force a synchronous layout of the board on
+			// every update in place.
+			return this.link.style.display !== 'none';
+		}
+
+		/**
+		 * Title of the item as text, suitable for a11y names. The server sends it
+		 * html-encoded (`Smith &amp; Sons`), so a title that has to be heard is
+		 * decoded back.
+		 *
+		 * The result is not escaped: text and attribute contexts only, never markup.
+		 *
+		 * @returns {string}
+		 */
+		getUnescapedName() {
+			const name = String(this.getData().name ?? '');
+			return name === '' ? '' : decodeEntities(name);
+		}
+
+		/**
+		 * Formatted amount as text (markup stripped), suitable for a11y names.
+		 *
+		 * The result is not escaped: text and attribute contexts only, never markup.
+		 *
+		 * @returns {string}
+		 */
+		getUnescapedAmount() {
+			const formatted = String(this.getData().price_formatted ?? '').replace(/<[^>]*>/g, '');
+
+			// The server formats the amount as html: the thousands separator and the
+			// currency sign come as entities (`15&nbsp;000 &#8381;`), and an accessible
+			// name has to carry text, not markup.
+			return decodeEntities(formatted).trim();
+		}
+
+		/**
+		 * Client display name as text (contact and/or company). Both names come from
+		 * the server html-encoded, the same way the title does.
+		 *
+		 * The result is not escaped: text and attribute contexts only, never markup.
+		 *
+		 * @returns {string}
+		 */
+		getUnescapedClientName() {
+			const data = this.getData();
+			const client = [data.contactName, data.companyName].filter(name => main_core.Type.isStringFilled(name)).join(', ');
+			return client === '' ? '' : decodeEntities(client);
 		}
 
 		/**
@@ -3916,12 +5414,7 @@ this.BX.CRM = this.BX.CRM || {};
 			let titleTooltip = null;
 			const tooltipText = fieldConfig?.helpMessage ?? '';
 			if (tooltipText && this.getGrid().shouldShowTooltips()) {
-				titleTooltip = main_core.Tag.render`
-				<span
-					class="crm-kanban-item-fields-item-title-tooltip --hidden">
-				</span>
-			`;
-				titleTooltip.dataset.hint = tooltipText;
+				titleTooltip = this.createFieldHintNode(tooltipText);
 				this.ufTooltipNodes.push(titleTooltip);
 			}
 			const titleTextWrapper = main_core.Tag.render`
@@ -3944,7 +5437,7 @@ this.BX.CRM = this.BX.CRM || {};
 			}
 			if (code === 'COMMENTS' && main_core.Type.isStringFilled(this.getGrid().getData().copilotName)) {
 				const copilot = `${this.getGrid().getData().copilotName}`;
-				const escapedCopilot = main_core.Type.isFunction(RegExp.escape) ? RegExp.escape(copilot) : copilot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const escapedCopilot = BX.util.escapeRegExp(copilot);
 				const regex = new RegExp(`(^|<br>)${escapedCopilot}`, 'gim');
 				const valueElements = fieldsElement.querySelectorAll('p');
 				valueElements.forEach(valueElement => {
@@ -3960,7 +5453,117 @@ this.BX.CRM = this.BX.CRM || {};
 			</div>
 		`;
 			main_core.Dom.append(fieldsItem, this.fieldsWrapper);
-			BX.UI.Hint.init(BX(this.fieldsWrapper));
+		}
+		createFieldHintNode(tooltipText) {
+			const titleTooltip = main_core.Tag.render`<span
+			class="crm-kanban-item-fields-item-title-tooltip ui-hint --hidden"
+			data-testid="crm-kanban-item-field-hint"
+		></span>`;
+			const iconElement = new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Main.HELP
+			}).render();
+			main_core.Dom.addClass(iconElement, 'ui-hint-icon');
+			main_core.Dom.append(iconElement, titleTooltip);
+			main_core.Event.bind(titleTooltip, 'mouseenter', () => this.showFieldHint(tooltipText, titleTooltip));
+			main_core.Event.bind(titleTooltip, 'mouseleave', () => this.scheduleHideFieldHint());
+			return titleTooltip;
+		}
+		showFieldHint(tooltipText, target) {
+			this.clearFieldHintCloseTimeout();
+			this.hideFieldHint();
+			const content = main_core.Tag.render`<div class="ui-hint-content"></div>`;
+			content.innerHTML = main_core.Text.encode(tooltipText).trim().replaceAll(/\r?\n/g, '<br>');
+			this.fieldHintPopup = new main_popup.Popup(`crm-kanban-field-hint-${this.id}`, target, {
+				content,
+				className: 'ui-hint-popup',
+				targetContainer: document.body,
+				darkMode: true,
+				focusTrap: false,
+				animation: 'fading-slide',
+				angle: true,
+				autoHide: true,
+				closeByEsc: true
+			});
+			this.fieldHintPopup.show();
+			const popupContainer = this.fieldHintPopup.getPopupContainer();
+			main_core.Dom.addClass(popupContainer, 'ui-hint-popup-interactivity');
+			popupContainer.setAttribute('data-testid', 'crm-kanban-item-field-hint-popup');
+			main_core.Event.bind(popupContainer, 'mouseenter', () => this.clearFieldHintCloseTimeout());
+			main_core.Event.bind(popupContainer, 'mouseleave', () => this.scheduleHideFieldHint());
+			this.adjustFieldHintAngle(target);
+		}
+		adjustFieldHintAngle(target) {
+			setTimeout(() => {
+				if (!this.fieldHintPopup || !main_core.Type.isDomNode(target)) {
+					return;
+				}
+				const angle = this.fieldHintPopup.angle;
+				const popupContainer = this.fieldHintPopup.getPopupContainer();
+				if (!angle?.element || !main_core.Type.isDomNode(popupContainer)) {
+					return;
+				}
+				const targetRect = target.getBoundingClientRect();
+				const popupRect = popupContainer.getBoundingClientRect();
+				let offset = targetRect.left + targetRect.width / 2 - popupRect.left - POPUP_ANGLE_HALF_WIDTH;
+				const range = this.getFieldHintAngleOffsetRange(popupContainer, angle);
+				let popupShift = 0;
+				if (offset < range.min || offset > range.max) {
+					popupShift = this.shiftFieldHintPopupHorizontally(popupContainer, offset, range);
+				}
+				if (popupShift > 0) {
+					offset = Math.min(Math.max(offset - popupShift, range.min), range.max);
+				}
+				angle.offset = offset;
+				if (angle.position === 'bottom') {
+					main_core.Dom.style(angle.element, 'left', '0');
+					main_core.Dom.style(angle.element, 'marginLeft', `${offset}px`);
+				} else {
+					main_core.Dom.style(angle.element, 'marginLeft', '0');
+					main_core.Dom.style(angle.element, 'left', `${offset}px`);
+				}
+			}, 0);
+		}
+		getFieldHintAngleOffsetRange(popupContainer, angle) {
+			const styles = getComputedStyle(popupContainer);
+			const angleWidth = angle.element.offsetWidth || POPUP_ANGLE_HALF_WIDTH * 2;
+			const leftRadius = parseFloat(angle.position === 'bottom' ? styles.borderBottomLeftRadius : styles.borderTopLeftRadius);
+			const rightRadius = parseFloat(angle.position === 'bottom' ? styles.borderBottomRightRadius : styles.borderTopRightRadius);
+			return {
+				min: leftRadius,
+				max: popupContainer.offsetWidth - angleWidth - rightRadius
+			};
+		}
+		shiftFieldHintPopupHorizontally(popupContainer, offset, range) {
+			const popupRect = popupContainer.getBoundingClientRect();
+			const viewportWidth = document.documentElement.clientWidth;
+			const shiftLeft = offset < range.min ? range.min - offset : 0;
+			const shiftRight = offset > range.max ? offset - range.max : 0;
+			const direction = shiftLeft > 0 ? -1 : 1;
+			const maxShift = direction < 0 ? popupRect.left : viewportWidth - popupRect.right;
+			const popupShift = Math.min(Math.max(shiftLeft, shiftRight), Math.max(maxShift, 0));
+			if (popupShift <= 0) {
+				return 0;
+			}
+			main_core.Dom.style(popupContainer, 'left', `${popupRect.left + popupShift * direction}px`);
+			return popupShift;
+		}
+		hideFieldHint() {
+			this.clearFieldHintCloseTimeout();
+			this.fieldHintPopup?.destroy();
+			this.fieldHintPopup = null;
+		}
+		scheduleHideFieldHint() {
+			this.clearFieldHintCloseTimeout();
+			this.fieldHintPopupCloseTimeout = setTimeout(() => {
+				this.hideFieldHint();
+			}, 100);
+		}
+		clearFieldHintCloseTimeout() {
+			if (this.fieldHintPopupCloseTimeout === null) {
+				return;
+			}
+			clearTimeout(this.fieldHintPopupCloseTimeout);
+			this.fieldHintPopupCloseTimeout = null;
 		}
 		addTextExpander(fieldElement) {
 			if (!main_core.Type.isDomNode(fieldElement)) {
@@ -4202,6 +5805,52 @@ this.BX.CRM = this.BX.CRM || {};
 				}
 			});
 		}
+
+		/**
+		 * Keyboard selection is available for real cards only: the special
+		 * import/rest placeholders render without a checkbox.
+		 *
+		 * @returns {boolean}
+		 */
+		isSelectionAvailable() {
+			return Boolean(this.checkedButton);
+		}
+
+		/**
+		 * Routes keyboard selection through the grid so it mirrors the mouse flow
+		 * (checkbox state, action panel) and manages focus board<->panel.
+		 */
+		toggleSelection() {
+			// The grid can defer the selection (an open quick form editor is closed
+			// first), so the announcement is chained onto the promise it returns: a
+			// timer would fire before the promise continuation and announce the state
+			// the card had before the toggle. Nothing is announced when the selection
+			// has not changed after all.
+			this.getGrid().toggleItemSelectionFromKeyboard(this).then(toggled => {
+				if (toggled) {
+					this.announceSelection();
+				}
+			});
+		}
+
+		/**
+		 * Announces the new selection state of the card and the size of the current
+		 * selection: keyboard selection moves focus to the group actions panel, so
+		 * the change itself has to be reported through the live region.
+		 */
+		announceSelection() {
+			const name = this.getUnescapedName();
+			const state = this.isChecked() ? main_core.Loc.getMessage('CRM_KANBAN_A11Y_ITEM_SELECTED', {
+				'#NAME#': name
+			}) : main_core.Loc.getMessage('CRM_KANBAN_A11Y_ITEM_UNSELECTED', {
+				'#NAME#': name
+			});
+			const count = this.getGrid().getChecked().length;
+			const total = count > 0 ? main_core.Loc.getMessagePlural('CRM_KANBAN_A11Y_SELECTED_COUNT', count, {
+				'#COUNT#': count
+			}) : main_core.Loc.getMessage('CRM_KANBAN_A11Y_SELECTED_NONE');
+			ui_a11y.LiveAnnouncer.announce(`${state}, ${total}`);
+		}
 		selectItem() {
 			this.checked = true;
 			// BX.onCustomEvent("BX.CRM.Kanban.Item.select", [this]);
@@ -4294,17 +5943,30 @@ this.BX.CRM = this.BX.CRM || {};
 			this.showUfTooltips();
 		}
 		hideUfTooltips() {
+			this.scheduleHideFieldHint();
 			this.ufTooltipNodes.forEach((node, idx) => {
 				this.ufTooltipNodes[idx].classList.add('--hidden');
 			});
 		}
 		showUfTooltips() {
+			this.clearFieldHintCloseTimeout();
 			this.ufTooltipNodes.forEach((node, idx) => {
 				this.ufTooltipNodes[idx].classList.remove('--hidden');
 			});
 		}
 		createTitleLink() {
-			this.link = main_core.Tag.render`<a class="crm-kanban-item-title" style="${this.getBlockStyleBasedOnFields()}"></a>`;
+			// The link is the focus node of the card, and the board moves a single
+			// tabindex="0" over its cards. Like the card and column containers, the
+			// link starts out of the Tab order, so a card added to a drawn board does
+			// not become an extra tab stop before the board normalizes the matrix.
+			this.link = main_core.Tag.render`
+			<a
+				class="crm-kanban-item-title"
+				tabindex="-1"
+				data-testid="crm-kanban-item-title-link"
+				style="${this.getBlockStyleBasedOnFields()}"
+			></a>
+		`;
 			return this.link;
 		}
 		createLine() {
@@ -4346,6 +6008,12 @@ this.BX.CRM = this.BX.CRM || {};
 			this.checkedButton = main_core.Tag.render`
 			<div class="crm-kanban-item-checkbox" onclick="${this.onCheckedButtonClick.bind(this)}"></div>
 		`;
+
+			// The mark is a decoration: it has pointer-events: none and selection is
+			// made by clicking the card or pressing Space on it. A widget role here
+			// would announce a control that cannot be reached or operated, so the
+			// selection state is carried by the accessible name of the card instead.
+			this.checkedButton.setAttribute('aria-hidden', 'true');
 			return this.checkedButton;
 		}
 		onCheckedButtonClick() {
@@ -4356,6 +6024,33 @@ this.BX.CRM = this.BX.CRM || {};
 			} else {
 				main_core.Dom.removeClass(this.checkedButton, className);
 			}
+		}
+
+		/**
+		 * Makes a card action drawn as a clickable span or div operable with the
+		 * keyboard and nameable for assistive tech: button semantics, focusability
+		 * and Enter/Space activation through the same click handler the mouse uses.
+		 *
+		 * @param {HTMLElement} node
+		 * @param {?string} ariaLabel Skipped for actions named by their visible text.
+		 * @returns {HTMLElement}
+		 */
+		makeCardActionAccessible(node, ariaLabel = null) {
+			if (!main_core.Type.isDomNode(node)) {
+				return node;
+			}
+			node.setAttribute('role', 'button');
+			node.setAttribute('tabindex', '0');
+			if (main_core.Type.isStringFilled(ariaLabel)) {
+				node.setAttribute('aria-label', ariaLabel);
+			}
+			main_core.Event.bind(node, 'keydown', event => {
+				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+					event.preventDefault();
+					node.click();
+				}
+			});
+			return node;
 		}
 		createBadgesWrapper() {
 			this.badgesWrapper = main_core.Tag.render`<div class="crm-kanban-item-badges"></div>`;
@@ -4372,15 +6067,25 @@ this.BX.CRM = this.BX.CRM || {};
 			}];
 			if (this.isShowActivity()) {
 				this.activityExist = main_core.Tag.render`
-				<span class="crm-kanban-item-activity" onclick="${this.showCurrentPlan.bind(this)}"></span>
+				<span
+					class="crm-kanban-item-activity"
+					data-testid="crm-kanban-item-activity-show-btn"
+					onclick="${this.showCurrentPlan.bind(this)}"
+				></span>
 			`;
+				this.makeCardActionAccessible(this.activityExist, main_core.Loc.getMessage('CRM_KANBAN_ITEM_ACTIVITY_SHOW_ARIA_LABEL'));
 				elements.push({
 					id: 'activityExist',
 					node: this.activityExist
 				});
 				this.activityEmpty = main_core.Tag.render`
-				<span class="crm-kanban-item-activity" onclick="${this.onActivityEmptyClick.bind(this)}"></span>
+				<span
+					class="crm-kanban-item-activity"
+					data-testid="crm-kanban-item-activity-empty-btn"
+					onclick="${this.onActivityEmptyClick.bind(this)}"
+				></span>
 			`;
+				this.makeCardActionAccessible(this.activityEmpty, main_core.Loc.getMessage('CRM_KANBAN_ITEM_ACTIVITY_EMPTY_ARIA_LABEL'));
 				elements.push({
 					id: 'activityEmpty',
 					node: this.activityEmpty
@@ -4433,10 +6138,16 @@ this.BX.CRM = this.BX.CRM || {};
 				return null;
 			}
 			this.activityPlan = main_core.Tag.render`
-			<span class="crm-kanban-item-plan" onclick="${this.showPlannerMenu.bind(this)}">
+			<span
+				class="crm-kanban-item-plan"
+				data-testid="crm-kanban-item-activity-plan-btn"
+				onclick="${this.showPlannerMenu.bind(this)}"
+			>
 				+ ${main_core.Loc.getMessage('CRM_KANBAN_ACTIVITY_TO_PLAN2')}
 			</span>
 		`;
+			// The visible text of the control is its accessible name.
+			this.makeCardActionAccessible(this.activityPlan);
 			this.planner = main_core.Tag.render`<div class="crm-kanban-item-planner">${this.activityPlan}</div>`;
 			return this.planner;
 		}
@@ -4472,7 +6183,12 @@ this.BX.CRM = this.BX.CRM || {};
 			const typeTranslateCode = /DYNAMIC_(\d+)/.test(type) ? 'DYNAMIC' : type;
 			content.innerHTML = main_core.Loc.getMessage(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_1`) || main_core.Loc.getMessage(`CRM_KANBAN_ACTIVITY_CHANGE_${typeTranslateCode}_MSGVER_2`);
 			const eventLink = content.querySelector('.crm-kanban-item-activity-link');
-			BX.bind(eventLink, 'click', () => {
+			eventLink.textContent = eventLink.textContent.replace(/\s+$/, '');
+			const previousSibling = eventLink.previousSibling;
+			if (previousSibling?.nodeType === Node.TEXT_NODE && /\S$/.test(previousSibling.textContent)) {
+				previousSibling.textContent = `${previousSibling.textContent} `;
+			}
+			main_core.Event.bind(eventLink, 'click', () => {
 				this.showPlannerMenu(this.activityPlan);
 				this.popupTooltip.destroy();
 			});
@@ -4512,6 +6228,10 @@ this.BX.CRM = this.BX.CRM || {};
 				autoHide: true,
 				className: 'crm-kanban-popup-plan',
 				closeByEsc: true,
+				focusTrap: true,
+				ariaLabel: main_core.Loc.getMessage('CRM_KANBAN_ITEM_PLANNER_POPUP_ARIA_LABEL', {
+					'#NAME#': this.getUnescapedName()
+				}),
 				contentColor: 'white',
 				angle: true,
 				offsetLeft: 15,
@@ -4971,13 +6691,56 @@ this.BX.CRM = this.BX.CRM || {};
 			if (value === 0) {
 				style = BX.UI.CounterStyle.FILLED_NO_ACCENT;
 			}
-			return new BX.UI.Counter({
+			const counterNode = new BX.UI.Counter({
 				value: value,
 				maxValue: 99,
 				useAirDesign: true,
 				style,
 				isDouble
-			}).render().outerHTML;
+			}).render();
+			counterNode.setAttribute('data-testid', 'crm-kanban-item-activity-counter');
+			const ariaLabel = this.getActivityCounterAriaLabel(value, style, isDouble);
+			if (ariaLabel !== '') {
+				// role=img makes the screen reader read the meaningful label instead of
+				// the bare number, so the counter's meaning is conveyed without colour.
+				counterNode.setAttribute('role', 'img');
+				counterNode.setAttribute('aria-label', ariaLabel);
+			}
+			return counterNode.outerHTML;
+		}
+
+		/**
+		 * Meaningful accessible name for the activity counter, derived from its
+		 * style so the type (incoming / overdue / total) is distinguishable without
+		 * relying on colour. Empty string for the neutral empty counter.
+		 *
+		 * @param {number} value
+		 * @param {string} style
+		 * @param {boolean} isDouble
+		 * @returns {string}
+		 */
+		getActivityCounterAriaLabel(value, style, isDouble) {
+			if (value <= 0) {
+				return '';
+			}
+			if (style === BX.UI.CounterStyle.FILLED_SUCCESS) {
+				return main_core.Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_INCOMING', value, {
+					'#COUNT#': value
+				});
+			}
+			if (style === BX.UI.CounterStyle.FILLED_ALERT) {
+				if (isDouble) {
+					return `${main_core.Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_TOTAL', value, {
+					'#COUNT#': value
+				})}. ` + main_core.Loc.getMessage('CRM_KANBAN_ACTIVITY_COUNTER_INCOMING_AND_OVERDUE');
+				}
+				return main_core.Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_OVERDUE', value, {
+					'#COUNT#': value
+				});
+			}
+			return main_core.Loc.getMessagePlural('CRM_KANBAN_ACTIVITY_COUNTER_TOTAL', value, {
+				'#COUNT#': value
+			});
 		}
 		isActivityLimitIsExceeded() {
 			return this.getGridData().isActivityLimitIsExceeded;
@@ -5376,6 +7139,25 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 	}
 
+	const darkTitleClass = 'main-kanban-column-title-dark';
+	function applyStageTitleTextColor(title, textColor) {
+		main_core.Dom.toggleClass(title, darkTitleClass, textColor === '#ffffff');
+	}
+
+	// Grace period that lets the pointer travel from the total onto the hint itself.
+	const HIDDEN_SUM_HINT_CLOSE_DELAY = 300;
+	let stageDescriptionTooltipLoadPromise = null;
+	let stageDescriptionTooltipOwnerToken = null;
+	function loadStageDescriptionTooltip() {
+		stageDescriptionTooltipLoadPromise ??= main_core.Runtime.loadExtension('crm.stage.description-tooltip').then(({
+			StageDescriptionTooltip
+		}) => new StageDescriptionTooltip()).catch(error => {
+			stageDescriptionTooltipLoadPromise = null;
+			throw error;
+		});
+		return stageDescriptionTooltipLoadPromise;
+	}
+
 	/**
 	 *
 	 * @param options
@@ -5399,14 +7181,30 @@ this.BX.CRM = this.BX.CRM || {};
 		quickFormCancelButtonInstance = null;
 		editorId = null;
 		editor = null;
+		quickFormPartialEditor = null;
 		loader = null;
 		isKeyMetaPressed = false;
 		clickStatus = null;
 		cancelEditHandler = null;
+		editModeSnapshot = null;
+		stageUpdateInProgress = false;
 		blockSize = 20;
 		canLoadMoreItems = true;
+		columnSumPopup = null;
+		hiddenSumHintCloseTimeout = null;
+		hiddenSumHintHandlers = null;
+		stageDescriptionTooltip = null;
+		stageDescriptionTooltipOwnerToken = {};
+		stageDescriptionTooltipRequestId = 0;
 		constructor(options) {
 			super(options);
+			this.handleStageTitleMouseEnter = this.handleStageTitleMouseEnter.bind(this);
+			this.handleStageTitleMouseLeave = this.handleStageTitleMouseLeave.bind(this);
+			this.handleStageTitleFocusIn = this.handleStageTitleFocusIn.bind(this);
+			this.handleStageTitleFocusOut = this.handleStageTitleFocusOut.bind(this);
+			this.handleStageTitleMouseDown = this.handleStageTitleMouseDown.bind(this);
+			this.handleStageTitleClick = this.handleStageTitleClick.bind(this);
+			this.handleStageTitleKeyDown = this.handleStageTitleKeyDown.bind(this);
 		}
 		getSubTitle() {
 			const subTitle = super.getSubTitle();
@@ -5481,8 +7279,164 @@ this.BX.CRM = this.BX.CRM || {};
 				this.layout.info.style.marginRight = "0";
 				return main_core.Dom.create("div");
 			} else {
-				return super.getAddColumnButton();
+				const button = super.getAddColumnButton();
+				this.makeColumnActionAccessible(button, main_core.Loc.getMessage('CRM_KANBAN_COLUMN_ADD_ARIA_LABEL', {
+					'#NAME#': this.getName() || ''
+				}), event => this.handleAddColumnButtonClick(event));
+				button.setAttribute('data-testid', 'crm-kanban-column-add-stage-btn');
+				return button;
 			}
+		}
+
+		/**
+		 * The stage edit ("pencil") control: focusable button with a meaningful name
+		 * and keyboard activation, revealed on keyboard focus as well as hover.
+		 *
+		 * @returns {Element}
+		 */
+		getEditButton() {
+			const button = super.getEditButton();
+			this.makeColumnActionAccessible(button, main_core.Loc.getMessage('CRM_KANBAN_COLUMN_EDIT_ARIA_LABEL', {
+				'#NAME#': this.getName() || ''
+			}), () => this.switchToEditMode());
+			button.setAttribute('data-testid', 'crm-kanban-column-edit-btn');
+			return button;
+		}
+
+		/**
+		 * Makes a column action (rendered as a clickable <div>) keyboard-operable and
+		 * nameable for assistive tech: adds button semantics, focusability and
+		 * Enter/Space activation. Controls that are only visible on hover are revealed
+		 * on keyboard focus by the :focus-visible rules of main.kanban.
+		 *
+		 * Semantics and handlers are set up once per node, while the name is written
+		 * on every call: the same node is handed back on later renders, and by then
+		 * the stage it is named after may have been renamed.
+		 *
+		 * @param {Element} node
+		 * @param {string} ariaLabel
+		 * @param {Function} onActivate
+		 */
+		makeColumnActionAccessible(node, ariaLabel, onActivate) {
+			if (!main_core.Type.isDomNode(node)) {
+				return;
+			}
+			this.setActionAriaLabel(node, ariaLabel);
+			if (node.dataset.a11yEnhanced === 'true') {
+				return;
+			}
+			node.dataset.a11yEnhanced = 'true';
+			node.setAttribute('role', 'button');
+			node.setAttribute('tabindex', '0');
+			main_core.Event.bind(node, 'keydown', event => {
+				if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+					event.preventDefault();
+					onActivate(event);
+				}
+			});
+		}
+
+		/**
+		 * @param {?Element} node
+		 * @param {string} ariaLabel
+		 */
+		setActionAriaLabel(node, ariaLabel) {
+			if (!main_core.Type.isDomNode(node) || !main_core.Type.isStringFilled(ariaLabel)) {
+				return;
+			}
+
+			// Writing the same value again would make some screen readers announce the
+			// control anew, and the stage is redrawn on every card added or removed.
+			if (node.getAttribute('aria-label') !== ariaLabel) {
+				node.setAttribute('aria-label', ariaLabel);
+			}
+		}
+
+		/**
+		 * The stage actions are named after the stage, and their nodes are created
+		 * once and reused: the title layout, the add-stage button and the compact
+		 * add-item button all survive a redraw. Renaming a stage therefore has to
+		 * rewrite their names explicitly, or a screen reader keeps announcing the old
+		 * one (WCAG 4.1.2). The name of the stage itself is rewritten by the base
+		 * render() through getColumnAriaLabel().
+		 *
+		 * @returns {Element}
+		 */
+		render() {
+			const container = super.render();
+			this.refreshActionAriaLabels();
+			return container;
+		}
+		refreshActionAriaLabels() {
+			const name = this.getName() || '';
+			this.setActionAriaLabel(this.layout.editButton, main_core.Loc.getMessage('CRM_KANBAN_COLUMN_EDIT_ARIA_LABEL', {
+				'#NAME#': name
+			}));
+			this.setActionAriaLabel(this.layout.addColumnButton, main_core.Loc.getMessage('CRM_KANBAN_COLUMN_ADD_ARIA_LABEL', {
+				'#NAME#': name
+			}));
+			this.refreshAddItemButtonAriaLabel();
+		}
+
+		/**
+		 * Makes the compact "add item" ("+") control keyboard-operable and, for the
+		 * icon-only variant, gives it a meaningful name.
+		 */
+		enhanceAddItemButtonAccessibility() {
+			const node = this.layout.subTitleAddButton;
+			if (!main_core.Type.isDomNode(node) || node.classList.contains('crm-kanban-column-add-item-button--dummy')) {
+				return;
+			}
+			this.refreshAddItemButtonAriaLabel();
+			if (node.dataset.a11yEnhanced === 'true') {
+				return;
+			}
+			node.dataset.a11yEnhanced = 'true';
+			node.setAttribute('data-testid', 'crm-kanban-column-quick-add-btn');
+
+			// Native <a> add-buttons are already keyboard-operable; only the <div>
+			// variant needs button semantics and Enter/Space activation.
+			if (node.tagName === 'DIV') {
+				node.setAttribute('role', 'button');
+				node.setAttribute('tabindex', '0');
+				main_core.Event.bind(node, 'keydown', event => {
+					if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+						event.preventDefault();
+						node.click();
+					}
+				});
+			}
+		}
+
+		/**
+		 * The icon-only variant of the "+" control is named after the stage; the
+		 * variant with a visible caption is already named by that caption, and an
+		 * author name would replace it in the name computation instead of adding to
+		 * it (WCAG 4.1.2).
+		 */
+		refreshAddItemButtonAriaLabel() {
+			const node = this.layout.subTitleAddButton;
+			if (!main_core.Type.isDomNode(node) || node.classList.contains('crm-kanban-column-add-item-button--dummy') || main_core.Type.isStringFilled(node.textContent.trim())) {
+				return;
+			}
+			this.setActionAriaLabel(node, main_core.Loc.getMessage('CRM_KANBAN_COLUMN_QUICK_ADD_ARIA_LABEL', {
+				'#NAME#': this.getName() || ''
+			}));
+		}
+
+		/**
+		 * Accessible name of the stage column. Overridable name hook: stage name
+		 * plus the number of cards, so a screen reader announces the stage without
+		 * relying on the visual counter.
+		 *
+		 * @returns {string}
+		 */
+		getColumnAriaLabel() {
+			const name = this.getName() || '';
+			return main_core.Loc.getMessagePlural('CRM_KANBAN_COLUMN_ARIA_LABEL', this.getTotal(), {
+				'#NAME#': name,
+				'#COUNT#': this.getTotal()
+			});
 		}
 
 		/**
@@ -5641,9 +7595,10 @@ this.BX.CRM = this.BX.CRM || {};
 			};
 			const grid = this.getGrid();
 			grid.ajax(params, data => {
-				this.prepareGridAfterItemsAdded(items, data);
+				this.prepareGridAfterItemsAdded(forSend, data);
 				this.registerAnalyticsChangeStageEvent(items, data);
 			}, error => {
+				void grid.loadNew(forSend, false, true, true, true);
 				grid.registerAnalyticsChangeStageEvent(items[0], this.getData().type, forSend, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
 			});
@@ -5780,8 +7735,12 @@ this.BX.CRM = this.BX.CRM || {};
 					this.layout.subTitleAddButton.classList.add("crm-kanban-column-add-item-button-wait");
 					this.disabledAddButton();
 				}
+				const eventData = BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(entityType).setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN).setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_QUICK_BUTTON).buildData();
+				const postFormAnalyticsData = {
+					data: eventData
+				};
 				const analyticsConfig = {
-					data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(entityType).setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN).setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_QUICK_BUTTON).buildData()
+					data: []
 				};
 				if (isFactoryBasedApproach) {
 					BX.ajax.runAction('crm.api.item.getEditor', {
@@ -5798,7 +7757,8 @@ this.BX.CRM = this.BX.CRM || {};
 								'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
 								'ENABLE_CONFIG_SCOPE_TOGGLE': true,
 								'ENABLE_SETTINGS_FOR_ALL': true,
-								'POST_FORM_ANALYTICS_DATA': analyticsConfig,
+								'POST_FORM_ANALYTICS_DATA': postFormAnalyticsData,
+								ANALYTICS_CONFIG: analyticsConfig,
 								'HOST_COLUMN_FOR_QUICK_EDITOR_ID': this.getId().toString()
 							}
 						}
@@ -5846,7 +7806,8 @@ this.BX.CRM = this.BX.CRM || {};
 						ENABLE_FIELDS_CONTEXT_MENU: "N",
 						FIELDS: formFields,
 						CONTEXT: context,
-						POST_FORM_ANALYTICS_DATA: analyticsConfig,
+						POST_FORM_ANALYTICS_DATA: postFormAnalyticsData,
+						ANALYTICS_CONFIG: analyticsConfig,
 						HOST_COLUMN_FOR_QUICK_EDITOR_ID: this.getId().toString()
 					}, result => {
 						this.editorNodeContainer.innerHTML = result;
@@ -5937,7 +7898,7 @@ this.BX.CRM = this.BX.CRM || {};
 					if (context[statusKey] === this.getId()) {
 						this.getGrid().loadNew(entityData.entityId, true, false, false, true);
 					}
-					if (this.editorOpen) {
+					if (this.editorOpen && this.isCurrentQuickFormEditorCreateEvent(entityData)) {
 						this.hideQuickEditorLoader();
 						entityData.isCancelled = true;
 					}
@@ -5971,7 +7932,8 @@ this.BX.CRM = this.BX.CRM || {};
 				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.closeQuickFormEditor.bind(this));
 				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
 				//BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
-				BX.addCustomEvent(window, "onCrmEntityCreate", this.hideQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "onCrmEntityCreate", this.completeQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "Crm.QuickFormPartialEditorDialog.Close", this.handleQuickFormPartialEditorClose.bind(this));
 				BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
 				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.enabledAddButton.bind(this));
 				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", () => {
@@ -6011,6 +7973,11 @@ this.BX.CRM = this.BX.CRM || {};
 			var context = {};
 			context[this.getGrid().getTypeInfoParam('stageIdKey')] = this.id;
 			context['NOT_CHANGE_STATUS'] = 'Y';
+			context.PARAMS = {
+				CATEGORY_ID: gridData.params.CATEGORY_ID || 0,
+				VIEW_MODE: gridData.viewMode
+			};
+			const eventData = BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(gridData.entityType).setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN).setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_FILL_REQUIRED_FIELDS_POPUP).buildData();
 			var settings = {
 				entityTypeId: gridData.entityTypeInt,
 				entityId: 0,
@@ -6019,25 +7986,65 @@ this.BX.CRM = this.BX.CRM || {};
 				values: [],
 				presetValues: presetValues,
 				analyticsConfig: {
-					data: BX.Crm.Integration.Analytics.Builder.Entity.AddEvent.createDefault(gridData.entityType).setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN).setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_FILL_REQUIRED_FIELDS_POPUP).buildData()
-				}
+					data: []
+				},
+				postFormAnalyticsData: {
+					data: eventData
+				},
+				hostColumnForQuickEditorId: this.getId().toString(),
+				categoryId: (gridData.params.CATEGORY_ID || 0).toString(),
+				viewMode: gridData.viewMode
 			};
 			if (this.getGrid().getTypeInfoParam('useFactoryBasedApproach')) {
 				settings.title = main_core.Loc.getMessage('CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE');
 				settings.isController = true;
 				settings.entityTypeName = gridData.entityType;
 				settings.stageId = this.getId();
-				if (gridData.params.CATEGORY_ID) {
-					settings.categoryId = gridData.params.CATEGORY_ID;
-				}
 			} else {
 				settings.title = main_core.Loc.getMessage("CRM_KANBAN_REQUIRED_FIELDS_TITLE_" + gridData.entityType);
 			}
 			this.quickFormPartialEditor = BX.Crm.QuickFormPartialEditorDialog.create("quickform-partial-entity-editor", settings);
 			this.quickFormPartialEditor.open();
 		}
+		handleQuickFormPartialEditorClose(sender) {
+			if (sender === this.quickFormPartialEditor) {
+				this.quickFormPartialEditor = null;
+			}
+		}
 		isEditorOpen() {
 			return this.editorOpen;
+		}
+		completeQuickFormEditor(entityData = null) {
+			if (!this.editorOpen || !this.isCurrentQuickFormEditorCreateEvent(entityData)) {
+				return;
+			}
+			this.hideQuickEditorLoader();
+			this.enabledAddButton();
+			this.restoreQuickFormEntryPointFocus();
+			this.hideQuickFormEditor();
+			this.cleanEditor();
+		}
+		isCurrentQuickFormEditorCreateEvent(entityData) {
+			if (!entityData) {
+				return true;
+			}
+			const sender = entityData.sender;
+			if (sender === this.editor) {
+				return true;
+			}
+			const partialEditor = this.quickFormPartialEditor?.getEditor?.();
+			return sender === partialEditor && this.quickFormPartialEditor?.isOpen?.() === true;
+		}
+		restoreQuickFormEntryPointFocus() {
+			const activeElement = document.activeElement;
+			if (this.editorNode?.contains?.(activeElement) !== true) {
+				return;
+			}
+			const addItemButton = this.layout?.subTitleAddButton;
+			if (addItemButton?.isConnected !== true) {
+				return;
+			}
+			addItemButton.focus?.();
 		}
 		showQuickEditorLoader() {
 			this.quickFormSaveButtonInstance.setWaiting(true);
@@ -6114,6 +8121,140 @@ this.BX.CRM = this.BX.CRM || {};
 		 */
 		isBoundToDocument(target) {
 			return !!target.closest('body');
+		}
+		renderTitle() {
+			const title = super.renderTitle();
+			applyStageTitleTextColor(title, crm_stage_color.getStageTextColor(this.getColor()));
+			this.bindStageTooltipEvents();
+			return title;
+		}
+		addTitleHint(element) {
+			this.clearDefaultStageTitleHint(element);
+		}
+		clearDefaultStageTitleHint(element) {
+			const hintObject = element?.closest('.main-kanban-column-title-info');
+			if (!main_core.Type.isElementNode(hintObject)) {
+				return;
+			}
+			hintObject.removeAttribute('data-hint-init');
+			hintObject.removeAttribute('data-hint');
+			hintObject.removeAttribute('data-hint-no-icon');
+			ui_hint.Hint.hide(hintObject);
+		}
+		bindStageTooltipEvents() {
+			const titleNode = this.layout?.info;
+			if (!main_core.Type.isElementNode(titleNode)) {
+				return;
+			}
+			this.clearDefaultStageTitleHint(titleNode);
+			main_core.Event.unbind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+			main_core.Event.unbind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+			main_core.Event.unbind(titleNode, 'focusin', this.handleStageTitleFocusIn);
+			main_core.Event.unbind(titleNode, 'focusout', this.handleStageTitleFocusOut);
+			main_core.Event.unbind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+			main_core.Event.unbind(titleNode, 'click', this.handleStageTitleClick);
+			main_core.Event.unbind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+			titleNode.dataset.testid = `crm-kanban-stage-title-${this.getId()}`;
+			main_core.Event.bind(titleNode, 'mouseenter', this.handleStageTitleMouseEnter);
+			main_core.Event.bind(titleNode, 'mouseleave', this.handleStageTitleMouseLeave);
+			main_core.Event.bind(titleNode, 'focusin', this.handleStageTitleFocusIn);
+			main_core.Event.bind(titleNode, 'focusout', this.handleStageTitleFocusOut);
+			main_core.Event.bind(titleNode, 'mousedown', this.handleStageTitleMouseDown);
+			main_core.Event.bind(titleNode, 'click', this.handleStageTitleClick);
+			main_core.Event.bind(titleNode, 'keydown', this.handleStageTitleKeyDown);
+			if (this.isEditable()) {
+				titleNode.setAttribute('role', 'button');
+				titleNode.setAttribute('tabindex', '0');
+				titleNode.setAttribute('aria-haspopup', 'dialog');
+			} else {
+				titleNode.removeAttribute('role');
+				titleNode.removeAttribute('aria-haspopup');
+				if (main_core.Type.isStringFilled(this.getData().description) || this.isStageTitleCropped()) {
+					titleNode.setAttribute('tabindex', '0');
+				} else {
+					titleNode.removeAttribute('tabindex');
+				}
+			}
+		}
+		handleStageTitleMouseEnter() {
+			const grid = this.getGrid();
+			if (main_core.Type.isFunction(grid.isStageEditorOpenedFor) && grid.isStageEditorOpenedFor(this.getId())) {
+				this.closeStageDescriptionTooltip();
+				return;
+			}
+			this.showStageDescriptionTooltip();
+		}
+		handleStageTitleMouseLeave() {
+			this.stageDescriptionTooltipRequestId++;
+			if (stageDescriptionTooltipOwnerToken === this.stageDescriptionTooltipOwnerToken) {
+				stageDescriptionTooltipOwnerToken = null;
+				this.stageDescriptionTooltip?.hide();
+			}
+		}
+		handleStageTitleFocusIn() {
+			this.handleStageTitleMouseEnter();
+		}
+		handleStageTitleFocusOut() {
+			this.handleStageTitleMouseLeave();
+		}
+		handleStageTitleMouseDown() {
+			this.closeStageDescriptionTooltip();
+		}
+		handleStageTitleClick(event) {
+			if (!this.isEditable() || event.target.closest('.main-kanban-column-edit')) {
+				return;
+			}
+			event.preventDefault();
+			this.switchToEditMode();
+		}
+		handleStageTitleKeyDown(event) {
+			if (!this.isEditable() || !['Enter', ' '].includes(event.key)) {
+				return;
+			}
+			event.preventDefault();
+			this.switchToEditMode();
+		}
+		async showStageDescriptionTooltip() {
+			if (!main_core.Type.isStringFilled(this.getData().description) && !this.isStageTitleCropped()) {
+				this.closeStageDescriptionTooltip();
+				return;
+			}
+			const requestId = ++this.stageDescriptionTooltipRequestId;
+			let tooltip = null;
+			try {
+				tooltip = await loadStageDescriptionTooltip();
+			} catch {
+				return;
+			}
+			if (requestId !== this.stageDescriptionTooltipRequestId) {
+				return;
+			}
+			this.stageDescriptionTooltip = tooltip;
+			this.showLoadedStageDescriptionTooltip();
+		}
+		showLoadedStageDescriptionTooltip() {
+			stageDescriptionTooltipOwnerToken = this.stageDescriptionTooltipOwnerToken;
+			this.stageDescriptionTooltip.show({
+				bindElement: this.getStageDescriptionTooltipBindElement(),
+				focusElement: this.layout.info,
+				name: this.getName(),
+				description: this.getData().description ?? '',
+				showName: this.isStageTitleCropped()
+			});
+		}
+		getStageDescriptionTooltipBindElement() {
+			return main_core.Type.isElementNode(this.layout?.color) ? this.layout.color : this.layout.info;
+		}
+		isStageTitleCropped() {
+			const titleText = this.layout?.nameInner;
+			return main_core.Type.isElementNode(titleText) && titleText.offsetWidth < titleText.scrollWidth;
+		}
+		closeStageDescriptionTooltip() {
+			this.stageDescriptionTooltipRequestId++;
+			if (stageDescriptionTooltipOwnerToken === this.stageDescriptionTooltipOwnerToken) {
+				stageDescriptionTooltipOwnerToken = null;
+				this.stageDescriptionTooltip?.hideImmediately();
+			}
 		}
 
 		/**
@@ -6313,6 +8454,7 @@ this.BX.CRM = this.BX.CRM || {};
 				// just a button for new window
 				, this.editorNode]
 			});
+			this.enhanceAddItemButtonAccessibility();
 			return this.subtitleNode;
 		}
 		createSubTitlePrice() {
@@ -6322,25 +8464,119 @@ this.BX.CRM = this.BX.CRM || {};
 		createSubTitlePriceLayout() {
 			const isShowTotalPrice = this.getGrid().getTypeInfoParam('showTotalPrice');
 			if (isShowTotalPrice && !this.layout.subTitlePrice) {
+				// The hint popup is bound to the total node, so it cannot outlive it.
+				this.destroyHiddenSumHint();
 				this.layout.subTitlePriceText = main_core.Tag.render`<span class="crm-kanban-total-price-total"></span>`;
 				this.layout.subTitlePrice = main_core.Tag.render`<div class="crm-kanban-total-price">`;
 				main_core.Dom.append(this.layout.subTitlePriceText, this.layout.subTitlePrice);
 			} else if (!isShowTotalPrice) {
+				this.destroyHiddenSumHint();
 				this.layout.subTitlePrice = null;
+				this.layout.subTitlePriceText = null;
 			}
-			if (this.isHiddenTotalSum()) {
-				const {
-					subTitlePriceText
-				} = this.layout;
-				main_core.Event.unbindAll(subTitlePriceText, 'mouseenter');
-				main_core.Event.unbindAll(subTitlePriceText, 'mouseleave');
-				main_core.Event.bind(subTitlePriceText, 'mouseenter', this.onSubTitlePriceMouseEnter.bind(this));
-				main_core.Event.bind(subTitlePriceText, 'mouseleave', this.onSubTitlePriceMouseLeave.bind(this));
+			this.updateHiddenSumHint();
+		}
+
+		/**
+		 * The masked total is the trigger of the "sum is hidden" hint. WCAG 1.4.13
+		 * requires such content to be dismissible, hoverable and persistent, so the
+		 * hint opens on hover and on keyboard focus, closes on Escape, and survives
+		 * the pointer travelling from the trigger onto the hint itself. The hint text
+		 * is also the accessible name of the trigger, so a screen reader gets it
+		 * without opening anything - and for the same reason the trigger does not
+		 * point at the shown hint with aria-describedby, which would only repeat the
+		 * name as a description.
+		 */
+		updateHiddenSumHint() {
+			const trigger = this.layout.subTitlePriceText;
+			this.unbindHiddenSumHintHandlers();
+			if (!main_core.Type.isDomNode(trigger)) {
+				return;
 			}
+			if (!this.isHiddenTotalSum()) {
+				this.closeHiddenSumHint();
+				['role', 'tabindex', 'aria-label', 'data-testid'].forEach(attribute => {
+					trigger.removeAttribute(attribute);
+				});
+				return;
+			}
+			trigger.setAttribute('role', 'button');
+			trigger.setAttribute('tabindex', '0');
+			trigger.setAttribute('aria-label', main_core.Loc.getMessage('CRM_KANBAN_COLUMN_HIDDEN_SUM'));
+			trigger.setAttribute('data-testid', 'crm-kanban-column-hidden-sum-hint-btn');
+
+			// Handlers are kept so they can be removed one by one: unbindAll would also
+			// take down listeners of these events bound by anyone else.
+			this.hiddenSumHintHandlers = {
+				node: trigger,
+				events: {
+					mouseenter: this.onSubTitlePriceMouseEnter.bind(this),
+					mouseleave: this.onSubTitlePriceMouseLeave.bind(this),
+					focus: this.onSubTitlePriceFocus.bind(this),
+					blur: this.onSubTitlePriceBlur.bind(this),
+					keydown: this.onSubTitlePriceKeyDown.bind(this)
+				}
+			};
+			Object.entries(this.hiddenSumHintHandlers.events).forEach(([eventName, handler]) => {
+				main_core.Event.bind(trigger, eventName, handler);
+			});
+		}
+		unbindHiddenSumHintHandlers() {
+			if (!this.hiddenSumHintHandlers) {
+				return;
+			}
+			const {
+				node,
+				events
+			} = this.hiddenSumHintHandlers;
+			Object.entries(events).forEach(([eventName, handler]) => {
+				main_core.Event.unbind(node, eventName, handler);
+			});
+			this.hiddenSumHintHandlers = null;
 		}
 		onSubTitlePriceMouseEnter() {
+			this.showHiddenSumHint();
+		}
+		onSubTitlePriceMouseLeave() {
+			this.scheduleHiddenSumHintClose();
+		}
+		onSubTitlePriceFocus() {
+			this.showHiddenSumHint();
+		}
+		onSubTitlePriceBlur(event) {
+			// The hint may legitimately take the focus (a screen reader user walking
+			// into its content), so leaving the trigger for the hint itself must not
+			// close it - otherwise focus bounces between the two.
+			const popupContainer = this.columnSumPopup?.getPopupContainer();
+			const nextTarget = event?.relatedTarget;
+			if (popupContainer && main_core.Type.isDomNode(nextTarget) && popupContainer.contains(nextTarget)) {
+				return;
+			}
+			this.closeHiddenSumHint();
+		}
+		onSubTitlePriceKeyDown(event) {
+			if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') {
+				return;
+			}
+			event.preventDefault();
+			if (this.columnSumPopup?.isShown()) {
+				this.closeHiddenSumHint();
+			} else {
+				this.showHiddenSumHint();
+			}
+		}
+		getHiddenSumPopup() {
+			if (this.columnSumPopup) {
+				return this.columnSumPopup;
+			}
 			this.columnSumPopup = main_popup.PopupManager.create(this.getHideColumnSumPopupId(), this.layout.subTitlePriceText, {
 				autoHide: true,
+				closeByEsc: true,
+				role: 'tooltip',
+				// A tooltip must never pull the focus away from its trigger. The
+				// option has to be explicit: with the focus trap accessibility
+				// setting on, an omitted value means "trap enabled".
+				focusTrap: false,
 				angle: true,
 				animation: 'fading',
 				darkMode: true,
@@ -6354,13 +8590,48 @@ this.BX.CRM = this.BX.CRM || {};
 					angleLeftOffset: 200
 				}
 			});
-			this.columnSumPopup.show();
+
+			// Keeps the hint open while the pointer is on the hint itself.
+			const popupContainer = this.columnSumPopup.getPopupContainer();
+			main_core.Event.bind(popupContainer, 'mouseenter', this.cancelHiddenSumHintClose.bind(this));
+			main_core.Event.bind(popupContainer, 'mouseleave', this.scheduleHiddenSumHintClose.bind(this));
+			return this.columnSumPopup;
+		}
+		showHiddenSumHint() {
+			this.cancelHiddenSumHintClose();
+			this.getHiddenSumPopup().show();
+		}
+		closeHiddenSumHint() {
+			this.cancelHiddenSumHintClose();
+			this.columnSumPopup?.close();
+		}
+		scheduleHiddenSumHintClose() {
+			this.cancelHiddenSumHintClose();
+			this.hiddenSumHintCloseTimeout = setTimeout(() => this.closeHiddenSumHint(), HIDDEN_SUM_HINT_CLOSE_DELAY);
+		}
+		cancelHiddenSumHintClose() {
+			if (this.hiddenSumHintCloseTimeout) {
+				clearTimeout(this.hiddenSumHintCloseTimeout);
+				this.hiddenSumHintCloseTimeout = null;
+			}
+		}
+
+		/**
+		 * Drops the hint entirely: the popup is bound to the total node and the close
+		 * timeout would otherwise fire after that node is gone.
+		 */
+		destroyHiddenSumHint() {
+			this.cancelHiddenSumHintClose();
+			this.unbindHiddenSumHintHandlers();
+			this.columnSumPopup?.destroy();
+			this.columnSumPopup = null;
+		}
+		destroy() {
+			this.destroyHiddenSumHint();
+			super.destroy();
 		}
 		getHideColumnSumPopupId() {
 			return `kanban-column-${this.getId()}-hidden-sum-popup`;
-		}
-		onSubTitlePriceMouseLeave() {
-			this.columnSumPopup.close();
 		}
 		renderSubTitlePrice() {
 			if (!this.layout.subTitlePriceText) {
@@ -6468,16 +8739,14 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 		handleAddColumnButtonClick(event) {
 			const gridData = this.getGridData();
-			if (gridData.rights?.canAddColumn) {
-				const newColumn = this.getGrid().addColumn({
-					id: "kanban-new-column-" + BX.util.getRandomString(5),
-					type: "BX.CRM.Kanban.DraftColumn",
-					canSort: false,
-					canAddItem: false,
-					droppable: false,
-					targetId: this.getGrid().getNextColumnSibling(this)
-				});
-				newColumn.switchToEditMode();
+			if (gridData.rights?.areStagesEditable) {
+				const grid = this.getGrid();
+				if (main_core.Type.isFunction(grid.openStageEditorForCreate)) {
+					event.preventDefault();
+					grid.openStageEditorForCreate(this);
+					return;
+				}
+				super.handleAddColumnButtonClick(event);
 			} else if (gridData.isLockedEntity) {
 				this.getGrid().showLockedEntitySlider();
 			} else if (!main_core.Type.isUndefined(BX.Intranet)) {
@@ -6485,14 +8754,57 @@ this.BX.CRM = this.BX.CRM || {};
 			}
 		}
 		switchToEditMode() {
+			if (this.isStageUpdateInProgress()) {
+				return;
+			}
 			const gridData = this.getGridData();
-			if (gridData.rights?.canEditColumn) {
+			if (gridData.rights?.areStagesEditable) {
+				const grid = this.getGrid();
+				if (main_core.Type.isFunction(grid.openStageEditorForEdit)) {
+					grid.openStageEditorForEdit(this);
+					return;
+				}
+				this.saveEditModeSnapshot();
 				super.switchToEditMode();
 			} else if (gridData.isLockedEntity) {
 				this.getGrid().showLockedEntitySlider();
 			} else if (!main_core.Type.isUndefined(BX.Intranet)) {
 				this.getGrid().accessNotify();
 			}
+		}
+		saveEditModeSnapshot() {
+			this.editModeSnapshot = {
+				name: this.getName(),
+				color: this.getColor()
+			};
+		}
+		getEditModeSnapshot() {
+			return this.editModeSnapshot;
+		}
+		restoreEditModeSnapshot(snapshot) {
+			if (!this.isCurrentEditModeSnapshot(snapshot)) {
+				return;
+			}
+			this.setName(snapshot.name);
+			this.setColor(snapshot.color);
+			this.colorChanged = false;
+			this.render();
+			this.clearEditModeSnapshot(snapshot);
+		}
+		clearEditModeSnapshot(snapshot) {
+			if (!this.isCurrentEditModeSnapshot(snapshot)) {
+				return;
+			}
+			this.editModeSnapshot = null;
+		}
+		isCurrentEditModeSnapshot(snapshot) {
+			return main_core.Type.isPlainObject(snapshot) && this.editModeSnapshot === snapshot;
+		}
+		isStageUpdateInProgress() {
+			return this.stageUpdateInProgress === true;
+		}
+		setStageUpdateInProgress(value = true) {
+			this.stageUpdateInProgress = value;
 		}
 		focusTextBox() {
 			setTimeout(() => {
@@ -6595,6 +8907,11 @@ this.BX.CRM = this.BX.CRM || {};
 	class DraftColumn extends BX.Kanban.DraftColumn {
 		constructor(options) {
 			super(options);
+		}
+		renderTitle() {
+			const title = super.renderTitle();
+			applyStageTitleTextColor(title, crm_stage_color.getStageTextColor(this.getColor()));
+			return title;
 		}
 		handleRemoveButtonClick(event) {
 			this.getGrid().getColumns().forEach(function (column) {
@@ -7140,6 +9457,9 @@ this.BX.CRM = this.BX.CRM || {};
 				overlay: true,
 				draggable: true,
 				closeByEsc: true,
+				// Modal field-selection editor: trap focus. Its accessible
+				// name comes from titleBar (main.popup mirrors it into aria-label).
+				focusTrap: true,
 				contentColor: 'white',
 				maxHeight: window.innerHeight - 50,
 				events: {
@@ -7151,6 +9471,9 @@ this.BX.CRM = this.BX.CRM || {};
 				buttons: [new ui_buttons.SaveButton({
 					color: ui_buttons.Button.Color.PRIMARY,
 					state: this.fields ? '' : ui_buttons.Button.State.DISABLED,
+					dataset: {
+						testid: 'crm-kanban-fields-selector-save-btn'
+					},
 					onclick: () => {
 						const selectedFields = this.fields ? this.fields.filter(field => this.selectedFields.indexOf(field.NAME) >= 0) : [];
 						if (selectedFields.length) {
@@ -7165,6 +9488,9 @@ this.BX.CRM = this.BX.CRM || {};
 						}
 					}
 				}), new ui_buttons.CancelButton({
+					dataset: {
+						testid: 'crm-kanban-fields-selector-cancel-btn'
+					},
 					onclick: () => {
 						this.popup.close();
 					}
@@ -7198,7 +9524,7 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 		getFieldsLayout() {
 			const sectionsWithFields = this.distributeFieldsBySections(this.fields);
-			const container = main_core.Tag.render`<div class="crm-kanban-popup-field"></div>`;
+			const container = main_core.Tag.render`<div class="crm-kanban-popup-field" data-testid="crm-kanban-fields-selector"></div>`;
 			const headerWrapper = main_core.Tag.render`
 			<div class="crm-kanban-popup-field-search-header-wrapper">
 				<div class="ui-form-row-inline"></div>
@@ -7234,6 +9560,7 @@ this.BX.CRM = this.BX.CRM || {};
 										name="${main_core.Text.encode(field.NAME)}"
 										class="crm-kanban-popup-field-item-input"
 										data-label="${encodedLabel}"
+										data-testid="crm-kanban-fields-selector-field-${main_core.Text.encode(field.NAME)}"
 										${this.selectedFields.indexOf(field.NAME) >= 0 ? 'checked' : ''}
 										onclick="${this.onFieldClick.bind(this)}"
 									/>
@@ -7298,7 +9625,11 @@ this.BX.CRM = this.BX.CRM || {};
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon">
 						<div class="ui-ctl-before ui-ctl-icon-search"></div>
 						<button class="ui-ctl-after ui-ctl-icon-clear"></button>
-						<input type="text" class="ui-ctl-element crm-kanban-popup-field-search-section-input">
+						<input
+							type="text"
+							class="ui-ctl-element crm-kanban-popup-field-search-section-input"
+							data-testid="crm-kanban-fields-selector-search"
+						>
 					</div>
 				</div>
 			</div>
@@ -7468,6 +9799,14 @@ this.BX.CRM = this.BX.CRM || {};
 			}
 			if (action === 'addItem') {
 				this.addItem();
+				return;
+			}
+			if (action === 'addStage') {
+				this.addStage();
+				return;
+			}
+			if (action === 'updateStage') {
+				this.updateStage();
 			}
 		}
 		updateItem() {
@@ -7555,8 +9894,71 @@ this.BX.CRM = this.BX.CRM || {};
 			}
 			this.grid.addItem(params.item);
 		}
+		addStage() {
+			const params = this.getActionParams();
+			const stage = params.stage;
+			if (!main_core.Type.isPlainObject(stage) || this.grid.getColumn(stage.id)) {
+				return;
+			}
+			const targetColumn = getStageTargetColumn(stage, this.grid.getColumns());
+			this.grid.addColumn({
+				...this.#getStageColumnOptions(stage),
+				targetId: targetColumn?.getId()
+			});
+			normalizeStageRealSorts(this.grid.getColumns());
+		}
+		updateStage() {
+			const params = this.getActionParams();
+			const stage = params.stage;
+			if (!main_core.Type.isPlainObject(stage)) {
+				return;
+			}
+			const column = this.grid.getColumn(stage.id);
+			if (!column) {
+				return;
+			}
+			if (main_core.Type.isFunction(column.closeStageDescriptionTooltip)) {
+				column.closeStageDescriptionTooltip();
+			}
+			const stageOptions = this.#getStageColumnOptions(stage, column.getData());
+			this.grid.updateColumn(column, stageOptions);
+			BX.onCustomEvent('Crm.Stage.DescriptionChanged', [{
+				entityType: this.grid.getData().entityType,
+				categoryId: this.grid.getData().params?.CATEGORY_ID ?? 0,
+				stageId: stage.id,
+				description: stageOptions.data.description
+			}]);
+			this.grid.moveColumn(column, getStageTargetColumn(stage, this.grid.getColumns(), column));
+			normalizeStageRealSorts(this.grid.getColumns());
+		}
+		#getStageColumnOptions(stage, currentData = {}) {
+			const description = main_core.Type.isString(stage.description) ? stage.description : main_core.Type.isString(currentData.description) ? currentData.description : '';
+			return {
+				id: stage.id,
+				name: stage.name,
+				color: stage.color,
+				data: {
+					...stage,
+					description,
+					type: stage.type ?? stage.TYPE,
+					sort: parseInt(stage.sort, 10)
+				}
+			};
+		}
 	}
 
+	const ACTIVITIES_LOAD_ITEMS_DELAY = 1000;
+	// The queue stops taking events once it holds more than it may, and its window
+	// here is five times shorter than the one its own limit is measured against, so
+	// the board keeps the backlog of the same span of time.
+	const ACTIVITIES_MAX_PENDING_ITEMS = 150;
+	const MAX_OFF_BOARD_ITEMS = 512;
+	const OFF_BOARD_PROBE_DELAY = 30000;
+	// The queue restarts its own batching window on the very events that bring the
+	// probe back - the tab and the last slider - and answers them with a load of its
+	// own. The probe waits out two of those windows: the first one belongs to the
+	// queue, the second keeps the probe behind it instead of beside it.
+	const PROBE_RESUME_QUEUE_WINDOWS = 2;
 	const EventName = {
 		itemUpdated: 'ITEMUPDATED',
 		itemAdded: 'ITEMADDED',
@@ -7566,6 +9968,12 @@ this.BX.CRM = this.BX.CRM || {};
 		stageDeleted: 'STAGEDELETED'
 	};
 	class PullManager {
+		#offBoardItems = new Set();
+		#delayedProbeIds = new Set();
+		#delayedProbeTimer = null;
+		#probeDeadline = 0;
+		#isProbeFrozenBySlider = false;
+		#isQueueLoading = false;
 		constructor(grid) {
 			if (!BX.PULL) {
 				console.info('BX.PULL is not initialized');
@@ -7601,7 +10009,38 @@ this.BX.CRM = this.BX.CRM || {};
 					}
 				}
 			};
+			if (data.viewMode === ViewMode.MODE_ACTIVITIES) {
+				options.config = {
+					loadItemsDelay: ACTIVITIES_LOAD_ITEMS_DELAY,
+					maxPendingItems: ACTIVITIES_MAX_PENDING_ITEMS
+				};
+			}
 			this.queueManager = new pull_queuemanager.QueueManager(options);
+
+			// A board can be drawn under an open card, so the pause is taken from the
+			// page as it is now and not only from the next slider that opens.
+			this.#isProbeFrozenBySlider = this.#getOpenSlidersCount() > 0;
+
+			// The board reloads through its own funnel, not only by the global filter
+			// event: a reload leaves the memory of another selection behind.
+			main_core_events.EventEmitter.subscribe(this.grid, 'Kanban.Grid:onApplyFilter', () => {
+				this.#forgetOffBoardItems();
+			});
+
+			// The queue stops taking events while a slider is open, and the probe goes
+			// around the queue: it holds the same pause, or the board under an open card
+			// keeps asking the server.
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpenStart', () => {
+				this.#isProbeFrozenBySlider = true;
+			});
+			main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
+				this.#syncSliderFreezeState();
+			});
+			main_core.Event.bind(document, 'visibilitychange', () => {
+				if (!document.hidden) {
+					this.#resumeOffBoardProbe();
+				}
+			});
 		}
 		#onBeforeQueueExecute(items) {
 			items.forEach(item => {
@@ -7621,8 +10060,8 @@ this.BX.CRM = this.BX.CRM || {};
 		#onQueueExecute(items) {
 			const ids = [];
 			items.forEach(({
-				id,
 				data: {
+					id,
 					action
 				}
 			}) => {
@@ -7633,9 +10072,127 @@ this.BX.CRM = this.BX.CRM || {};
 			if (ids.length === 0) {
 				return Promise.resolve();
 			}
-			return this.grid.loadNew(ids, false, true, true, true);
+			this.#isQueueLoading = true;
+			return this.grid.loadNew(ids, false, true, true, true).then(result => {
+				this.#isQueueLoading = false;
+				this.#rememberLoadResult(ids);
+				return result;
+			}, error => {
+				this.#isQueueLoading = false;
+				throw error;
+			});
+		}
+
+		/**
+		 * An item the board did not draw is outside its filter: further events about
+		 * it would load it again for nothing. The board takes off the cards the server
+		 * left out of its answer, so what is drawn after a load is what passed it.
+		 */
+		#rememberLoadResult(ids) {
+			ids.forEach(id => {
+				if (this.grid.getItem(id)) {
+					this.#offBoardItems.delete(id);
+				} else {
+					this.#offBoardItems.add(id);
+				}
+			});
+
+			// The oldest records leave one by one: a whole reset would let every item
+			// outside the board through again, and the queue would load them anew.
+			while (this.#offBoardItems.size > MAX_OFF_BOARD_ITEMS) {
+				this.#offBoardItems.delete(this.#offBoardItems.values().next().value);
+			}
+		}
+
+		/**
+		 * An item outside the board is asked about rarely and for the whole set at
+		 * once: it gets onto the board only when a change brings it into the filter.
+		 */
+		#scheduleOffBoardProbe(itemId) {
+			this.#delayedProbeIds.add(itemId);
+			this.#keepOffBoardProbeTimer(OFF_BOARD_PROBE_DELAY);
+		}
+
+		/**
+		 * Events about items outside the board keep coming in while the window runs:
+		 * the probe holds the timer it already has, or a busy board would push its own
+		 * probe away for as long as the events last.
+		 */
+		#keepOffBoardProbeTimer(delay) {
+			if (this.#delayedProbeTimer !== null && this.#probeDeadline <= Date.now() + delay) {
+				return;
+			}
+			this.#restartOffBoardProbeTimer(delay);
+		}
+		#restartOffBoardProbeTimer(delay) {
+			if (this.#delayedProbeTimer !== null) {
+				clearTimeout(this.#delayedProbeTimer);
+			}
+			this.#probeDeadline = Date.now() + delay;
+			this.#delayedProbeTimer = setTimeout(() => {
+				this.#runOffBoardProbe();
+			}, delay);
+		}
+		#runOffBoardProbe() {
+			this.#delayedProbeTimer = null;
+			if (this.#delayedProbeIds.size === 0) {
+				return;
+			}
+			if (this.#isOffBoardProbeDeferred()) {
+				this.#restartOffBoardProbeTimer(OFF_BOARD_PROBE_DELAY);
+				return;
+			}
+			if (this.#isQueueLoading) {
+				// The queue is on the wire with a batch of its own: the probe comes back
+				// when the answer is in, so the two never ask the server at once.
+				this.#restartOffBoardProbeTimer(this.#getProbeResumeDelay());
+				return;
+			}
+			const ids = [...this.#delayedProbeIds];
+			this.#delayedProbeIds.clear();
+			this.grid.loadNew(ids, false, true, true, true).then(() => {
+				this.#rememberLoadResult(ids);
+			}).catch(() => {
+				// A probe that did not reach the server tells nothing about the items:
+				// they stay off the board until the next event asks about them again.
+			});
+		}
+		#isOffBoardProbeDeferred() {
+			return document.hidden || this.#isProbeFrozenBySlider;
+		}
+
+		/**
+		 * The board came back - the tab was switched to, the last slider was closed.
+		 * The queue picks up its own backlog on the same events, so the probe is moved
+		 * onto a window of its own: a shorter one than the whole wait it would owe, and
+		 * a later one than a timer about to fire, which would go before that backlog.
+		 */
+		#resumeOffBoardProbe() {
+			if (this.#delayedProbeIds.size === 0 || this.#isOffBoardProbeDeferred()) {
+				return;
+			}
+			this.#restartOffBoardProbeTimer(this.#getProbeResumeDelay());
+		}
+		#getProbeResumeDelay() {
+			return this.queueManager.getLoadItemsDelay() * PROBE_RESUME_QUEUE_WINDOWS;
+		}
+		#syncSliderFreezeState() {
+			this.#isProbeFrozenBySlider = this.#getOpenSlidersCount() > 0;
+			this.#resumeOffBoardProbe();
+		}
+		#getOpenSlidersCount() {
+			return top.BX?.SidePanel?.Instance?.getOpenSlidersCount() ?? 0;
+		}
+		#forgetOffBoardItems() {
+			this.#offBoardItems.clear();
+			this.#delayedProbeIds.clear();
+			if (this.#delayedProbeTimer !== null) {
+				clearTimeout(this.#delayedProbeTimer);
+				this.#delayedProbeTimer = null;
+			}
 		}
 		#onReload() {
+			this.#forgetOffBoardItems();
 			this.grid.reload();
 		}
 		#onBeforePull(event) {
@@ -7688,11 +10245,6 @@ this.BX.CRM = this.BX.CRM || {};
 			} = event.data;
 			const item = this.grid.getItem(params.item.id);
 			if (item) {
-				if (this.grid.getData().viewMode === ViewMode.MODE_ACTIVITIES) {
-					event.preventDefault();
-					void this.grid.loadNew([params.item.id], false, true, true, true);
-					return;
-				}
 				promises.push(Promise.resolve({
 					data: this.#getPullData('updateItem', params)
 				}));
@@ -7710,10 +10262,15 @@ this.BX.CRM = this.BX.CRM || {};
 				},
 				promises
 			} = event.data;
-			const itemId = params.item.id;
+			const itemId = parseInt(params.item.id, 10);
 			const oldItem = this.grid.getItem(itemId);
 			if (oldItem) {
 				event.preventDefault();
+				return;
+			}
+			if (this.#offBoardItems.has(itemId)) {
+				event.preventDefault();
+				this.#scheduleOffBoardProbe(itemId);
 				return;
 			}
 			promises.push(Promise.resolve({
@@ -7723,12 +10280,23 @@ this.BX.CRM = this.BX.CRM || {};
 		#getPullData(action, actionParams) {
 			const {
 				id
-			} = actionParams.item;
+			} = actionParams.item ?? actionParams.stage;
 			return {
 				id,
 				action,
 				actionParams
 			};
+		}
+		#getPendingItemKeys(itemId) {
+			return [`${itemId}_${EventName.itemAdded}`, `${itemId}_${EventName.itemUpdated}`];
+		}
+		#hasPendingItemChanges(itemId) {
+			return this.#getPendingItemKeys(itemId).some(key => this.queueManager.hasInQueue(key));
+		}
+		#clearPendingItemChanges(itemId) {
+			this.#getPendingItemKeys(itemId).forEach(key => {
+				this.queueManager.deleteFromQueue(key);
+			});
 		}
 		#onPullItemDeleted(event) {
 			const {
@@ -7740,19 +10308,20 @@ this.BX.CRM = this.BX.CRM || {};
 				return;
 			}
 			const {
-				id,
-				data: {
-					columnId
-				}
+				id
 			} = params.item;
 
 			/**
 			 * Delay so that the element has time to be rendered before deletion,
 			 * if an event for changing the element came before. Ticket #141983
 			 */
-			const delay = this.queueManager.hasInQueue(id) ? this.queueManager.getLoadItemsDelay() : 0;
+			const delay = this.#hasPendingItemChanges(id) ? this.queueManager.getLoadItemsDelay() : 0;
 			setTimeout(() => {
-				this.queueManager.deleteFromQueue(id);
+				this.#clearPendingItemChanges(id);
+				// QueueManager appends action items asynchronously after pull handlers finish.
+				setTimeout(() => {
+					this.#clearPendingItemChanges(id);
+				}, 0);
 				const {
 					grid
 				} = this;
@@ -7760,9 +10329,12 @@ this.BX.CRM = this.BX.CRM || {};
 				if (!item) {
 					return;
 				}
+
+				// The event names the stage of the item, which is not the column of the card
+				// in the deadlines view.
+				const column = item.getColumn();
 				grid.removeItem(id);
-				if (grid.getTypeInfoParam('showTotalPrice')) {
-					const column = grid.getColumn(columnId);
+				if (column && grid.getTypeInfoParam('showTotalPrice')) {
 					column.decPrice(item.data.price);
 					column.renderSubTitle();
 				}
@@ -7770,8 +10342,23 @@ this.BX.CRM = this.BX.CRM || {};
 			event.preventDefault();
 		}
 		#onPullStageChanged(event) {
-			event.preventDefault();
-			this.grid.onApplyFilter();
+			const {
+				pullData: {
+					params
+				},
+				promises
+			} = event.data;
+			if (main_core.Type.isPlainObject(params.stage) && main_core.Type.isFunction(this.grid.markStageEditorExternalConflict)) {
+				this.grid.markStageEditorExternalConflict(params.stage.id, params.stage);
+			}
+			const action = params.eventName === EventName.stageAdded ? 'addStage' : 'updateStage';
+			promises.push(Promise.resolve({
+				data: this.#getPullData(action, params)
+			}));
+		}
+		#clearPendingStageChanges(stageId) {
+			this.queueManager.deleteFromQueue(`${stageId}_${EventName.stageAdded}`);
+			this.queueManager.deleteFromQueue(`${stageId}_${EventName.stageUpdated}`);
 		}
 		#onPullStageDeleted(event) {
 			event.preventDefault();
@@ -7780,7 +10367,22 @@ this.BX.CRM = this.BX.CRM || {};
 					params
 				}
 			} = event.data;
-			this.grid.removeColumn(params.stage.id);
+			if (main_core.Type.isPlainObject(params.stage) && main_core.Type.isFunction(this.grid.handleStageEditorExternalDelete)) {
+				this.grid.handleStageEditorExternalDelete(params.stage.id);
+			} else if (main_core.Type.isPlainObject(params.stage) && main_core.Type.isFunction(this.grid.markStageEditorExternalConflict)) {
+				this.grid.markStageEditorExternalConflict(params.stage.id, params.stage);
+			}
+			const stageId = params.stage.id;
+			this.#clearPendingStageChanges(stageId);
+			// QueueManager appends action items asynchronously after pull handlers finish.
+			setTimeout(() => {
+				this.#clearPendingStageChanges(stageId);
+			}, 0);
+			const column = this.grid.getColumn(stageId);
+			if (main_core.Type.isFunction(column?.closeStageDescriptionTooltip)) {
+				column.closeStageDescriptionTooltip();
+			}
+			this.grid.removeColumn(stageId);
 		}
 	}
 
@@ -7800,5 +10402,5 @@ this.BX.CRM = this.BX.CRM || {};
 	exports.StageLabels = StageLabels;
 	exports.ViewMode = ViewMode;
 
-})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX.CRM.Kanban, BX.Crm, BX, BX, BX.Main, window, BX, BX, BX.UI.EntitySelector, BX.UI.Tour, BX.UI.Notification, BX.Crm.Integration.Analytics, BX.Pull, BX.Crm.Autorun, BX.UI.Analytics, BX.Crm.Activity, BX.Crm, BX.Main, BX.SidePanel, BX.UI.System.Label, BX.UI, BX, BX.Currency, BX, BX.UI, BX.Crm, BX.CRM.Kanban);
+})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX, BX, BX.Event, BX, BX.Main, BX.UI.Accessibility, BX.Pull, window, BX.UI.EntitySelector, BX, BX.UI.Notification, BX.UI.Tour, BX.CRM.Kanban, BX.Crm, BX.Crm.Integration.Analytics, BX.Crm.Autorun, BX.UI.Analytics, BX.Crm.Activity, BX.Crm, BX.Main, BX.SidePanel, BX.UI.IconSet, BX.UI.System.Label, BX.UI, window, BX, BX, BX.UI, BX.Currency, BX.Crm.Stage, BX.Crm, BX.CRM.Kanban);
 //# sourceMappingURL=kanban.js.map

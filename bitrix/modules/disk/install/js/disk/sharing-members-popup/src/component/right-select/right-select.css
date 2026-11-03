@@ -1,0 +1,9 @@
+/* the link-like trigger of the reference popup: .access-private-user__access-button */
+.disk-sharing-members-popup-right {
+	padding: 0;
+	background: transparent;
+	border: 0;
+	color: var(--ui-color-accent-main-link);
+	text-decoration: underline dashed;
+	cursor: pointer;
+}

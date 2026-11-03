@@ -3,8 +3,16 @@
 	margin-left: 0 !important;
 }
 
-.ui-label-inner {
-	text-transform: uppercase;
+#air-workarea-content {
+	background-color: transparent;
+}
+
+#biconnector-dashboard-grid .main-grid-row-head {
+	background-color: var(--ui-color-bg-vibrant-default);
+}
+
+#biconnector-dashboard-grid .main-grid-cell-head {
+	background-color: transparent;
 }
 
 .main-ui-grid-show-new-row {
@@ -80,10 +88,6 @@
 	align-items: center;
 }
 
-.dashboard-title-non-favorite {
-	margin-left: 20px;
-}
-
 .group-title-wrapper__item i,
 .dashboard-title-wrapper__item i {
 	margin-left: 5px;
@@ -95,19 +99,41 @@
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-60) !important;
 }
 
-.dashboard-title-wrapper__buttons-wrapper {
-	width: 65px;
-	overflow: hidden;
-	display: block;
-}
-
 .dashboard-title-buttons {
 	display: flex;
 	flex-direction: row;
 }
 
-.dashboard-title-wrapper__buttons {
-	display: flex;
+.dashboard-title-constructor-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	line-height: 0;
+	cursor: pointer;
+}
+
+.dashboard-title-constructor-icon {
+	display: block;
+	width: 21px;
+	height: 21px;
+	background: none;
+	mask-image: url(/bitrix/images/biconnector/superset-dashboard-grid/edit-in-bi-constructor.svg);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	mask-size: contain;
+}
+
+.main-grid-row:hover .dashboard-title-constructor-icon,
+.main-grid-row.biconnector-constructor-hint-row .dashboard-title-constructor-icon {
+	background: var(--ui-color-palette-gray-40);
+}
+
+.dashboard-title-constructor-button:hover .dashboard-title-constructor-icon {
+	background: var(--ui-color-palette-gray-60);
 }
 
 .group-title-wrapper__item a i:hover,
@@ -116,50 +142,61 @@
 	transition: .2s !important;
 }
 
-.dashboard-title-input-danger {
-	border-color: var(--ui-field-color-danger, #FF5752) !important;
-}
-
 .group-title-wrapper__item a i,
 .dashboard-title-wrapper a i {
 	display: block;
 	cursor: pointer;
 }
 
-.group-title-wrapper__item__spinner,
-.dashboard-title-wrapper__spinner {
-	position: relative;
-	transition: transform 0.5s ease-in-out;
-	animation: .8s linear 0s normal none infinite running rotate;
-	-webkit-transform-origin: center;
-	transform-origin: center;
+#biconnector-dashboard-grid .dashboard-status-label .ui-label-inner {
+	font: var(--ui-font-size-xs)/var(--ui-font-size-xs) var(--ui-label-font);
 }
 
-.dashboard-title-edited td {
-	-webkit-animation: editedTowHoveredTd 900ms ease;
-	animation: editedTowHoveredTd 900ms ease;
+.dashboard-status-label.ui-label-primary {
+	border-color: var(--ui-color-design-outline-a2-stroke-alt);
 }
 
-@keyframes editedTowHoveredTd {
-	0% {
-		background-color: #FFF2D5;
-	}
+.dashboard-status-label.ui-label-primary .ui-label-inner {
+	color: var(--ui-color-design-outline-a2-content);
+}
 
-	60% {
-		background-color: #FFF2D5;
-	}
+.dashboard-status-label--ready {
+	border-color: var(--ui-color-accent-soft-border-green);
+}
 
-	100% {
-		background-color: #f6f8f9;
-	}
+.dashboard-status-label--ready .ui-label-inner {
+	color: var(--ui-color-accent-main-success-alt);
+}
+
+.dashboard-status-label.ui-label-default,
+.dashboard-status-label.ui-label-light {
+	border-color: var(--ui-color-design-outline-na-stroke);
+}
+
+.dashboard-status-label.ui-label-default .ui-label-inner,
+.dashboard-status-label.ui-label-light .ui-label-inner {
+	color: var(--ui-color-design-outline-na-content);
+}
+
+.dashboard-status-label.ui-label-danger {
+	border-color: var(--ui-color-design-outline-alert-stroke-alt);
+}
+
+.dashboard-status-label.ui-label-danger .ui-label-inner {
+	color: var(--ui-color-design-outline-alert-content);
 }
 
 .main-grid-row i {
 	transition: .0s;
 }
 
-.main-grid-row:hover i {
+.main-grid-row:hover i,
+.main-grid-row.biconnector-constructor-hint-row i {
 	--ui-icon-set__icon-color: var(--ui-color-palette-gray-40);
+}
+
+.main-grid-row.biconnector-constructor-hint-row td {
+	background-color: var(--ui-color-base-7) !important;
 }
 
 .dashboard-status-label-wrapper {
@@ -369,3 +406,7 @@
 	cursor: pointer;
 }
 
+.dashboard-share-link--banned {
+	color: var(--ui-color-base-3, #828B95);
+	cursor: default;
+}

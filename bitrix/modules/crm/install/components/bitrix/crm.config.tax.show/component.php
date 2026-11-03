@@ -14,8 +14,9 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityT
 	return;
 }
 
+$isSettingsHub = ($arParams['IS_SETTINGS_HUB'] ?? false) === true;
 $taxID = isset($arParams['TAX_ID']) ? strval($arParams['TAX_ID']) : '';
-if($taxID[0] <=0 )
+if (!$isSettingsHub && $taxID[0] <= 0)
 {
 	$taxIDParName = isset($arParams['TAX_ID_PAR_NAME']) ? strval($arParams['TAX_ID_PAR_NAME']) : '';
 	if($taxIDParName == '')
@@ -50,6 +51,14 @@ $arResult['BACK_URL'] = CComponentEngine::MakePathFromTemplate(
 	$arParams['PATH_TO_TAX_LIST'],
 	array()
 );
+
+if ($isSettingsHub)
+{
+	$arResult['PATH_TO_TAXRATE_LIST'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_TAX_SHOW'],
+		['tax_id' => $arResult['TAX_ID']],
+	);
+}
 
 $arResult['FIELDS'] = array();
 $arResult['FIELDS']['tab_props'][] = array(
@@ -114,6 +123,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_TAXRATE_SHOW' => $arResult['PATH_TO_TAXRATE_SHOW'],
 		'PATH_TO_TAXRATE_ADD' => $arResult['PATH_TO_TAXRATE_ADD'],
 		'PATH_TO_TAXRATE_EDIT' => $arResult['PATH_TO_TAXRATE_EDIT'],
+		'IS_SETTINGS_HUB' => $isSettingsHub,
 		'TAX_FORM_ID' => $arResult['FORM_ID'],
 		'TAX_ID' => $arResult['TAX_ID'],
 		'EDIT_MODE' => 'N'

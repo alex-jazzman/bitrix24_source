@@ -6,6 +6,11 @@ This library was generated with [Nx](https://nx.dev).
 
 Run `nx build flip-board-sdk` to build the library.
 
+## Mentions
+
+The board can ask the embedding application for the people that may be mentioned in comments.
+See [MENTIONS.md](./MENTIONS.md) for the setup, the interface and the request flow.
+
 ## AI Text Generation
 
 SDK allows the parent application (e.g. Bitrix) to handle AI text operations (fix grammar, translate) instead of direct backend requests.

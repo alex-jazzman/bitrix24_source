@@ -100,6 +100,26 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 
 				return state.collection[chatId]?.[subType]?.lastLoadFileId ?? 0;
 			},
+
+			/**
+			 * @function sidebarModel/sidebarFilesModel/getLastLoadFileDate
+			 * @param state
+			 * @return {function(number, string): string|null}
+			 */
+			getLastLoadFileDate: (state) => (chatId, subType) => {
+				logger.log('sidebarFilesModel: getLastLoadFileDate getter', chatId, subType);
+
+				return state.collection[chatId]?.[subType]?.lastLoadFileDate ?? null;
+			},
+
+			/**
+			 * @function sidebarModel/sidebarFilesModel/getCollectionKeys
+			 * @param state
+			 * @return {function(number): string[]}
+			 */
+			getCollectionKeys: (state) => (chatId) => {
+				return Object.keys(state.collection[chatId] ?? {});
+			},
 		},
 		actions: {
 			/**
@@ -119,7 +139,15 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 			 * @function sidebarModel/sidebarFilesModel/setFromPagination
 			 */
 			setFromPagination: (store, payload) => {
-				const { chatId, files, subType, hasNextPage, isHistoryLimitExceeded, lastLoadFileId } = payload;
+				const {
+					chatId,
+					files,
+					subType,
+					hasNextPage,
+					isHistoryLimitExceeded,
+					lastLoadFileId,
+					lastLoadFileDate,
+				} = payload;
 
 				if (!Type.isArray(files) || !Type.isNumber(chatId))
 				{
@@ -140,12 +168,13 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 
 				if (lastLoadFileId)
 				{
-					store.commit('setLastLoadFileId', {
-						actionName: 'setLastLoadFileId',
+					store.commit('setLastLoadFile', {
+						actionName: 'setLastLoadFile',
 						data: {
 							chatId,
 							subType,
 							lastLoadFileId,
+							lastLoadFileDate,
 						},
 					});
 				}
@@ -341,13 +370,15 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 			},
 
 			/**
+			 * @desc The page boundary is a pair: the date order continues by the date and resolves the
+			 * ties by the record number, and the server refuses one half of the pair without the other.
 			 * @param state
-			 * @param {MutationPayload<SidebarFilesSetHasNextPageData, SidebarFilesSetHasNextPageActions>} payload
+			 * @param {MutationPayload<SidebarFilesSetLastLoadFileData, SidebarFilesSetLastLoadFileActions>} payload
 			 */
-			setLastLoadFileId: (state, payload) => {
-				logger.log('sidebarFilesModel: setLastLoadFileId mutation', payload);
+			setLastLoadFile: (state, payload) => {
+				logger.log('sidebarFilesModel: setLastLoadFile mutation', payload);
 
-				const { chatId, subType, lastLoadFileId } = payload.data;
+				const { chatId, subType, lastLoadFileId, lastLoadFileDate } = payload.data;
 
 				if (!state.collection[chatId])
 				{
@@ -360,6 +391,7 @@ jn.define('im/messenger/model/sidebar/src/files/model', (require, exports, modul
 				}
 
 				state.collection[chatId][subType].lastLoadFileId = lastLoadFileId;
+				state.collection[chatId][subType].lastLoadFileDate = lastLoadFileDate ?? null;
 			},
 		},
 	};

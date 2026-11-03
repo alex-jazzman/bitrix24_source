@@ -19,7 +19,7 @@ export const DataPanel = {
 	},
 	computed:
 	{
-		...mapGetters(['hasFile', 'isSystem', 'connectionEditing']),
+		...mapGetters(['hasFile', 'isSystem', 'isEditingForbidden', 'connectionEditing']),
 		isCsv()
 		{
 			return this.sourceId === 'csv';
@@ -74,7 +74,7 @@ export const DataPanel = {
 		},
 		onPickFile(file)
 		{
-			if (!this.uploadController)
+			if (!this.uploadController || this.isEditingForbidden)
 			{
 				return;
 			}

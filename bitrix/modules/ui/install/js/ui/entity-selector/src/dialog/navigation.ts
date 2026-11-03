@@ -12,6 +12,7 @@ export class Navigation
 	lockedTab: Tab | null = null;
 	enabled: boolean = false;
 	#focusZone: FocusZone | null = null;
+	#isKeyHandled: boolean = false;
 
 	// IE/Edge compatible event names
 	static keyMap: Record<string, string> = {
@@ -309,12 +310,16 @@ export class Navigation
 			return;
 		}
 
-		const handler: Function | null | undefined = (this as unknown as Record<string, Function | undefined>)[`handle${keyName}Press`];
+		const handler: ((event: KeyboardEvent) => void) | undefined = (
+			this as unknown as Record<string, ((event: KeyboardEvent) => void) | undefined>
+		)[`handle${keyName}Press`];
+
 		if (handler)
 		{
+			this.#isKeyHandled = false;
 			handler.call(this, event);
 
-			if (keyName !== 'Tab')
+			if (this.#isKeyHandled && keyName !== 'Tab')
 			{
 				this.lockTab();
 			}
@@ -348,6 +353,7 @@ export class Navigation
 		}
 
 		event.preventDefault();
+		this.#isKeyHandled = true;
 	}
 
 	handleArrowUpPress(event: KeyboardEvent): void
@@ -372,6 +378,7 @@ export class Navigation
 		}
 
 		event.preventDefault();
+		this.#isKeyHandled = true;
 	}
 
 	handleArrowRightPress(event: KeyboardEvent): void
@@ -383,6 +390,7 @@ export class Navigation
 		}
 
 		event.preventDefault();
+		this.#isKeyHandled = true;
 	}
 
 	handleArrowLeftPress(event: KeyboardEvent): void
@@ -397,6 +405,7 @@ export class Navigation
 		{
 			activeNode.collapse();
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 		else
 		{
@@ -405,6 +414,7 @@ export class Navigation
 			{
 				this.focusOnNode(parentNode);
 				event.preventDefault();
+				this.#isKeyHandled = true;
 			}
 		}
 	}
@@ -418,6 +428,7 @@ export class Navigation
 		}
 
 		event.preventDefault();
+		this.#isKeyHandled = true;
 	}
 
 	handleSpacePress(event: KeyboardEvent): void
@@ -434,6 +445,7 @@ export class Navigation
 			}
 
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 	}
 
@@ -451,6 +463,7 @@ export class Navigation
 			}
 
 			event.preventDefault();
+			this.#isKeyHandled = true;
 		}
 	}
 }

@@ -8,7 +8,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const { AnalyticsHelper } = require('im/messenger/provider/services/analytics/helper');
@@ -24,6 +24,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 		[MessageMenuActionType.askCopilot]: Analytics.Event.askCopilot,
 		[MessageMenuActionType.feedback]: Analytics.Event.addFeedback,
 		[MessageMenuActionType.createTask]: Analytics.Event.clickCreateTask,
+		[MessageMenuActionType.createAiTask]: Analytics.Event.clickCreateAiTask,
 		[MessageMenuActionType.createEvent]: Analytics.Event.clickCreateEvent,
 	};
 
@@ -49,7 +50,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				return;
 			}
 
-			const category = AnalyticsHelper.getCategoryByChatType(dialogModel.type);
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
 			const event = actionIdByEventIdCollection[params.actionId];
 			const p1 = AnalyticsHelper.getP1ByDialog(dialogModel);
 
@@ -82,7 +83,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				return;
 			}
 
-			const category = AnalyticsHelper.getCategoryByChatType(dialogModel.type);
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
 			const event = actionIdByEventIdCollection[params.actionId];
 			const p1 = AnalyticsHelper.getP1ByDialog(dialogModel);
 
@@ -116,7 +117,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				return;
 			}
 
-			const category = dialogModel.type === DialogType.copilot ? Analytics.Category.copilot : Analytics.Category.chat;
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
 
 			const event = actionIdByEventIdCollection[params.actionId];
 			const p1 = AnalyticsHelper.getP1ByDialog(dialogModel);
@@ -125,7 +126,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				.setTool(Analytics.Tool.im)
 				.setCategory(category)
 				.setEvent(event)
-				.setSection(AnalyticsHelper.getSectionCode())
+				.setSection(AnalyticsHelper.getFolderSectionCode())
 				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(p1)
 				;
@@ -135,7 +136,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				analytics.setElement(Analytics.Element.more);
 			}
 
-			if (dialogModel.type === DialogType.copilot && !Feature.isBitrixGptV2Enabled)
+			if (dialogModel.type === DialogType.copilot && !Feature.isBitrixGptV2Enabled && category !== Analytics.Category.project)
 			{
 				this.#setCopilotAnalyticsParams(analytics, params.dialogId);
 			}
@@ -161,7 +162,7 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				return;
 			}
 
-			const category = AnalyticsHelper.getCategoryByChatType(dialogModel.type);
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
 			const event = actionIdByEventIdCollection[params.actionId];
 			const type = messageHelper.getComponentId();
 			const p1 = AnalyticsHelper.getP1ByDialog(dialogModel);
@@ -174,7 +175,6 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 				.setSection(Analytics.Section.chatWindow)
 				.setSubSection(Analytics.SubSection.contextMenu)
 				.setP1(p1)
-				.setP5(AnalyticsHelper.getFormattedChatId(dialogModel.chatId))
 				;
 
 			if (params.isNestedSection)
@@ -184,11 +184,11 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 
 			if (dialogModel.type === DialogType.copilot)
 			{
-				if (!Feature.isBitrixGptV2Enabled)
+				if (!Feature.isBitrixGptV2Enabled && category !== Analytics.Category.project)
 				{
 					this.#setCopilotAnalyticsParams(analytics, params.dialogId);
 				}
-				analytics.setSection(AnalyticsHelper.getSectionCode());
+				analytics.setSection(AnalyticsHelper.getFolderSectionCode());
 			}
 
 			analytics.send();
@@ -207,20 +207,22 @@ jn.define('im/messenger/provider/services/analytics/src/message-menu', (require,
 			}
 			const event = actionIdByEventIdCollection[params.actionId];
 
+			// The AI task starts on the value web already reports for this menu. The two older events
+			// keep from_context_menu: realigning them would split their collected series in two.
+			const subSection = params.actionId === MessageMenuActionType.createAiTask
+				? Analytics.SubSection.contextMenu
+				: Analytics.SubSection.fromContextMenu
+			;
+
+			const category = AnalyticsHelper.getCategoryByChat(dialogModel);
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.Tool.im)
-				.setCategory(AnalyticsHelper.getCategoryByChatType(dialogModel.type))
+				.setCategory(category)
 				.setEvent(event)
 				.setSection(Analytics.Section.chatWindow)
-				.setSubSection(Analytics.SubSection.fromContextMenu)
+				.setSubSection(subSection)
 				.setP1(AnalyticsHelper.getP1ByDialog(dialogModel))
 				.setP2(AnalyticsHelper.getP2ByUserType());
-
-			const isCollab = DialogHelper.createByDialogId(dialogModel.dialogId)?.isCollab;
-			if (isCollab)
-			{
-				analytics.setP4(AnalyticsHelper.getFormattedCollabIdByDialogId(dialogModel.dialogId));
-			}
 
 			if (params.isNestedSection)
 			{

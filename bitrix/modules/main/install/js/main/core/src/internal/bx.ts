@@ -1,4 +1,4 @@
-const bxTmp = (window as any).BX;
+const bxTmp: any = (window as any).BX;
 
 (window as any).BX = function(node: any)
 {

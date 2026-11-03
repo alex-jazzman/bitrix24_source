@@ -29,10 +29,6 @@ export const WorkspacePage = {
 		{
 			this.$router.replace({ name: ROUTE_NAME_HOME });
 		},
-		onDeleted(): void
-		{
-			this.$router.replace({ name: ROUTE_NAME_HOME });
-		},
 		onNotFound(): void
 		{
 			const message = Loc.getMessage('NOTE_WORKSPACE_NOT_FOUND') || '';
@@ -52,7 +48,6 @@ export const WorkspacePage = {
 			:collection-id="collectionId"
 			@open="onOpen"
 			@archived="onArchived"
-			@deleted="onDeleted"
 			@not-found="onNotFound"
 		/>
 	`,

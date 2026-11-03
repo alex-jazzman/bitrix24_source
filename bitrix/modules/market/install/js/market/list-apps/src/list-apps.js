@@ -106,7 +106,7 @@ export const ListApps = {
 
 			return this.$root.result.CURRENT_APPS_CNT;
 		},
-		...mapState(marketInstallState, ['installStep', 'timer', ]),
+		...mapState(marketInstallState, ['installStep']),
 	},
 	mounted: function () {
 		this.setCurrentSort();
@@ -126,7 +126,9 @@ export const ListApps = {
 		this.$Bitrix.eventEmitter.subscribe('market:loadContentFinish', this.loadContentFinish);
 	},
 	methods: {
-		...mapActions(marketInstallState, ['resetInstallStep']),
+		...mapActions(marketInstallState, [
+			'resetInstallStep', 'stopOpenAppAfterInstall', 'isInstallPopupEvent',
+		]),
 		isSelectedTag: function (tag) {
 			return tag === this.selectedTag;
 		},
@@ -161,12 +163,14 @@ export const ListApps = {
 		bindPopupEvent: function () {
 			EventEmitter.subscribe('BX.Main.Popup:onClose', this.onClosePopup);
 		},
-		onClosePopup: function () {
-			if (this.installStep === 2 || this.installStep === 3) {
-				clearTimeout(this.timer);
-				this.$root.updatePage(this.MarketLinks.installedLink(), 'list');
-				this.resetInstallStep();
+		onClosePopup: function (event) {
+			if (!this.isInstallPopupEvent(event) || (this.installStep !== 2 && this.installStep !== 3)) {
+				return;
 			}
+
+			this.stopOpenAppAfterInstall();
+			this.$root.updatePage(this.MarketLinks.installedLink(), 'list');
+			this.resetInstallStep();
 		},
 		initBottomLoader: function () {
 			if (!this.$refs.marketCatalogBottomLoader) {

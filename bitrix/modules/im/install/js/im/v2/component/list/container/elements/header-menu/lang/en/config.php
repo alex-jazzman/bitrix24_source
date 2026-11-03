@@ -1,0 +1,2 @@
+<?php
+$MESS["IM_LIST_CONTAINER_HEADER_MENU_FILTER_ARIA"] = "Chat filter";

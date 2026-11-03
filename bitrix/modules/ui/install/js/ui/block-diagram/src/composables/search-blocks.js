@@ -29,8 +29,18 @@ export function useSearchBlocks(optionParams: UseSearchBlocksOptions): UseSearch
 	const seachText: string = ref('');
 	const foundBlocks: Array<DiagramBlock> = ref([]);
 
-	function onSearchBlocks(searchText: string): void
+	// A search given up inside the delay leaves a pass already scheduled, and `debounce` has no way
+	// to drop it. Landing after the search is over, that pass refills the results, and whoever
+	// watches them takes the highlight over and moves the camera with nobody searching any more.
+	let isScheduledSearchDropped = false;
+
+	function searchBlocks(searchText: string): void
 	{
+		if (isScheduledSearchDropped)
+		{
+			return;
+		}
+
 		seachText.value = searchText;
 		foundBlocks.value = [];
 
@@ -47,8 +57,17 @@ export function useSearchBlocks(optionParams: UseSearchBlocksOptions): UseSearch
 		});
 	}
 
+	const runSearchBlocks = debounce(searchBlocks, options.delay);
+
+	function onSearchBlocks(searchText: string): void
+	{
+		isScheduledSearchDropped = false;
+		runSearchBlocks(searchText);
+	}
+
 	function onClearSearch(): void
 	{
+		isScheduledSearchDropped = true;
 		seachText.value = '';
 		foundBlocks.value = [];
 	}
@@ -56,7 +75,7 @@ export function useSearchBlocks(optionParams: UseSearchBlocksOptions): UseSearch
 	return {
 		seachText,
 		foundBlocks,
-		onSearchBlocks: debounce(onSearchBlocks, options.delay),
+		onSearchBlocks,
 		onClearSearch,
 	};
 }

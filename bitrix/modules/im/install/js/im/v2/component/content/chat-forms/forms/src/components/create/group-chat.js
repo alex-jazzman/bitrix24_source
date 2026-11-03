@@ -10,9 +10,8 @@ import {
 	CreateChatHeading,
 	SettingsSection,
 	RightsSection,
-	AppearanceSection,
 } from 'im.v2.component.content.chat-forms.elements';
-import { PopupType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
+import { PopupType, ChatType, EventType, Layout, type UserRole, type OnLayoutChangeEvent, type SelectorEntityItem } from 'im.v2.const';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -28,7 +27,6 @@ export const GroupChatCreation = {
 		ChatMembersSelector,
 		SettingsSection,
 		RightsSection,
-		AppearanceSection,
 		ButtonPanel,
 		CreateChatHeading,
 	},
@@ -55,6 +53,10 @@ export const GroupChatCreation = {
 				manageGuestInvites: '',
 			},
 		};
+	},
+	computed:
+	{
+		ChatType: () => ChatType,
 	},
 	watch:
 	{
@@ -225,7 +227,11 @@ export const GroupChatCreation = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-chat-forms__content --chat" @scroll="onScroll">
+		<div
+			class="bx-im-content-chat-forms__content --chat"
+			data-testid="im-chat-form-create-chat"
+			@scroll="onScroll"
+		>
 			<div class="bx-im-content-chat-forms__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
@@ -235,6 +241,7 @@ export const GroupChatCreation = {
 				<ChatMembersSelector 
 					:undeselectedItems="undeselectedItems" 
 					:chatMembers="chatMembers"
+					:chatType="ChatType.chat"
 					:allowTeamsSelect="true"
 					@membersChange="onMembersChange"
 				/>

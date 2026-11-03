@@ -1628,7 +1628,7 @@ var BitrixDisk = {
 		this.mySlice = {
 			value: this.mySpace,
 			pattern : {
-				"url" : this.pathToImages + "/texture-blue.png",
+				"url" : this.pathToImages + "/texture-blue.webp",
 				"width": 250,
 				"height": 250
 			}
@@ -1639,7 +1639,7 @@ var BitrixDisk = {
 		this.companySlice = {
 			value: companySpace,
 			pattern : {
-				"url" : this.pathToImages + "/texture-green.png",
+				"url" : this.pathToImages + "/texture-green.webp",
 				"width": 250,
 				"height": 250
 			}
@@ -1648,7 +1648,7 @@ var BitrixDisk = {
 		this.freeSlice = {
 			value: this.freeSpace,
 			pattern : {
-				"url" : this.pathToImages + "/texture.png",
+				"url" : this.pathToImages + "/texture.webp",
 				"width": 250,
 				"height": 250
 			}

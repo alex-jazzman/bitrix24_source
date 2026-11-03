@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'apptheme/extended',
+		'tokens',
+		'ui-system/typography/text',
 		'assets/common',
 		'layout/ui/file',
 		'layout/ui/optimized-grid-view',
@@ -12,6 +13,6 @@ return [
 		'utils/object',
 	],
 	'bundle' => [
-		'./grid-view-adapter',
+		'./src/grid-view-adapter',
 	]
 ];

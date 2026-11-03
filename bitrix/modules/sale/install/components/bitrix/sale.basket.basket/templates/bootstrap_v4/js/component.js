@@ -37,6 +37,24 @@
 			this.templates = {};
 			this.nodes = {};
 
+			/** Selector of the control that held the focus before the last redraw */
+			this.focusMarker = null;
+
+			/** Whether the focus stood inside the node of the last redraw, named control or not */
+			this.focusWasInside = false;
+
+			/** Focus zones of the variants of a product (itemId => array) */
+			this.skuFocusZones = {};
+
+			/** Variants chosen and not yet announced (itemId => name of the variant) */
+			this.skuAnnounce = {};
+
+			/** The coupon action ({action, coupon}) whose answer is not announced yet */
+			this.couponAnnounce = false;
+
+			/** Keeps the walk inside the layer of a picture while it is open */
+			this.imageFocusTrap = null;
+
 			/** Object of all basket items (itemId => itemArray) */
 			this.items = {};
 
@@ -143,6 +161,205 @@
 			return parent.querySelectorAll(additionalFilter + '[data-entity="' + entity + '"]');
 		},
 
+		getAccessibility: function()
+		{
+			return (BX.UI && BX.UI.Accessibility) || null;
+		},
+
+		announce: function(text, mode)
+		{
+			var accessibility = this.getAccessibility();
+
+			if (!accessibility || !BX.type.isNotEmptyString(text))
+			{
+				return;
+			}
+
+			accessibility.LiveAnnouncer.announce(text, mode || 'polite');
+		},
+
+		// The name of a variant is built in the markup: the value itself, its code when the value carries
+		// no name, and the phrase of an unavailable offer on top of that. The announcement speaks of the
+		// choice, so the tail about availability is left out - the row tells that state on its own.
+		getSkuName: function(node)
+		{
+			if (!BX.type.isDomNode(node))
+			{
+				return '';
+			}
+
+			var name = node.getAttribute('aria-label') || '';
+			var notAvailable = BX.message('SBB_SCU_NOT_AVAILABLE_ARIA') || '';
+			var tail = ', ' + notAvailable;
+
+			if (notAvailable && name === notAvailable)
+			{
+				name = '';
+			}
+			else if (notAvailable && name.slice(-tail.length) === tail)
+			{
+				name = name.slice(0, -tail.length);
+			}
+
+			name = BX.util.trim(name);
+
+			return name || BX.util.trim(node.getAttribute('data-sku-name') || '');
+		},
+
+		getPlainText: function(node)
+		{
+			if (!node)
+			{
+				return '';
+			}
+
+			if (!BX.type.isDomNode(node))
+			{
+				node = BX.create('SPAN', {html: String(node)});
+			}
+
+			return BX.util.trim(node.innerText || node.textContent || '');
+		},
+
+		rememberFocus: function(container)
+		{
+			this.focusMarker = null;
+			this.focusWasInside = false;
+
+			var active = document.activeElement;
+
+			if (
+				!BX.type.isDomNode(container)
+				|| !BX.type.isDomNode(active)
+				|| !container.contains(active)
+			)
+			{
+				return false;
+			}
+
+			this.focusWasInside = true;
+
+			// A redraw builds the node from the template, so a mark left on the live node dies with it.
+			// What survives the redraw is the description of the control: it comes back under the same
+			// data-entity, and a variant of a product under its own value on top of that.
+			var entity = active.getAttribute('data-entity');
+
+			if (!entity)
+			{
+				return false;
+			}
+
+			// The removal buttons of coupons share one data-entity: without the coupon the focus would
+			// land on the removal of the next coupon.
+			var marker = this.getAttributeSelector(active, 'data-entity');
+			marker += this.getAttributeSelector(active, 'data-value-id');
+			marker += this.getAttributeSelector(active, 'data-coupon');
+
+			this.focusMarker = marker;
+
+			return true;
+		},
+
+		getAttributeSelector: function(node, name)
+		{
+			var value = node.getAttribute(name);
+
+			if (!value)
+			{
+				return '';
+			}
+
+			return '[' + name + '="' + this.escapeSelectorValue(value) + '"]';
+		},
+
+		escapeSelectorValue: function(value)
+		{
+			if (window.CSS && BX.type.isFunction(window.CSS.escape))
+			{
+				return window.CSS.escape(value);
+			}
+
+			return String(value).replace(/["\\]/g, '\\$&');
+		},
+
+		restoreFocus: function(container)
+		{
+			var marker = this.focusMarker;
+			var wasInside = this.focusWasInside;
+
+			this.focusMarker = null;
+			this.focusWasInside = false;
+
+			// A control of the row carries no `data-entity` of its own - the link to the product is one of
+			// those - so the redraw leaves no marker to aim at. The focus still stood in the row and has
+			// to come back to it.
+			if (!wasInside || !BX.type.isDomNode(container))
+			{
+				return false;
+			}
+
+			var options = {preventScroll: true};
+			var accessibility = this.getAccessibility();
+
+			if (marker)
+			{
+				if (accessibility && accessibility.FocusNavigator.focusBySelector(container, marker, options))
+				{
+					return true;
+				}
+
+				// The navigator passes over a control it reads as invisible, and a row redrawn under the
+				// loading overlay is one of those.
+				var target = container.querySelector(marker);
+
+				if (BX.type.isDomNode(target))
+				{
+					target.focus(options);
+
+					return true;
+				}
+			}
+
+			// The redraw may bring back another set of controls: a removed row turns into the offer to
+			// restore it and back again, and the control the focus stood on is gone with the previous
+			// shape of the row. The focus lands on the box that came instead and not on the first
+			// control inside it. What came instead undoes what just happened - the offer to restore a
+			// removed row, the row itself after it is back - and a key held long enough to repeat, or
+			// pressed twice, would land on that control and undo the action at once. The cross of
+			// removal then looks as if it answers the space key alone: space activates a button but not
+			// the link of the offer, so the removal of a row stays. A box that takes the focus says so
+			// with a tabindex of its own; the panel of the total has none and keeps the walk going from
+			// the first stop of it, the way it always did.
+			if (container.hasAttribute('tabindex'))
+			{
+				container.focus(options);
+
+				return true;
+			}
+
+			if (!accessibility)
+			{
+				return false;
+			}
+
+			if (accessibility.FocusNavigator.focusFirst(container, options))
+			{
+				return true;
+			}
+
+			// The same blind spot as above: under the loading overlay the navigator sees no stop at all.
+			var first = container.querySelector(accessibility.FocusNavigator.FOCUSABLE_SELECTOR);
+
+			if (BX.type.isDomNode(first))
+			{
+				first.focus(options);
+
+				return true;
+			}
+
+			return false;
+		},
+
 		bindInitialEvents: function()
 		{
 			this.bindWarningEvents();
@@ -191,10 +408,12 @@
 				if (entities[i].getAttribute('data-filter') === entityName)
 				{
 					BX.addClass(entities[i], 'active');
+					entities[i].setAttribute('aria-pressed', 'true');
 				}
-				else if (BX.hasClass(entities[i], 'active'))
+				else
 				{
 					BX.removeClass(entities[i], 'active');
+					entities[i].setAttribute('aria-pressed', 'false');
 				}
 			}
 
@@ -418,15 +637,92 @@
 					{
 						if (totalNodes.hasOwnProperty(i) && BX.type.isDomNode(totalNodes[i]))
 						{
+							this.rememberFocus(totalNodes[i]);
+
 							totalNodes[i].innerHTML = totalRender;
 
+							this.makeCheckoutReasonUnique(totalNodes[i], i);
 							this.bindTotalEvents(totalNodes[i]);
+							this.restoreFocus(totalNodes[i]);
 						}
 					}
 				}
 			}
 
+			this.announceCouponResult(totalNodes && totalNodes[0]);
 			this.checkStickyHeaders();
+		},
+
+		// One rendered panel goes into both places of the page, so the node holding the reason arrives
+		// under the same id twice. Each button is pointed at the node of its own panel.
+		makeCheckoutReasonUnique: function(totalNode, suffix)
+		{
+			var reason = totalNode.querySelector('#basket-checkout-disabled-reason');
+
+			if (!reason)
+			{
+				return;
+			}
+
+			reason.id = 'basket-checkout-disabled-reason-' + suffix;
+
+			var button = this.getEntity(totalNode, 'basket-checkout-button');
+
+			if (button && button.getAttribute('aria-describedby'))
+			{
+				button.setAttribute('aria-describedby', reason.id);
+			}
+		},
+
+		// The panel is replaced whole, so the block of the answer arrives already filled and a live
+		// region has nothing to report. One panel speaks: the two of them carry the same list, and only
+		// the coupon of the last action is told - the others were announced when they came.
+		announceCouponResult: function(totalNode)
+		{
+			var request = this.couponAnnounce;
+
+			if (!request)
+			{
+				return;
+			}
+
+			this.couponAnnounce = false;
+
+			if (!BX.type.isDomNode(totalNode))
+			{
+				return;
+			}
+
+			var text = this.getPlainText(this.findCouponText(totalNode, request.coupon));
+
+			if (text)
+			{
+				this.announce(BX.message('SBB_COUPON_RESULT_ARIA') + ' ' + text);
+			}
+			else if (request.action === 'remove')
+			{
+				this.announce(BX.message('SBB_COUPON_REMOVED_ARIA').replace('#COUPON#', request.coupon));
+			}
+		},
+
+		findCouponText: function(totalNode, coupon)
+		{
+			var buttons = this.getEntities(totalNode, 'basket-coupon-delete');
+			var code = String(coupon).toLowerCase();
+
+			for (var i = 0; i < buttons.length; i++)
+			{
+				if (BX.util.trim(buttons[i].getAttribute('data-coupon') || '').toLowerCase() !== code)
+				{
+					continue;
+				}
+
+				var alert = BX.findParent(buttons[i], {className: 'basket-coupon-alert'}, totalNode);
+
+				return alert ? alert.querySelector('.basket-coupon-text') : null;
+			}
+
+			return null;
 		},
 
 		showItemsCount: function()
@@ -562,6 +858,14 @@
 			{
 				BX.bind(this.getEntity(node, 'basket-checkout-button'), 'click', BX.proxy(this.checkOutAction, this));
 			}
+			else
+			{
+				BX.bind(
+					this.getEntity(node, 'basket-checkout-button'),
+					'click',
+					BX.proxy(this.announceCheckoutDisabled, this)
+				);
+			}
 
 			BX.bind(this.getEntity(node, 'basket-coupon-input'), 'change', BX.proxy(this.addCouponAction, this));
 			BX.bind(this.getEntity(node, 'basket-coupon-input'), 'paste', BX.proxy(this.pasteCouponAction, this));
@@ -579,13 +883,27 @@
 			document.location.href = this.params.PATH_TO_ORDER;
 		},
 
+		// The barred button keeps its place in the walk, so pressing it has to say why it leads nowhere.
+		announceCheckoutDisabled: function()
+		{
+			var button = BX.proxy_context;
+			var reasonId = BX.type.isDomNode(button) ? button.getAttribute('aria-describedby') : '';
+
+			this.announce(this.getPlainText(reasonId ? BX(reasonId) : null), 'assertive');
+		},
+
 		addCouponAction: function(event)
 		{
 			var target = BX.getEventTarget(event);
 			if (target && target.value)
 			{
 				this.actionPool.addCoupon(target.value);
-				target.disabled = true;
+
+				// Not `disabled`: a disabled field leaves the tree of the reader, and the focus of the
+				// buyer drops to the body with it. Read only blocks a second sending just as well, the
+				// field keeps the focus, and the redraw of the panel brings it back by its marker.
+				target.readOnly = true;
+				this.couponAnnounce = {action: 'add', coupon: BX.util.trim(target.value)};
 			}
 		},
 
@@ -602,6 +920,7 @@
 			if (value)
 			{
 				this.actionPool.removeCoupon(value);
+				this.couponAnnounce = {action: 'remove', coupon: value};
 			}
 		},
 
@@ -1066,6 +1385,8 @@
 				var generalWarningNode = this.getEntity(warningNode, 'basket-general-warnings');
 				var itemsWarningsNode = this.getEntity(warningNode, 'basket-item-warnings');
 
+				var wasHidden = warningNode.style.display === 'none';
+
 				if (
 					(!BX.type.isDomNode(generalWarningNode) || generalWarningNode.style.display === 'none')
 					&& (!BX.type.isDomNode(itemsWarningsNode) || itemsWarningsNode.style.display === 'none')
@@ -1076,8 +1397,36 @@
 				else
 				{
 					warningNode.style.display = '';
+
+					if (wasHidden)
+					{
+						// The text goes into the block while the block is still hidden, so the live region
+						// has nothing to report: a reader only hears what changes under its eyes. Once the
+						// block is up, the region answers for every further change by itself.
+						this.announceWarningBlock(warningNode);
+					}
 				}
 			}
+		},
+
+		announceWarningBlock: function(warningNode)
+		{
+			var nodes = [
+				this.getEntity(warningNode, 'basket-general-warnings'),
+				this.getEntity(warningNode, 'basket-item-warnings')
+			];
+
+			var text = '';
+
+			for (var i = 0; i < nodes.length; i++)
+			{
+				if (BX.type.isDomNode(nodes[i]) && nodes[i].style.display !== 'none')
+				{
+					text += (text ? ' ' : '') + this.getPlainText(nodes[i]);
+				}
+			}
+
+			this.announce(text);
 		},
 
 		checkBasketItemWarnings: function(itemData, warnings)
@@ -1442,6 +1791,15 @@
 									delete this.result.TOTAL_RENDER_DATA.PRICE_NEW;
 									this.result.TOTAL_RENDER_DATA.PRICE_FORMATED = formattedPrice;
 									delete this.result.TOTAL_RENDER_DATA.PRICE_FORMATED_NEW;
+
+									// The panel of the total is a named area and not a live one: a reader says nothing
+									// of its own when the sum inside it is rewritten.
+									this.announce(
+										BX.message('SBB_TOTAL_CHANGED_ARIA').replace(
+											'#TOTAL#',
+											this.getPlainText(formattedPrice)
+										)
+									);
 								}
 							}
 						}
@@ -1455,6 +1813,41 @@
 		getFormatPrice: function(price, currency)
 		{
 			return BX.Currency.currencyFormat(price, currency, true);
+		},
+
+		// The row holding the focus is gone for good, and the browser drops the focus to the body: the
+		// walk would start again from the top of the page, above the header of the shop.
+		focusAfterRemoval: function()
+		{
+			var accessibility = this.getAccessibility();
+
+			if (!accessibility)
+			{
+				return;
+			}
+
+			var options = {preventScroll: true};
+			var containers = [
+				this.getCacheNode(this.ids.itemList),
+				this.getCacheNode(this.ids.basketRoot)
+			];
+
+			for (var i = 0; i < containers.length; i++)
+			{
+				if (
+					BX.type.isDomNode(containers[i])
+					&& accessibility.FocusNavigator.focusFirst(containers[i], options)
+				)
+				{
+					return;
+				}
+			}
+
+			// The last row of the cart has just left, and no control of it is there to step on.
+			if (BX.type.isDomNode(containers[1]))
+			{
+				accessibility.FocusNavigator.focusContainer(containers[1], options);
+			}
 		},
 
 		deleteBasketItems: function(items, restore, final)
@@ -1490,8 +1883,19 @@
 			}
 			else
 			{
+				var itemNode = BX(this.ids.item + itemId);
+				var focusWasInside = BX.type.isDomNode(itemNode) && itemNode.contains(document.activeElement);
+
 				this.changeShownItem(itemId);
-				BX.remove(BX(this.ids.item + itemId));
+				// The zones of the row watch its own nodes, so nothing rebinds them once the row is
+				// gone: left alive they hold the detached markup and an observer over it.
+				this.dropSkuFocusZones(itemId);
+				BX.remove(itemNode);
+
+				if (focusWasInside)
+				{
+					this.focusAfterRemoval();
+				}
 			}
 
 			if (final)
@@ -1607,9 +2011,17 @@
 					oldHeight = nodeAligner.clientHeight;
 				}
 
+				var hadRestore = BX.type.isDomNode(this.getEntity(basketItemNode, 'basket-item-restore-button'));
+				var previousWarnings = this.getItemWarningTexts(basketItemNode);
+
+				this.rememberFocus(basketItemNode);
+
+				// The old row leaves the page only after the focus has moved over to the new one: a focused
+				// node removed first drops the focus to the body, and the reader takes that for leaving
+				// the table. For that moment both rows share the id, and the lookups by it below find the
+				// new one, as it stands first.
 				var basketItemHtml = this.renderBasketItem(basketItemTemplate, this.items[itemId]);
 				basketItemNode.insertAdjacentHTML('beforebegin', basketItemHtml);
-				BX.remove(basketItemNode);
 
 				if (oldHeight)
 				{
@@ -1624,10 +2036,68 @@
 
 				this.bindBasketItemEvents(this.items[itemId]);
 
+				this.restoreFocus(BX(this.ids.item + itemId));
+				BX.remove(basketItemNode);
+
+				this.announceItemRedraw(itemId, hadRestore);
+				this.announceNewItemWarnings(BX(this.ids.item + itemId), previousWarnings);
+
 				if (this.filter.isActive())
 				{
 					this.filter.highlightSearchMatch(this.items[itemId]);
 				}
+			}
+		},
+
+		announceItemRedraw: function(itemId, hadRestore)
+		{
+			if (this.skuAnnounce[itemId])
+			{
+				var variant = this.skuAnnounce[itemId];
+
+				delete this.skuAnnounce[itemId];
+
+				this.announce(
+					BX.message('SBB_SCU_CHANGED_ARIA')
+						.replace('#VARIANT#', variant)
+						.replace('#PRICE#', this.getPlainText(this.items[itemId] && this.items[itemId].PRICE_FORMATED))
+				);
+
+				return;
+			}
+
+			var hasRestore = !!(this.items[itemId] && this.items[itemId].SHOW_RESTORE);
+
+			if (hasRestore === hadRestore)
+			{
+				return;
+			}
+
+			this.announce(BX.message(hasRestore ? 'SBB_ITEM_REMOVED_ARIA' : 'SBB_ITEM_RESTORED_ARIA'));
+		},
+
+		getItemWarningTexts: function(basketItemNode)
+		{
+			var nodes = BX.type.isDomNode(basketItemNode)
+				? this.getEntities(basketItemNode, 'basket-item-warning-text')
+				: [];
+
+			return Array.prototype.map.call(nodes, function(node) {
+				return this.getPlainText(node);
+			}, this);
+		},
+
+		// The warning of a row carries no live role: the row is replaced whole on every redraw, and a role
+		// on the inserted node would have some readers repeat the warning each time. It is spoken once here.
+		announceNewItemWarnings: function(basketItemNode, previousWarnings)
+		{
+			var added = this.getItemWarningTexts(basketItemNode).filter(function(text) {
+				return text !== '' && !BX.util.in_array(text, previousWarnings);
+			});
+
+			if (added.length)
+			{
+				this.announce(added.join(' '));
 			}
 		},
 
@@ -1749,9 +2219,10 @@
 				var measureRatio = isQuantityFloat ? parseFloat(itemData.MEASURE_RATIO) : parseInt(itemData.MEASURE_RATIO);
 
 				var quantity = parseFloat((currentQuantity + measureRatio).toFixed(5));
-				quantity = this.getCorrectQuantity(itemData, quantity);
+				var correctedQuantity = this.getCorrectQuantity(itemData, quantity);
 
-				this.setQuantity(itemData, quantity);
+				this.announceQuantityCorrection(itemData, quantity, correctedQuantity);
+				this.setQuantity(itemData, correctedQuantity);
 			}
 		},
 
@@ -1769,9 +2240,10 @@
 				var measureRatio = isQuantityFloat ? parseFloat(itemData.MEASURE_RATIO) : parseInt(itemData.MEASURE_RATIO);
 
 				var quantity = parseFloat((currentQuantity - measureRatio).toFixed(5));
-				quantity = this.getCorrectQuantity(itemData, quantity);
+				var correctedQuantity = this.getCorrectQuantity(itemData, quantity);
 
-				this.setQuantity(itemData, quantity);
+				this.announceQuantityCorrection(itemData, quantity, correctedQuantity);
+				this.setQuantity(itemData, correctedQuantity);
 			}
 		},
 
@@ -1785,8 +2257,75 @@
 				quantityField = BX(this.ids.quantity + itemData.ID);
 				quantity = this.getCorrectQuantity(itemData, quantityField.value);
 
+				this.announceQuantityCorrection(itemData, quantityField.value, quantity);
 				this.setQuantity(itemData, quantity);
 			}
+		},
+
+		announceQuantityCorrection: function(itemData, requested, corrected)
+		{
+			if (parseFloat(requested) === corrected)
+			{
+				return;
+			}
+
+			var available = itemData.CHECK_MAX_QUANTITY === 'Y'
+				? parseFloat(itemData.AVAILABLE_QUANTITY)
+				: 0;
+
+			if (available > 0 && corrected === available)
+			{
+				this.announce(BX.message('SBB_QUANTITY_LIMIT_ARIA').replace('#VALUE#', corrected));
+
+				return;
+			}
+
+			this.announce(
+				BX.util.trim(
+					BX.message('SBB_QUANTITY_CORRECTED_ARIA')
+						.replace('#VALUE#', corrected)
+						.replace('#REASON#', this.getQuantityCorrectionReason(itemData, requested))
+				)
+			);
+		},
+
+		// Three things move the number in the browser (`getCorrectQuantity`): the stock of the product,
+		// which speaks a phrase of its own above, the lowest amount the product is sold by, and the step
+		// of that sale. Which of them moved it is told by the number asked for, not by the answer: the
+		// answer of the two of them looks the same.
+		getQuantityCorrectionReason: function(itemData, requested)
+		{
+			var isQuantityFloat = this.isQuantityFloat(itemData);
+			var measureRatio = isQuantityFloat ? parseFloat(itemData.MEASURE_RATIO) : parseInt(itemData.MEASURE_RATIO);
+			var asked = isQuantityFloat ? parseFloat(requested) : parseInt(requested, 10);
+
+			// A field holding something that is no number at all counts as nothing asked for, exactly as
+			// the correction itself counts it.
+			if (isNaN(asked) || asked < 0)
+			{
+				asked = 0;
+			}
+
+			if (!(measureRatio > 0))
+			{
+				return '';
+			}
+
+			if (asked < measureRatio)
+			{
+				return BX.message('SBB_QUANTITY_MINIMUM_REASON_ARIA');
+			}
+
+			// A product sold by the piece has no step to round to, and the correction leaves such a
+			// number alone.
+			if (measureRatio === 1)
+			{
+				return '';
+			}
+
+			var remain = (asked * this.precisionFactor) % (measureRatio * this.precisionFactor) / this.precisionFactor;
+
+			return remain > 0 ? BX.message('SBB_QUANTITY_STEP_REASON_ARIA') : '';
 		},
 
 		isQuantityFloat: function(item)
@@ -1954,6 +2493,8 @@
 			var blocks = this.getEntities(node, 'basket-item-sku-block');
 			var blockEntities, i, l, ii, ll;
 
+			this.dropSkuFocusZones(data.ID);
+
 			for (i = 0, l = blocks.length; i < l; i++)
 			{
 				blockEntities = this.getEntities(blocks[i], 'basket-item-sku-field');
@@ -1961,8 +2502,106 @@
 				for (ii = 0, ll = blockEntities.length; ii < ll; ii++)
 				{
 					BX.bind(blockEntities[ii], 'click', BX.proxy(this.changeSku, this));
+					BX.bind(blockEntities[ii], 'keydown', BX.proxy(this.selectSkuByKey, this));
+				}
+
+				BX.bind(
+					blocks[i].querySelector('.basket-item-scu-list'),
+					'focusin',
+					BX.proxy(this.createSkuFocusZone, this)
+				);
+			}
+		},
+
+		// The radio role sits on a list item, so the browser synthesizes no activation of its own;
+		// preventDefault also keeps the space key from scrolling the page.
+		selectSkuByKey: function(event)
+		{
+			if (event.key !== 'Enter' && event.key !== ' ')
+			{
+				return;
+			}
+
+			event.preventDefault();
+			BX.proxy_context.click();
+		},
+
+		// The arrows of a group of variants and its single stop in the walk are kept by `ui.a11y`, the
+		// same way the card of `catalog.item` keeps them.
+		//
+		// The zone is built when the focus first reaches the group and not when the row is drawn. The
+		// cart is faded in from `opacity: 0`, and `InteractivityChecker` counts everything inside a box
+		// of no opacity as invisible: a zone built at that moment collects no values at all, and the
+		// arrows stay dead for good - the zone watches its own container and never learns that an
+		// ancestor of it has become visible.
+		createSkuFocusZone: function()
+		{
+			var list = BX.proxy_context;
+
+			if (!BX.type.isDomNode(list) || list.hasAttribute('data-a11y-zone'))
+			{
+				return;
+			}
+
+			var accessibility = this.getAccessibility();
+			var itemData = this.getItemDataByTarget(list);
+
+			if (!accessibility || !itemData)
+			{
+				return;
+			}
+
+			var itemId = itemData.ID;
+
+			list.setAttribute('data-a11y-zone', 'Y');
+
+			var keys = accessibility.FocusKeys;
+			var zone = new accessibility.FocusZone(list, {
+				bindKeys: keys.ArrowHorizontal | keys.ArrowVertical | keys.HomeAndEnd,
+				focusOutBehavior: 'wrap',
+				focusInStrategy: BX.delegate(function() {
+					return this.getSkuTabStop(list);
+				}, this)
+			});
+
+			zone.activate();
+
+			this.skuFocusZones[itemId] = this.skuFocusZones[itemId] || [];
+			this.skuFocusZones[itemId].push(zone);
+		},
+
+		// A property with nothing chosen would fall out of the walk: the mark of the stop stands on
+		// the chosen value alone, so the first value answers for an empty group.
+		getSkuTabStop: function(list)
+		{
+			var values = list.querySelectorAll('[role="radio"]');
+
+			for (var i = 0; i < values.length; i++)
+			{
+				if (values[i].getAttribute('aria-checked') === 'true')
+				{
+					return values[i];
 				}
 			}
+
+			return values.length ? values[0] : null;
+		},
+
+		dropSkuFocusZones: function(itemId)
+		{
+			var zones = this.skuFocusZones[itemId];
+
+			if (!zones)
+			{
+				return;
+			}
+
+			for (var i = 0; i < zones.length; i++)
+			{
+				zones[i].deactivate();
+			}
+
+			delete this.skuFocusZones[itemId];
 		},
 
 		changeSku: function()
@@ -1986,12 +2625,16 @@
 						if (currentSkuListNodes[i].isEqualNode(target))
 						{
 							BX.addClass(currentSkuListNodes[i], 'selected');
+							currentSkuListNodes[i].setAttribute('aria-checked', 'true');
 						}
 						else
 						{
 							BX.removeClass(currentSkuListNodes[i], 'selected');
+							currentSkuListNodes[i].setAttribute('aria-checked', 'false');
 						}
 					}
+
+					this.skuAnnounce[itemData.ID] = this.getSkuName(target);
 
 					this.actionPool.changeSku(
 						itemData.ID,
@@ -2033,16 +2676,19 @@
 			if (!node || !data)
 				return;
 
-			var images = node.querySelectorAll('.basket-item-custom-block-photo-item');
-			for (var i = 0, l = images.length; i < l; i++)
+			// The handler moves to the button around the picture and does not stay on both: a click of
+			// the mouse would otherwise reach the picture and then bubble up to the button, and the
+			// layer would open twice.
+			var buttons = this.getEntities(node, 'basket-item-property-image');
+			for (var i = 0, l = buttons.length; i < l; i++)
 			{
-				BX.bind(images[i], 'click', BX.proxy(this.showPropertyImagePopup, this));
+				BX.bind(buttons[i], 'click', BX.proxy(this.showPropertyImagePopup, this));
 			}
 		},
 
 		showPropertyImagePopup: function()
 		{
-			var target, propertyCode, imageIndex, item, imageSrc, i;
+			var target, propertyCode, imageIndex, item, imageSrc, propertyName, i;
 
 			target = BX.proxy_context;
 			item = this.getItemDataByTarget(target);
@@ -2061,6 +2707,7 @@
 					)
 					{
 						imageSrc = item.COLUMN_LIST[i].VALUE[imageIndex].IMAGE_SRC_ORIGINAL;
+						propertyName = item.COLUMN_LIST[i].NAME;
 						break;
 					}
 				}
@@ -2073,6 +2720,7 @@
 
 			if (this.imagePopup)
 			{
+				this.releaseImagePopupFocus();
 				this.imagePopup.destroy();
 			}
 
@@ -2091,7 +2739,7 @@
 				events: {
 					onPopupShow: function() {
 						BX.create('IMG', {
-							props: {src: imageSrc},
+							props: {src: imageSrc, alt: ''},
 							events: {
 								load: function() {
 									var content = BX(imageId);
@@ -2131,12 +2779,61 @@
 						});
 					},
 					onPopupClose: function() {
+						that.releaseImagePopupFocus();
 						this.destroy();
 					}
 				},
 				content: BX.create('DIV', {props: {id: imageId}})
 			});
 			this.imagePopup.show();
+			this.holdImagePopupFocus(propertyName, target);
+		},
+
+		// The layer stands on the body, outside the basket, so it answers for its own name and for the
+		// focus: the walk stays inside it while it is open, Esc closes it, and the focus comes back to
+		// the button that opened it.
+		holdImagePopupFocus: function(propertyName, opener)
+		{
+			var container = this.imagePopup.getPopupContainer();
+
+			if (!BX.type.isDomNode(container))
+			{
+				return;
+			}
+
+			container.setAttribute('role', 'dialog');
+			container.setAttribute('aria-modal', 'true');
+
+			if (BX.type.isNotEmptyString(propertyName))
+			{
+				container.setAttribute('aria-label', propertyName);
+			}
+
+			var accessibility = this.getAccessibility();
+
+			if (!accessibility)
+			{
+				return;
+			}
+
+			this.imageFocusTrap = new accessibility.FocusTrap(container, {
+				initialFocus: 'container',
+				restoreFocus: opener,
+				preventScroll: true
+			});
+
+			this.imageFocusTrap.activate();
+		},
+
+		releaseImagePopupFocus: function()
+		{
+			if (!this.imageFocusTrap)
+			{
+				return;
+			}
+
+			this.imageFocusTrap.destroy();
+			this.imageFocusTrap = null;
 		},
 
 		bindActionEvents: function(node, data)

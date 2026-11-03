@@ -1,0 +1,25 @@
+.bx-im-slash-command-error-state__container {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 16px;
+}
+
+.bx-im-slash-command-error-state__icon {
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert);
+}
+
+.bx-im-slash-command-error-state__content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	text-align: left;
+}
+
+.bx-im-slash-command-error-state__text {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-1);
+}

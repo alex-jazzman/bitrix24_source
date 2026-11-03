@@ -129,10 +129,9 @@ if ($saleModulePermissions == "W")
 				'EXPORT_TYPE' => 'csv',
 				'ENTITY_TYPE' => CCrmOwnerType::CheckCorrectionName,
 				'COMPONENT_NAME' => 'bitrix:crm.check.correction.export',
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
-					'bitrix:crm.check.correction.export',
-					[]
-				),
+				'signedParameters' => method_exists(\Bitrix\Crm\Controller\Export::class, 'signExportParameters')
+					? \Bitrix\Crm\Controller\Export::signExportParameters('bitrix:crm.check.correction.export', [])
+					: \Bitrix\Main\Component\ParameterSigner::signParameters('bitrix:crm.check.correction.export', []),
 			],
 			'messages' => array(
 				'DialogTitle' => Loc::getMessage('CORRECTION_CHECK_EXPORT_CSV_TITLE'),

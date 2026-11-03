@@ -36,6 +36,11 @@ export class NotificationReadService
 			}
 
 			const notification = this.store.getters['notifications/getById'](id);
+			if (!notification)
+			{
+				return;
+			}
+
 			if (notification.read)
 			{
 				return;
@@ -69,7 +74,12 @@ export class NotificationReadService
 		const allIdsToRead = [...this.itemsToRead];
 
 		const notificationsToReadIds = allIdsToRead.filter((id) => {
-			return !confirmNotificationIds.has(id);
+			if (confirmNotificationIds.has(id))
+			{
+				return false;
+			}
+
+			return this.store.getters['notifications/getById'](id) !== false;
 		});
 
 		if (notificationsToReadIds.length === 0)

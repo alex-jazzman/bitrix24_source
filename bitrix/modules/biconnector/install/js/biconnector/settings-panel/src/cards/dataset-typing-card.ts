@@ -1,5 +1,6 @@
 import { Dom, Tag, Loc } from 'main.core';
 import { Switcher, SwitcherSize } from 'ui.switcher';
+import { resolveErrorHtml } from 'biconnector.error-message';
 import { CollapsibleCard } from '../card/collapsible-card';
 import { CardHint } from '../card/card-hint';
 import { SettingsApi } from '../api/settings-api';
@@ -47,7 +48,10 @@ export class DatasetTypingCard
 		Dom.append(hint.getLayout(), content);
 
 		const switcherNode: HTMLElement = Tag.render`
-			<div class="biconnector-settings-card__switcher-control"></div>
+			<div
+				class="biconnector-settings-card__switcher-control"
+				data-testid="biconnector-settings-dataset-typing-switcher"
+			></div>
 		`;
 
 		this.#switcher = new Switcher({
@@ -93,11 +97,10 @@ export class DatasetTypingCard
 				this.#enabled,
 			);
 		}
-		catch
+		catch (response)
 		{
 			BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR'),
-				autoHideDelay: 2000,
+				content: resolveErrorHtml(response, Loc.getMessage('BICONNECTOR_SETTINGS_PANEL_SAVE_ERROR')),
 			});
 			this.#enabled = !this.#enabled;
 			this.#switcher?.check(this.#enabled, false);

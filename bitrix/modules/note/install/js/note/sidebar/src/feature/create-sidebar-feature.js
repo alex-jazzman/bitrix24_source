@@ -99,12 +99,12 @@ function createUiState(
 		sidebarCollapsed: normalizeSidebarCollapsed(sidebarCollapsed),
 		isMobile: Boolean(isMobile),
 		// Bootstrap-level UI feature flags — surfaced on the sidebar root state so the pages that
-		// inject it (document / workspace) can gate their history + notifications affordances.
+		// inject it (document / workspace) can gate their history and notification affordances.
 		historyEnabled: Boolean(historyEnabled),
 		notificationsEnabled: Boolean(notificationsEnabled),
 		renamingDocId: null,
 		renamingCollectionId: null,
-		// [ALG-01] Whether the BitrixGPT rail panel is expanded. Owned by the shell, never by the
+		// Whether the BitrixGPT rail panel is expanded. Owned by the shell, never by the
 		// panel: the panel is mounted once and only its geometry collapses.
 		aiChatOpen: false,
 	});
@@ -341,15 +341,15 @@ function createStoreProxy(store: Object): Object
 		setRecycleBinView: (active) => store.actions.setRecycleBinView(active),
 		insertCollectionLocal: (collection) => store.actions.insertCollectionLocal(collection),
 		updateCollectionLocal: (collectionId, patch) => store.actions.updateCollectionLocal(Number(collectionId), patch),
-		removeCollectionLocal: (collectionId) => store.actions.removeCollectionLocal(Number(collectionId)),
+		removeArchivedCollectionLocal: (collectionId) => store.actions.removeCollectionLocal(Number(collectionId)),
 		isCollectionSelected: (collectionId) => (
 			Number(store.state.selectedCollectionId.value) === Number(collectionId)
 		),
 		clearCollectionSelection: () => store.actions.clearSelection(),
-		// [P4.T6] The page of a knowledge base re-reads the block when the server turns a subscription
+		// The page of a knowledge base re-reads the block when the server turns a subscription
 		// down for an object that is not in the list any more.
 		reloadFavorites: () => store.actions.reloadFavorites(),
-		// [TPL-01] Star of the knowledge base page: one implementation of the gesture for every star.
+		// Star of the knowledge base page: one implementation of the gesture for every star.
 		toggleFavorite: (target, hint) => store.actions.toggleFavorite(target, hint),
 	};
 }
@@ -533,7 +533,7 @@ function createSidebarRuntime({
 	const state = createSidebarState(store, uiState, dragState, routeSyncService);
 	const storeProxy = createStoreProxy(store);
 
-	// The block is painted with the rest of the sidebar, and hiding an empty one (AC-027) needs a
+	// The block is painted with the rest of the sidebar, and hiding an empty one needs a
 	// confirmed empty page - so its first page is there from the start: taken from the page when the
 	// server rendered it in (TPL-02), read up front otherwise.
 	if (!store.actions.hydrateFavorites(initialFavorites))

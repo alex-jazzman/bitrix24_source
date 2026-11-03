@@ -1,5 +1,5 @@
-<?
-$MESS["DISK_HELP_0"] = " ";
+<?php
+$MESS["DISK_HELP_0"] = "Working with documents in Bitrix24";
 $MESS["DISK_HELP_1"] = "<strong>Drive</strong> is the ultimate file storage and sharing solution available inside your Bitrix24 account to streamline your company's operations with documents.";
 $MESS["DISK_HELP_2"] = "Managing Files and Folders";
 $MESS["DISK_HELP_3"] = "Creating a New Document";
@@ -14,8 +14,8 @@ $MESS["DISK_HELP_11"] = "What is Bitrix24.Drive?";
 $MESS["DISK_HELP_12"] = "Bitrix24.Drive is a complete file storing, synching, editing, and sharing system. Coupled with the desktop app, Bitrix24.Drive lets you store files both in the cloud and locally. If you modify a document on your computer or device, the copy stored in the cloud is automatically synchronized to match the new version. It works like magic - Bitrix24.Drive saves you the hassle of downloading and uploading files. Open a file, edit and close - just as you would do when editing a file on your computer. The latest version of the document will be available to you and your coworkers in the cloud as well as on their computers and mobile devices. Simply download the Bitrix24 desktop app and connect your Bitrix24.Drive to get access to multi-device autosync capabilities.";
 $MESS["DISK_HELP_13"] = "Sharing Documents";
 $MESS["DISK_HELP_14"] = "You can use the Activity Stream to share documents and discuss them at the same time. Start by typing a message and attaching a file from Drive. When done, click 'Send'. Your colleagues can now view or edit the document you attached, if you gave them permission. Every time someone saves a new version of the file, a notification comment is added to your original message, and the attached file is updated. The file modification history is kept, and users can view all previous revisions done to the file and revert to an older version, if necessary.";
-$MESS["DISK_HELP_15"] = " ";
-$MESS["DISK_HELP_16"] = " ";
+$MESS["DISK_HELP_15"] = "No downloading and uploading needed";
+$MESS["DISK_HELP_16"] = "If you do not have edit permissions but were invited to discuss a document in the Activity Stream, just open the document and make your changes. Once you save them, your version is uploaded to the comments as a separate file. There is no need to download and upload anything, we do it for you. Note that if you have edit permissions, changing the document adds a comment with the new version of the file to the Activity Stream message. If you do not have them, your changes are also uploaded to the comments, but as a new document rather than a new version.";
 $MESS["DISK_HELP_17"] = "Tracking Document Use";
 $MESS["DISK_HELP_18"] = "Documents inside Bitrix24 can be used in any entity that allows file attachments (Activity Stream, Tasks, Calendar events, CRM). You can view the entities where the file is used and which users have access to it in the document properties (File > Open). Notice that once you delete a file from your Drive, you delete it from all Bitrix24 entities it was attached to as well.";
 $MESS["DISK_HELP_19"] = "The bottom line is this - when it comes to working with documents, <strong>Bitrix24.Drive</strong> is your best friend that you can always rely on. Read more about Drive in the training course.";

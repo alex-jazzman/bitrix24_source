@@ -42,6 +42,7 @@ export const Group = {
 	{
 		return {
 			isHintShown: false,
+			isDialogShown: false,
 		};
 	},
 	computed: {
@@ -56,6 +57,22 @@ export const Group = {
 		groupImage(): string
 		{
 			return encodeURI(this.group?.image);
+		},
+		ariaLabel(): string
+		{
+			if (this.readonly)
+			{
+				return '';
+			}
+
+			return this.loc('TASKS_V2_GROUP_VALUE_ARIA_LABEL', {
+				'#TITLE#': groupMeta.getTitle(this.task.groupId),
+				'#VALUE#': this.groupName,
+			});
+		},
+		addAriaLabel(): string
+		{
+			return this.readonly ? '' : this.loc('TASKS_V2_GROUP_ADD_ARIA_LABEL');
 		},
 		isSecret(): boolean
 		{
@@ -129,17 +146,33 @@ export const Group = {
 		},
 		showDialog(): void
 		{
+			this.isDialogShown = true;
 			groupDialog.show({
 				targetNode: this.$refs.group,
 				taskId: this.taskId,
+				onClose: this.handleDialogClose,
 			});
 		},
-		clear(): void
+		async handleDialogClose(): void
+		{
+			this.isDialogShown = false;
+
+			await this.focusTrigger();
+		},
+		async focusTrigger(): void
+		{
+			await this.$nextTick();
+
+			this.$refs.group?.querySelector('.b24-hover-pill-content')?.focus();
+		},
+		async clear(): void
 		{
 			void taskService.update(this.taskId, {
 				groupId: 0,
 				stageId: 0,
 			});
+
+			await this.focusTrigger();
 		},
 		showLimitDialog(): void
 		{
@@ -159,14 +192,24 @@ export const Group = {
 				<HoverPill
 					v-if="task.groupId"
 					:withClear
+					:clearAriaLabel="loc('TASKS_V2_GROUP_CLEAR_ARIA_LABEL')"
 					@clear="clear"
 					:readonly
+					:ariaLabel
+					:ariaHaspopup="readonly ? '' : 'dialog'"
+					:ariaExpanded="readonly ? null : isDialogShown"
 				>
 					<img v-if="groupImage" class="tasks-field-group-image" :src="groupImage" :alt="groupName"/>
 					<BIcon v-else class="tasks-field-group-icon" :name="Outline.FOLDER"/>
 					<div class="tasks-field-group-title">{{ groupName }}</div>
 				</HoverPill>
-				<FieldAdd v-else :icon="Outline.FOLDER_PLUS"/>
+				<FieldAdd
+					v-else
+					:icon="Outline.FOLDER_PLUS"
+					:ariaLabel="addAriaLabel"
+					:ariaHaspopup="readonly ? '' : 'dialog'"
+					:ariaExpanded="readonly ? null : isDialogShown"
+				/>
 			</div>
 		</div>
 		<Hint v-if="isHintShown" :bindElement="$refs.group" @close="isHintShown = false">

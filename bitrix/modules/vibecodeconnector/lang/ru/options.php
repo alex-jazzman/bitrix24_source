@@ -10,6 +10,8 @@ $MESS['VIBECODECONNECTOR_OPT_PERMISSION_SOURCE'] = 'Источник прав �
 $MESS['VIBECODECONNECTOR_OPT_PERMISSION_SOURCE_HINT'] = 'Включено — права на создание ключей и приложений берутся у Вайбкод-сервера, и коннектор создаёт их в обход портального ограничения на REST-вебхуки. Выключено — создание подчиняется портальным правам. Предварительно настройте права на Вайбкод-сервере.';
 $MESS['VIBECODECONNECTOR_OPT_OPEN_APP_IN_IFRAME'] = 'Открывать приложения внутри Битрикс24';
 $MESS['VIBECODECONNECTOR_OPT_OPEN_APP_IN_IFRAME_HINT'] = 'Элементы каталога будут открываться в слайдере Битрикс24 через iframe.';
+$MESS['VIBECODECONNECTOR_OPT_EMBED_CREATE_IN_IFRAME'] = 'Создавать приложения и агентов внутри Битрикс24';
+$MESS['VIBECODECONNECTOR_OPT_EMBED_CREATE_IN_IFRAME_HINT'] = 'Кнопка «+» в каталоге откроет создание приложения или агента Hermes в слайдере Битрикс24.';
 $MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION'] = 'Активное подключение к Битрикс24 Вайбкод';
 $MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_HINT'] = 'Куда портал отправляет данные: бот, каталог, статус. Адрес вводится вручную, список ниже только подставляет готовый. Ключ для входящих токенов берётся не отсюда, а из блока «Облачная схема».';
 $MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN'] = 'Известные адреса';
@@ -83,3 +85,6 @@ $MESS['VIBECODECONNECTOR_OPT_UNREGISTRATION_SUCCESS'] = 'Привязка уда
 $MESS['VIBECODECONNECTOR_OPT_UNREGISTRATION_ERROR'] = 'Ошибка удаления привязки: #MESSAGE#. Локальная строка не очищена — повторите попытку.';
 $MESS['VIBECODECONNECTOR_OPT_REFRESH_SUCCESS'] = 'Публичный ключ обновлён.';
 $MESS['VIBECODECONNECTOR_OPT_REFRESH_ERROR'] = 'Ошибка обновления ключа: #MESSAGE#';
+
+$MESS['VIBECODECONNECTOR_OPT_CABINET_SEAMLESS_ENTRY'] = 'Быстрый вход в Битрикс24Вайбкод';
+$MESS['VIBECODECONNECTOR_OPT_CABINET_SEAMLESS_ENTRY_HINT'] = 'При переходе из каталога Битрикс24Вайбкод откроется сразу под текущим пользователем, без экрана входа. Если выключить настройку, откроется обычная страница входа в Битрикс24Вайбкод';

@@ -23,6 +23,7 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 		NOTIFICATIONS: 'notifications',
 		CHANGE_PORTAL: 'change_portal',
 		GO_TO_WEB: 'go_to_web',
+		LOGIN_ON_OTHER_DEVICE: 'login_on_other_device',
 		LOGOUT: 'exit',
 	};
 
@@ -131,6 +132,13 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 					},
 				},
 				{
+					id: ItemId.LOGIN_ON_OTHER_DEVICE,
+					imageName: Icon.QR_CODE.getName(),
+					title: Loc.getMessage('MENU_SETTINGS_SECTION_LOGIN_ON_OTHER_DEVICE'),
+					sort: 250,
+					path: '/settings/login-on-other-device',
+				},
+				{
 					id: ItemId.LOGOUT,
 					imageName: 'log_out',
 					title: Loc.getMessage('MENU_BITRIX24_SECTION_EXIT'),
@@ -178,12 +186,14 @@ jn.define('more-menu/block/settings-list', (require, exports, module) => {
 			const canUseTabPresetSettings = this.props.canUseTabPresetSettings ?? true;
 			const canUseNotificationSettings = this.props.canUseNotificationSettings ?? true;
 			const canGoToWeb = this.props.canGoToWeb ?? true;
+			const canLoginOnOtherDevice = this.props.canLoginOnOtherDevice ?? false;
 
 			const hideItems = {
 				[ItemId.SECURITY]: !canUseSecuritySettings,
 				[ItemId.PRESETS]: !canUseTabPresetSettings,
 				[ItemId.NOTIFICATIONS]: !canUseNotificationSettings,
 				[ItemId.GO_TO_WEB]: !canGoToWeb,
+				[ItemId.LOGIN_ON_OTHER_DEVICE]: !canLoginOnOtherDevice,
 			};
 
 			return SETTINGS_SECTIONS.map((section) => ({

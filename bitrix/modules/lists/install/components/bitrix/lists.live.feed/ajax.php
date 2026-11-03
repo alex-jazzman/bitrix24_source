@@ -5,6 +5,7 @@ use Bitrix\Lists\Internals\Error\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Lists\Internals\Controller;
+use Bitrix\Lists\Internal\Sanitizer\ElementFieldSanitizer;
 use Bitrix\Main\Text\HtmlFilter;
 
 define('STOP_STATISTICS', true);
@@ -761,7 +762,7 @@ class LiveFeedAjaxController extends Controller
 		$fields = $list->getFields();
 		$elementData = array(
 			"IBLOCK_ID" => $this->iblockId,
-			"NAME" => $_POST["NAME"],
+			"NAME" => ElementFieldSanitizer::sanitizeName($this->request->getPost("NAME")),
 		);
 		$props = array();
 		foreach($fields as $fieldId => $field)
@@ -774,16 +775,9 @@ class LiveFeedAjaxController extends Controller
 			}
 			elseif($fieldId == "PREVIEW_TEXT" || $fieldId == "DETAIL_TEXT")
 			{
-				if(
-					isset($field["SETTINGS"])
-					&& is_array($field["SETTINGS"])
-					&& $field["SETTINGS"]["USE_EDITOR"] == "Y"
-				)
-					$elementData[$fieldId."_TYPE"] = "html";
-				else
-					$elementData[$fieldId."_TYPE"] = "text";
-
-				$elementData[$fieldId] = $_POST[$fieldId];
+				$preparedText = ElementFieldSanitizer::prepareTextField($field, $this->request->getPost($fieldId));
+				$elementData[$fieldId."_TYPE"] = $preparedText["TYPE"];
+				$elementData[$fieldId] = $preparedText["VALUE"];
 			}
 			elseif($fieldId == 'ACTIVE_FROM' || $fieldId == 'ACTIVE_TO')
 			{
@@ -1225,6 +1219,10 @@ class LiveFeedAjaxController extends Controller
 			{
 				$field['VALUE'] = $this->lists['FORM_DATA'][$fieldId] ?? null;
 				$preparedField = \Bitrix\Lists\Field::prepareFieldDataForEditForm($field);
+				if ($field['TYPE'] === 'S:DateTime')
+				{
+					$preparedField['value'] .= $preparedField['customHtml'] ?? '';
+				}
 
 				$this->lists['PREPARED_FIELDS'][$fieldId] = $preparedField;
 
@@ -1946,6 +1944,7 @@ class LiveFeedAjaxController extends Controller
 		$html = '';
 		if (Loader::includeModule('fileman'))
 		{
+			$content = \Bitrix\Lists\Field::normalizeHtmlEditorContent((string)$content);
 			ob_start();
 			$editor = new CHTMLEditor;
 			$res = array(

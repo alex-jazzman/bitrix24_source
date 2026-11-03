@@ -84,10 +84,6 @@
 	cursor: pointer;
 }
 
-#row_SelectedFields .node-settings-edit-caption {
-	display: none;
-}
-
 .bizproc-create-storage__fields-title {
 	color: var(--ui-color-base-1);
 	font-size: var(--ui-font-size-xl);

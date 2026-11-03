@@ -30,6 +30,7 @@ return [
 		'ui.notification',
 		'ui.system.dialog',
 		'ui.vue3',
+		'ui.vue3.components.button',
 		'ui.vue3.router',
 	],
 	'skip_core' => false,

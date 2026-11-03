@@ -1,6 +1,7 @@
 import { Dom, Text, Event, Runtime } from 'main.core';
 import type { PopupOptions } from 'main.popup';
 
+import { defineComponent } from 'ui.vue3';
 import { Popup } from 'ui.vue3.components.popup';
 
 import './bottom-sheet.css';
@@ -10,8 +11,7 @@ export type SheetBindProps = {
 	getTargetContainer: Function,
 };
 
-// @vue/component
-export const BottomSheet = {
+export const BottomSheet = defineComponent({
 	components: {
 		Popup,
 	},
@@ -41,6 +41,14 @@ export const BottomSheet = {
 			type: String,
 			default: '',
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
+		ariaLabelledBy: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: ['close'],
 	computed: {
@@ -67,7 +75,13 @@ export const BottomSheet = {
 					closeAnimationType: 'animation',
 				},
 				autoHide: false,
-				closeByEsc: false,
+				// main.popup gives neither Esc nor focus-trap by default: the built-in trap
+				// is gated behind the ui.a11y `useFocusTrapInDialogs` setting, which is on
+				// for dev environments only. Both options must be passed explicitly.
+				closeByEsc: true,
+				focusTrap: true,
+				ariaLabel: this.ariaLabel || null,
+				ariaLabelledBy: this.ariaLabelledBy || null,
 			};
 		},
 	},
@@ -109,4 +123,4 @@ export const BottomSheet = {
 			</div>
 		</Popup>
 	`,
-};
+});

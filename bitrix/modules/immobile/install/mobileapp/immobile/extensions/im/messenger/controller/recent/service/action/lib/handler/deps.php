@@ -14,10 +14,10 @@ return [
 		'im:messenger/provider/data',
 		'im:messenger/provider/rest',
 		'im:messenger/lib/ui/notification/messenger-notifier',
+		'im:messenger/controller/recent/service/lib/folder-composition',
 		'im:messenger/controller/recent/service/select/lib/opener',
 		'im:messenger/controller/folder/create',
 		'im:messenger/controller/folder/selector',
 		'im:messenger/provider/services/folder',
-		'im:messenger/provider/services/analytics',
 	],
 ];

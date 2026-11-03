@@ -4,6 +4,7 @@ namespace Bitrix\Sign\Controllers\V1;
 
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 use Bitrix\Main\Type\DateTime;
@@ -11,6 +12,7 @@ use Bitrix\Sign\Access\ActionDictionary;
 use Bitrix\Sign\Access\DocumentAnnulPermission;
 use Bitrix\Sign\Attribute;
 use Bitrix\Sign\Attribute\ActionAccess;
+use Bitrix\Sign\Config\Feature;
 use Bitrix\Sign\Config\Storage;
 use Bitrix\Sign\Engine\Controller;
 use Bitrix\Sign\FeatureResolver;
@@ -31,6 +33,12 @@ use Bitrix\Sign\Type\Template\EntityType;
 
 class Document extends Controller
 {
+	/**
+	 * The dictionary of the settings dialog reads the tax id of every company it answers with, and a
+	 * menu of more than that many companies is picked from by typing anyway.
+	 */
+	private const B2E_COMPANY_DICTIONARY_LIMIT = 50;
+
 	private Service\Sign\DocumentService $documentService;
 	private TemplateService $templateService;
 	private AccessService $templateAccessService;
@@ -692,6 +700,135 @@ class Document extends Controller
 		}
 
 		return [];
+	}
+
+	/**
+	 * Company dictionary for the B2E document settings dialog: the value stored in settings is the CRM company id.
+	 */
+	#[Attribute\ActionAccess(ActionDictionary::ACTION_B2E_DOCUMENT_EDIT)]
+	public function listB2eCompaniesAction(): array
+	{
+		if (!Feature::instance()->isB2eBizprocChainEnabled())
+		{
+			$this->addError(new Error(
+				Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_B2E_COMPANIES_FEATURE_DISABLED'),
+				'FEATURE_DISABLED',
+			));
+
+			return [];
+		}
+
+		if (B2eTariff::instance()->isB2eRestrictedInCurrentTariff())
+		{
+			$this->addB2eTariffRestrictedError();
+
+			return [];
+		}
+
+		if (!Loader::includeModule('crm'))
+		{
+			$this->addError(new Error('Module crm not installed'));
+
+			return [];
+		}
+
+		$myCompanyService = Service\Container::instance()->getCrmMyCompanyService();
+		$showTaxId = !$myCompanyService->isTaxIdIsCompanyId();
+
+		return [
+			'showTaxId' => $showTaxId,
+			'companies' => self::listSelectableCompanies(
+				$myCompanyService->listWithTaxIds(
+					checkRequisitePermissions: false,
+					limit: self::B2E_COMPANY_DICTIONARY_LIMIT,
+				),
+				$showTaxId,
+			),
+		];
+	}
+
+	/**
+	 * A company without a tax id is left out of the dictionary: the signing service knows a company by its
+	 * tax id, so the settings run would refuse such a company anyway, while asking the service which
+	 * companies are registered would cost the dialog an external request on every open.
+	 *
+	 * The tax id is answered only to a dialog that shows it: where it is not shown it repeats the
+	 * company id the answer already carries, and the dictionary has no reason to send it.
+	 *
+	 * @return list<array{id: int, title: string, taxId?: non-empty-string}>
+	 */
+	private static function listSelectableCompanies(
+		Item\Integration\Crm\MyCompanyCollection $myCompanies,
+		bool $withTaxId,
+	): array
+	{
+		$companies = [];
+		foreach ($myCompanies as $company)
+		{
+			if ($company->id === null || trim((string)$company->taxId) === '')
+			{
+				continue;
+			}
+
+			$selectable = [
+				'id' => $company->id,
+				'title' => $company->name,
+			];
+			if ($withTaxId)
+			{
+				$selectable['taxId'] = $company->taxId;
+			}
+
+			$companies[] = $selectable;
+		}
+
+		return $companies;
+	}
+
+	#[Attribute\Access\LogicOr(
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		),
+		new Attribute\ActionAccess(
+			permission: ActionDictionary::ACTION_B2E_DOCUMENT_EDIT,
+			itemType: AccessibleItemType::DOCUMENT,
+			itemIdOrUidRequestKey: 'uid',
+		)
+	)]
+	public function modifyInviteMessageAction(string $uid, ?string $message = null): array
+	{
+		if (!Feature::instance()->isDocumentMessageEnabled())
+		{
+			$this->addError(new Error(
+				Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_MESSAGE_FEATURE_DISABLED'),
+				'FEATURE_DISABLED',
+			));
+
+			return [];
+		}
+
+		$document = $this->documentService->getByUid($uid);
+		if ($document === null)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('SIGN_CONTROLLER_DOCUMENT_NOT_FOUND'),
+				'DOCUMENT_NOT_FOUND',
+			));
+
+			return [];
+		}
+
+		$result = $this->documentService->modifyInviteMessage($document, $message);
+		if (!$result->isSuccess())
+		{
+			$this->addErrorsFromResult($result);
+
+			return [];
+		}
+
+		return ['success' => true];
 	}
 
 	#[Attribute\ActionAccess(

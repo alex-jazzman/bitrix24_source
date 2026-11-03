@@ -1,10 +1,17 @@
+import { Type } from 'main.core';
+
 import { Core } from 'im.v2.application.core';
 import { RecentType, RestMethod, type RecentTypeItem, ParentChatScope, type ParentChatIdType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 import { UserManager } from 'im.v2.lib.user';
-import { type RawChat, type RawMessage, type RawRecentItem } from 'im.v2.provider.service.types';
+import {
+	type RawChat,
+	type RawMessage,
+	type RawRecentItem,
+	type RawStickerMessage,
+} from 'im.v2.provider.service.types';
 
 import {
 	type BaseRecentQueryParams,
@@ -144,32 +151,37 @@ export class BaseRecentService
 
 	async #requestItems({ firstPage = false } = {}): Promise
 	{
-		const queryParams = {
-			data: this.getQueryParams(firstPage),
-		};
-
-		const result: RecentRestResult = await runAction(this.getRestMethodName(firstPage), queryParams)
-			.catch(([error]) => {
-				console.error('BaseRecentList: page request error', error);
-				throw error;
-			});
-
-		this.#pagesLoaded++;
-		Logger.warn(`BaseRecentList: ${firstPage ? 'First' : this.#pagesLoaded} page request result`, result);
-		const { hasNextPage } = result;
-		this.handlePaginationField(result);
-		this.#hasMoreItemsToLoad = hasNextPage;
-
-		this.#isLoading = false;
-
-		this.onAfterRequest(firstPage);
-
-		if (firstPage)
+		try
 		{
-			await this.saveFirstPageData(result);
-		}
+			const queryParams = {
+				data: this.getQueryParams(firstPage),
+			};
 
-		return this.#updateModels(result, firstPage);
+			const result: RecentRestResult = await runAction(this.getRestMethodName(firstPage), queryParams)
+				.catch(([error]) => {
+					console.error('BaseRecentList: page request error', error);
+					throw error;
+				});
+
+			this.#pagesLoaded++;
+			Logger.warn(`BaseRecentList: ${firstPage ? 'First' : this.#pagesLoaded} page request result`, result);
+			const { hasNextPage } = result;
+			this.handlePaginationField(result);
+			this.#hasMoreItemsToLoad = hasNextPage;
+
+			this.onAfterRequest(firstPage);
+
+			if (firstPage)
+			{
+				await this.saveFirstPageData(result);
+			}
+
+			return this.#updateModels(result, firstPage);
+		}
+		finally
+		{
+			this.#isLoading = false;
+		}
 	}
 
 	#updateModels(restResult: RecentRestResult): Promise
@@ -184,6 +196,9 @@ export class BaseRecentService
 		const messagesPromise = Core.getStore().dispatch('messages/store', messages);
 		const filesPromise = Core.getStore().dispatch('files/set', files);
 		const recentPromise = this.saveRecentItems(restResult);
+		// sticker messages have no text, recent preview detects them through the stickers model
+		const stickerMessages = this.#getStickerMessages(messages);
+		const stickersPromise = Core.getStore().dispatch('stickers/messages/set', stickerMessages);
 
 		const copilotManager = new CopilotManager();
 		const copilotPromise = copilotManager.handleRecentListResponse(copilot);
@@ -196,7 +211,32 @@ export class BaseRecentService
 			recentPromise,
 			autoDeletePromise,
 			copilotPromise,
+			stickersPromise,
 		]);
+	}
+
+	#getStickerMessages(messages: RawMessage[]): RawStickerMessage[]
+	{
+		const stickerMessages = [];
+		if (!messages)
+		{
+			return stickerMessages;
+		}
+
+		messages.forEach((message: RawMessage) => {
+			const stickerParams = message.params?.STICKER_PARAMS;
+			if (!Type.isPlainObject(stickerParams))
+			{
+				return;
+			}
+
+			stickerMessages.push({
+				messageId: message.id,
+				...stickerParams,
+			});
+		});
+
+		return stickerMessages;
 	}
 
 	#getChatsWithCounters(chats: RawChat[], recentItems: RawRecentItem[]): RawChat[]
@@ -220,13 +260,12 @@ export class BaseRecentService
 
 	#setLastMessageDate(restResult: RecentRestResult)
 	{
-		const { messages, recentItems, sectionMeta } = restResult;
+		const { recentItems, sectionMeta } = restResult;
 		const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
-		const messagesById: Map<number, RawMessage> = new Map(
-			messages.map((message) => [message.id, message]),
-		);
 
-		// Cursor uses each row's own message (always in its own chat), not the preview (may be a foreign chat).
+		// The REST filter field is named lastMessageDate, but the server matches it against
+		// DATE_LAST_ACTIVITY - the field it sorts and cuts the page by. So the cursor is the oldest
+		// activity date of the page, not the date of any message.
 		let lastMessageDate = '';
 		recentItems.forEach((recentItem: RawRecentItem) => {
 			const isPinnedItem = recentItem.pinned === true;
@@ -236,17 +275,16 @@ export class BaseRecentService
 				return;
 			}
 
-			const ownMessageId = recentItem.ownMessageId || recentItem.messageId;
-			const message = messagesById.get(ownMessageId);
-			if (!message)
+			const { dateLastActivity } = recentItem;
+			if (!dateLastActivity)
 			{
 				return;
 			}
 
 			// comparing strings in atom format works correctly because the format is lexically sortable
-			if (lastMessageDate === '' || message.date < lastMessageDate)
+			if (lastMessageDate === '' || dateLastActivity < lastMessageDate)
 			{
-				lastMessageDate = message.date;
+				lastMessageDate = dateLastActivity;
 			}
 		});
 

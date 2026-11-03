@@ -1,4 +1,4 @@
-import { Loc, Type, Text, Dom } from 'main.core';
+import { Loc, Type, Dom } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import {Dialog, ItemOptions} from 'ui.entity-selector';
@@ -113,6 +113,7 @@ export class TagSearcher extends EventEmitter
 			footerOptions: {
 				userId: this.userId,
 				groupId: groupId,
+				onCreateTag: () => this.createTaskTag(this.tagDialog, statusSuccess, item),
 			},
 			offsetTop: 12,
 			entities: [
@@ -128,7 +129,6 @@ export class TagSearcher extends EventEmitter
 			events: {
 				'onLoad': (baseEvent: BaseEvent) => {
 					Dom.style(baseEvent.getTarget().getFooterContainer(), 'zIndex', 1);
-					this.onShowTaskEditCallback(baseEvent, statusSuccess, item);
 					this.hideDialogLabel(baseEvent.getTarget());
 				},
 				'Item:onSelect': (event) => {
@@ -148,19 +148,6 @@ export class TagSearcher extends EventEmitter
 				},
 				'onSearch': event => {
 					this.onSearchCallback(event);
-				},
-			},
-			tagSelectorOptions: {
-				events: {
-					onInput: (event) => {
-						const selector = event.getData().selector;
-						if (selector)
-						{
-							const dialog = selector.getDialog();
-							const label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
-							label.textContent = Text.encode(selector.getTextBoxValue());
-						}
-					},
 				},
 			},
 		});
@@ -346,12 +333,13 @@ export class TagSearcher extends EventEmitter
 				footerOptions: {
 					userId: this.userId,
 					groupId: groupId,
+					onCreateTag: () => this.createQuickCreateTag(this.tagSearchDialog, inputObject),
 				},
 				clearUnavailableItems: true,
 				events: {
 					'onLoad': (event) => {
 						Dom.style(event.getTarget().getFooterContainer(), 'zIndex', 1);
-						this.onLoadTaskQuickCreateCallback(event, inputObject);
+						this.hideDialogLabel(event.getTarget());
 					},
 					'onSearch': event => {
 						this.onSearchCallback(event);
@@ -643,155 +631,93 @@ export class TagSearcher extends EventEmitter
 	onSearchCallback(event)
 	{
 		const dialog = event.getTarget();
-		const query = event.getData().query;
-		if (query.trim() !== '')
-		{
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
-		}
-		else
-		{
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
-			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
-		}
+		dialog.getFooter().setSearchQuery(event.getData().query);
 	}
 
-	onLoadTaskQuickCreateCallback(event, inputObject)
+	createQuickCreateTag(dialog: ?Dialog, inputObject: Input)
 	{
-		const dialog = event.getTarget();
-		this.hideDialogLabel(dialog);
+		if (!dialog)
+		{
+			return;
+		}
+
 		const input = inputObject.getInputNode();
+		const regex = new RegExp('\\s|#$', 'm');
+		const currentPiece = input.value.split(regex).pop();
+		const tagName = currentPiece.replace('#', '').trim();
+		if (tagName === '')
+		{
+			return;
+		}
 
-		inputObject.subscribe('onMetaEnter', (event) => {
-			const regex = new RegExp('\\s|#$', 'm');
-			const currentPiece = input.value.split(regex).pop();
-			const tagName = currentPiece.replace('#', '').trim();
-			const data = {
-				newTag: tagName,
-				groupId: this.groupId,
-				taskId: 0,
-				action: 'add',
-			};
-			if (tagName === '')
+		this.requestSender.addTag({
+			newTag: tagName,
+			groupId: this.groupId,
+			taskId: 0,
+			action: 'add',
+		}).then(response => {
+			if (!response.data.success)
 			{
+				const alertClass = 'tasks-scrum-tag-already-exists-alert';
+				this.showAlert(dialog.getId(), alertClass, response.data.error);
+				setTimeout(() => {
+					this.removeAlert(dialog, alertClass);
+				}, 2000);
 				return;
 			}
-			this.requestSender.addTag(data).then(response => {
-				if (!response.data.success)
-				{
-					const alertClass = 'tasks-scrum-tag-already-exists-alert';
-					this.showAlert(dialog.getId(), alertClass, response.data.error);
-					setTimeout(() => {
-							this.removeAlert(dialog, alertClass);
-						},
-						2000);
-					return;
-				}
-				dialog.search(tagName);
-			});
-		});
 
-		dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
-			.addEventListener('click', event => {
-				const regex = new RegExp('\\s|#$', 'm');
-				const currentPiece = input.value.split(regex).pop();
-				const tagName = currentPiece.replace('#', '').trim();
-				const data = {
-					newTag: tagName,
-					groupId: this.groupId,
-					taskId: 0,
-					action: 'add',
-				};
-				if (tagName === '')
-				{
-					return;
-				}
-				this.requestSender.addTag(data).then(response => {
-					if (!response.data.success)
-					{
-						const alertClass = 'tasks-scrum-tag-already-exists-alert';
-						this.showAlert(dialog.getId(), alertClass, response.data.error);
-						setTimeout(() => {
-								this.removeAlert(dialog, alertClass);
-							},
-							2000);
-						return;
-					}
-					dialog.search(tagName);
-				});
-			});
+			dialog.search(tagName);
+		});
 	}
 
-	onShowTaskEditCallback(event, statusSuccess, item)
+	createTaskTag(dialog: ?Dialog, statusSuccess: Object, item: Item)
 	{
-		const dialog = event.getTarget();
-		const events = ['click', 'keydown'];
+		if (!dialog)
+		{
+			return;
+		}
 
-		const handler = event => {
-			if (event.type === 'keydown')
-			{
-				if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
-				{
-					return;
-				}
-			}
+		const tag = dialog.getTagSelectorQuery();
+		if (tag.trim() === '')
+		{
+			return;
+		}
 
-			const tag = dialog.getTagSelectorQuery();
-			if (tag.trim() === '')
+		this.requestSender.updateTaskTags({
+			tag,
+			itemIds: [item.getId()],
+			groupId: this.groupId,
+			action: 'add',
+		}).then(response => {
+			if (response.data.success)
 			{
+				statusSuccess.status = true;
+				const createdItem = dialog.addItem({
+					id: tag,
+					entityId: 'task-tag',
+					title: tag,
+					sort: 1,
+					badges: [
+						{
+							title: response.data.group,
+						},
+					],
+				});
+
+				dialog.getTab('all').getRootNode().addItem(createdItem);
+				createdItem.select();
+				dialog.getTagSelector().clearTextBox();
+				dialog.getFooter().setSearchQuery(dialog.getTagSelectorQuery());
+				dialog.focusSearch();
+				dialog.selectFirstTab();
 				return;
 			}
-			const data = {
-				tag: tag,
-				itemIds: [item.getId()],
-				groupId: this.groupId,
-				action: 'add',
-			};
-			this.requestSender.updateTaskTags(data).then(response => {
-				if (response.data.success)
-				{
-					statusSuccess.status = true;
-					const item = dialog.addItem({
-						id: tag,
-						entityId: 'task-tag',
-						title: tag,
-						sort: 1,
-						badges: [
-							{
-								title: response.data.group,
-							},
-						],
-					});
 
-					dialog.getTab('all').getRootNode().addItem(item);
-					item.select();
-					dialog.getTagSelector().clearTextBox();
-					dialog.focusSearch();
-					dialog.selectFirstTab();
-
-				}
-				else
-				{
-					const alertClass = 'tasks-scrum-tag-already-exists-alert';
-					this.showAlert(dialog.getId(), alertClass, response.data.error);
-					setTimeout(() => {
-							this.removeAlert(dialog, alertClass);
-						},
-						3000);
-				}
-			});
-		};
-
-		events.forEach(function(ev) {
-			if (ev === 'click')
-			{
-				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
-					.addEventListener(ev, handler);
-			}
-			else
-			{
-				dialog.getContainer().addEventListener(ev, handler);
-			}
+			const alertClass = 'tasks-scrum-tag-already-exists-alert';
+			this.showAlert(dialog.getId(), alertClass, response.data.error);
+			setTimeout(() => {
+				this.removeAlert(dialog, alertClass);
+			}, 3000);
 		});
 	}
 

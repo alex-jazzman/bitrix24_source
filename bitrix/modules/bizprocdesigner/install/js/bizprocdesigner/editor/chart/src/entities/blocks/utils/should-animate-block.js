@@ -10,6 +10,8 @@ const ANIMATED_ACTIVITY_TYPES: Set<string> = new Set([
 	'CrmDealComplexActivity',
 	'TasksComplexActivity',
 	'CrmDynamicComplexActivity',
+	'CrmSmartProcessComplexActivity',
+	'CrmAutomatedSolutionComplexActivity',
 	'AiAssistantAgentComplexActivity',
 ]);
 

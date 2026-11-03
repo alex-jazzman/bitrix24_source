@@ -101,7 +101,15 @@ export class EscapeHandler
 		});
 	}
 
-	restore(text: string): string
+	/**
+	 * Expand the placeholders of a fragment WITHOUT consuming the storage: the image rule needs
+	 * the escapes of a label back before toMarkdownInertToken encodes the alt out of restore's
+	 * reach, while the rest of the text is still restored by the final restore() below.
+	 *
+	 * @param {string} text
+	 * @return {string}
+	 */
+	expand(text: string): string
 	{
 		if (this.#escapes.length === 0)
 		{
@@ -109,13 +117,18 @@ export class EscapeHandler
 		}
 
 		const escapes = this.#escapes;
-		const result = text.replaceAll(
+
+		return text.replaceAll(
 			ESCAPE_PLACEHOLDER_PATTERN,
 			// A user-typed literal "####MD_ESC_N####" (or an out-of-range index) has no
 			// stored char — leave the marker untouched instead of emitting "undefined".
 			(match, index) => escapes[Number(index)] ?? match,
 		);
+	}
 
+	restore(text: string): string
+	{
+		const result = this.expand(text);
 		this.#escapes = [];
 
 		return result;

@@ -26,6 +26,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 	const { Worker } = require('im/messenger/lib/helper');
 
 	const { MessageQueueRequestManager } = require('im/messenger/application/lib/message-queue-request-manager');
+	const { ReadyState } = require('im/messenger/application/lib/refresher/ready-state');
 
 	const REFRESH_AFTER_ERROR_INTERVAL = 10000;
 
@@ -54,15 +55,19 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 		{
 			this.logger = getLoggerWithContext('messenger--refresher', this);
 
-			this.isReady = false;
-			this.isFirstLoad = true;
+			/** @type {ReadyState} */
+			this.readyState = new ReadyState({
+				onRuntimeReady: () => this.#publishRuntimeReady(),
+				onStartupComplete: () => this.#completeStartup(),
+			});
 
 			this.core = serviceLocator.get('core');
 
 			this.refreshAfterErrorInterval = REFRESH_AFTER_ERROR_INTERVAL;
 			this.initAfterRefreshErrorWorker();
 
-			EntityReady.addCondition(WaitingEntity.chat, () => this.isReady);
+			// the subscription lives until the end of the context, so it stays out of ReadyState
+			EntityReady.addCondition(WaitingEntity.chat, () => this.readyState.isRuntimeReady);
 
 			/** @type {JSSharedStorage} */
 			this.departmentColleaguesStore = Application.sharedStorage('immobileDepartmentColleagues');
@@ -279,7 +284,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 				.then(() => {
 					this.#initPerfPoint?.endPoint('connection');
 
-					return this.#afterRefresh();
+					return this.#afterRefresh(mode);
 				})
 				.catch((response) => {
 					this.#initPerfPoint?.endPoint('connection', { error: 'refresh error' });
@@ -314,8 +319,22 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 			return options;
 		}
 
-		async #afterRefresh()
+		/**
+		 * @param {RefreshModeType} [mode]
+		 */
+		async #afterRefresh(mode)
 		{
+			// Only on startup, and strictly before both status changes: pull interception holds on
+			// "synchronization is running OR the status equals connection", and the synchronization
+			// status does not participate in that condition. Any waiting inserted after the
+			// connection status is dropped would open a window where pull events apply directly.
+			if (mode === RefreshMode.startUp)
+			{
+				this.#initPerfPoint?.startPoint('init-handlers-wait');
+				await this.#messengerInitService.waitOnceInitHandlers();
+				this.#initPerfPoint?.endPoint('init-handlers-wait');
+			}
+
 			if (Feature.isLocalStorageEnabled)
 			{
 				// We're setting the state here to prevent a break between the "connection" and "sync" header text,
@@ -323,6 +342,10 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 				await this.core.setAppStatus(AppStatus.sync, true);
 			}
 			await this.core.setAppStatus(AppStatus.connection, false);
+
+			// a single point for both local storage branches: the bootstrap response is already
+			// laid out here, and the synchronization has not started yet
+			this.readyState.markRuntimeReady();
 
 			this.refreshErrorNoticeFlag = false;
 			this.refreshErrorWorker.stop();
@@ -335,7 +358,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 
 			if (!Feature.isLocalStorageEnabled)
 			{
-				return this.#ready();
+				return this.readyState.markStartupComplete();
 			}
 
 			this.#initPerfPoint?.startPoint('sync');
@@ -346,7 +369,7 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 
 					return this.prewarmFavoriteReactionsCache();
 				})
-				.then(() => this.#ready())
+				.then(() => this.readyState.markStartupComplete())
 				.then(() => this.syncService?.startBackgroundSync())
 				.catch((error) => {
 					this.#initPerfPoint?.endPoint('sync', { error: error?.message });
@@ -385,22 +408,21 @@ jn.define('im/messenger/application/lib/refresher', (require, exports, module) =
 			}, this.refreshAfterErrorInterval);
 		}
 
-		async #ready()
+		#publishRuntimeReady()
 		{
-			this.isReady = true;
+			this.logger.warn('runtime ready');
+			EntityReady.ready(WaitingEntity.chat);
+			this.#initPerfPoint?.endPoint('ready');
+		}
 
-			if (this.isFirstLoad)
-			{
-				this.logger.warn('ready');
-				EntityReady.ready(WaitingEntity.chat);
-			}
-
-			this.isFirstLoad = false;
+		async #completeStartup()
+		{
 			serviceLocator.get('counters-update-system').enableReadingQueue();
 			await serviceLocator.get('counters-update-system').startReadingQueue();
 
 			return this.core.setAppStatus(AppStatus.running, true)
 				.then(() => {
+					this.#initPerfPoint?.endPoint('startup-complete');
 					MessengerEmitter.emit(EventType.messenger.afterRefreshSuccess);
 
 					this.logger.warn('refresh complete');

@@ -9,26 +9,20 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 
-	/**
-	 * @typedef {Object} SelectorParams
-	 * @property {string} id
-	 * @property {string} [title]
-	 * @property {string} [avatar]
-	 * @property {boolean} [withRedux]
-	 * @property {boolean} [isCollaber]
-	 * @property {boolean} [isExtranet]
-	 * @property {Object} [customData]
-	 *
-	 * @param {SelectorParams} selectorProps
-	 */
-
 	class SelectorDataProvider
 	{
+		/**
+		 * @param {AvatarSelectorParams} data
+		 */
 		constructor(data = {})
 		{
 			this.data = mergeImmutable(data, this.getReduxData(data));
 		}
 
+		/**
+		 * @param {AvatarSelectorParams} params
+		 * @return {AvatarSliceUser}
+		 */
 		getReduxData({ id, withRedux })
 		{
 			if (!withRedux)
@@ -39,6 +33,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return usersSelector.selectById(store.getState(), Number(id)) || {};
 		}
 
+		/**
+		 * @return {AvatarId}
+		 */
 		getId()
 		{
 			const { id } = this.data;
@@ -46,6 +43,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return id;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getName()
 		{
 			const { fullName, title } = this.data;
@@ -54,6 +54,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return fullName ?? (title || [name, lastName].filter(Boolean).join(' '));
 		}
 
+		/**
+		 * @return {string | undefined}
+		 */
 		getEntityType()
 		{
 			const { entityType } = this.data;
@@ -61,6 +64,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return entityType;
 		}
 
+		/**
+		 * @return {string | undefined}
+		 */
 		getSelectorEntityId()
 		{
 			const { entityId } = this.data;
@@ -68,6 +74,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return entityId;
 		}
 
+		/**
+		 * @return {AvatarSelectorCustomData}
+		 */
 		getCustomData()
 		{
 			const { customData } = this.data;
@@ -75,6 +84,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return customData || {};
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getTestId()
 		{
 			const testId = 'avatar-selector';
@@ -83,7 +95,7 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 		}
 
 		/**
-		 * @returns {AvatarEntityType}
+		 * @return {AvatarEntityType | null}
 		 */
 		getAvatarEntityType()
 		{
@@ -107,11 +119,17 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return null;
 		}
 
+		/**
+		 * @return {string | undefined}
+		 */
 		getAvatarType()
 		{
 			return this.getEntityType();
 		}
 
+		/**
+		 * @return {string | undefined}
+		 */
 		getUri()
 		{
 			const { avatarSize100, avatar } = this.data;
@@ -119,6 +137,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return avatarSize100 ?? avatar;
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		isExtranet()
 		{
 			const { isExtranet } = this.data;
@@ -126,6 +147,9 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return Boolean(isExtranet) || this.getAvatarType() === this.getExtranetEntityName();
 		}
 
+		/**
+		 * @return {boolean}
+		 */
 		isCollaber()
 		{
 			const { isCollaber } = this.data;
@@ -133,21 +157,33 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 			return Boolean(isCollaber) || this.getAvatarType() === this.getCollabEntityName();
 		}
 
+		/**
+		 * @return {AvatarShape | null}
+		 */
 		getShape()
 		{
 			return null;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getCollabEntityName()
 		{
 			return UserSelectorEntityType.COLLABER.getValue();
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getExtranetEntityName()
 		{
 			return UserSelectorEntityType.EXTRANET.getValue();
 		}
 
+		/**
+		 * @return {Partial<AvatarComponentProps>}
+		 */
 		getParams()
 		{
 			const { id, entityId, size, onClick } = this.data;
@@ -176,6 +212,10 @@ jn.define('ui-system/blocks/avatar/src/providers/selector', (require, exports, m
 
 	module.exports = {
 		SelectorDataProviderClass: SelectorDataProvider,
+		/**
+		 * @param {AvatarSelectorParams} data
+		 * @return {Partial<AvatarComponentProps>}
+		 */
 		selectorDataProvider: (data) => (new SelectorDataProvider(data)).getParams(),
 	};
 });

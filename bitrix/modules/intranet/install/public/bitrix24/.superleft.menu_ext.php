@@ -496,7 +496,13 @@ if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailabl
 
 if ($isNewProjectsOn)
 {
-	$projectSubLink = "javascript: BX.Messenger.Public.openChatCreation('collab');";
+	$trackCreateStart = "BX.Socialnetwork.V2.Lib.trackProjectCreateStart({ element: 'left_menu', kind: 'project' });";
+
+	$projectSubLink = 'javascript:'
+		. " BX.Runtime.loadExtension('socialnetwork.v2.lib.event-sender')"
+		. ' .then(function() { ' . $trackCreateStart . ' })'
+		. ' .catch(function() {});'
+		. " BX.Messenger.Public.openChatCreation('collab');";
 }
 else
 {
@@ -570,7 +576,7 @@ if (Loader::includeModule('intranet') && AutomationSection::isAvailable())
 
 if (
 	Loader::includeModule('bizproc')
-	&& \Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'Y'
+	&& \Bitrix\Main\Config\Feature::isEnabled(\Bitrix\Bizproc\Public\Feature\AiAgent\AiAgentSectionFlag::class)
 )
 {
 	$arMenu[] = [
@@ -668,7 +674,9 @@ if (Loader::includeModule("bitrix24"))
 {
 	$arMenu[] = array(
 		GetMessage("MENU_TARIFF"),
-		"/settings/license.php?TARIFF_WIDGET=Y",
+		(Bitrix\Bitrix24\CurrentUser::get()->canDoOperation('bitrix24_config') || CBitrix24::canAllBuyLicense())
+			? '/settings/license.php'
+			: '/settings/license_all.php',
 		array(),
 		array(
 			"class" => "menu-tariff",

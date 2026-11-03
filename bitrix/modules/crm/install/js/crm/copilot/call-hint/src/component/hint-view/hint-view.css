@@ -1,0 +1,29 @@
+.crm-copilot-call-hint {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.crm-copilot-call-hint__navigation {
+	flex: none;
+	margin: 17px var(--ui-space-inline-xl, 24px) var(--ui-space-stack-xs, 8px);
+}
+
+.crm-copilot-call-hint__hint {
+	margin-inline: var(--ui-space-inline-xl, 24px);
+	padding: 17px 20px 22px 20px;
+}
+
+.crm-copilot-call-hint__hint,
+.crm-copilot-call-hint__rules {
+	min-height: 0;
+	overflow: auto;
+}
+
+.crm-copilot-call-hint__content {
+	display: flex;
+	flex-direction: column;
+	gap: 19px;
+	overflow-wrap: anywhere;
+}

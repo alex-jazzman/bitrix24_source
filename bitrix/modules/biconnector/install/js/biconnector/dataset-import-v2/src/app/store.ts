@@ -1,7 +1,9 @@
+/* eslint-disable no-param-reassign */
 import { createStore } from 'ui.vue3.vuex';
 import type { Store } from 'ui.vue3.vuex';
 import type {
 	AppConfig,
+	ConnectionLoadState,
 	ConnectionProperties,
 	DataFormats,
 	DatasetProperties,
@@ -9,6 +11,7 @@ import type {
 	FileProperties,
 	InitialData,
 	PreviewData,
+	PreviewState,
 	RootState,
 	SectionsConfig,
 	UploadStatus,
@@ -33,6 +36,7 @@ const defaultConfig = (): AppConfig => ({
 	datasetProperties: {
 		id: 0,
 		name: '',
+		verboseName: '',
 		description: '',
 		externalCode: '',
 		externalName: '',
@@ -40,6 +44,7 @@ const defaultConfig = (): AppConfig => ({
 	},
 	fieldsSettings: [],
 	sectionsConfig: {},
+	tableGroupIds: [],
 });
 
 const defaultPreview = (): PreviewData => ({
@@ -75,6 +80,10 @@ function mergeInitialState(initial: InitialData | undefined): RootState
 	{
 		config.sectionsConfig = { ...initialConfig.sectionsConfig };
 	}
+	if (Array.isArray(initialConfig.tableGroupIds))
+	{
+		config.tableGroupIds = initialConfig.tableGroupIds.map(Number);
+	}
 
 	const preview = defaultPreview();
 	const initialRows = initial?.previewData?.rows;
@@ -97,6 +106,7 @@ function mergeInitialState(initial: InitialData | undefined): RootState
 			isReloadingPreview: false,
 			hasPreviewSchemaMismatch: false,
 			connectionEditing: !(config.datasetProperties.id > 0) && !hasConnectionTable,
+			connectionLoad: { status: 'idle', errorHtml: '', loaded: false },
 		},
 	};
 }
@@ -203,14 +213,44 @@ export function buildStore(initialData?: InitialData): Store<RootState>
 			{
 				state.ui.connectionEditing = isEditing;
 			},
+			setTableGroupIds(state: RootState, ids: Array<number>): void
+			{
+				state.config.tableGroupIds = ids;
+			},
+			setConnectionLoading(state: RootState): void
+			{
+				state.ui.connectionLoad = { ...state.ui.connectionLoad, status: 'loading', errorHtml: '' };
+			},
+			setConnectionLoaded(state: RootState): void
+			{
+				state.ui.connectionLoad = { ...state.ui.connectionLoad, status: 'idle', loaded: true };
+			},
+			setConnectionLoadFailed(state: RootState, errorHtml: string): void
+			{
+				state.ui.connectionLoad = { status: 'error', errorHtml, loaded: false };
+			},
+			setConnectionLoad(state: RootState, connectionLoad: ConnectionLoadState): void
+			{
+				state.ui.connectionLoad = connectionLoad;
+			},
 		},
 		getters: {
 			isEditMode: (state: RootState): boolean => state.config.datasetProperties.id > 0,
 			isSystem: (state: RootState): boolean => Boolean(state.config.datasetProperties.isSystem),
+			// Properties fixed after creation (name, verbose name); see isEditingForbidden for the whole dataset.
 			isReadOnly: (state: RootState): boolean =>
 				state.config.datasetProperties.id > 0
 				|| Boolean(state.config.datasetProperties.isSystem)
 			,
+			// A missing canEdit flag means allowed, so older component responses behave as before.
+			isLockedByRights: (state: RootState): boolean =>
+				state.config.datasetProperties.id > 0
+				&& state.config.datasetProperties.canEdit === false
+			,
+			isEditingForbidden: (state: RootState, getters: Record<string, boolean>): boolean =>
+				getters.isSystem || getters.isLockedByRights
+			,
+			tableGroupIds: (state: RootState): Array<number> => state.config.tableGroupIds,
 			hasFile: (state: RootState): boolean =>
 				Boolean(state.config.fileProperties.fileToken)
 				|| Boolean(state.config.fileProperties.fileName)
@@ -293,6 +333,27 @@ export function buildStore(initialData?: InitialData): Store<RootState>
 				state.config.connectionProperties
 			,
 			connectionEditing: (state: RootState): boolean => state.ui.connectionEditing,
+			isConnectionLoading: (state: RootState): boolean => state.ui.connectionLoad.status === 'loading',
+			connectionLoadErrorHtml: (state: RootState): string => state.ui.connectionLoad.errorHtml,
+			previewState: (state: RootState): PreviewState => {
+				const { status, loaded } = state.ui.connectionLoad;
+				if (status === 'loading' || status === 'error')
+				{
+					return status;
+				}
+
+				if (state.previewData.rows.length > 0)
+				{
+					return 'data';
+				}
+
+				if (loaded && state.config.fieldsSettings.length > 0)
+				{
+					return 'empty';
+				}
+
+				return 'idle';
+			},
 			getSectionConfig: (state: RootState) => (sectionName: string, property: string): boolean => {
 				const section = state.config.sectionsConfig[sectionName];
 				if (section && property in section)

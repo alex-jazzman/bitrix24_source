@@ -14,12 +14,20 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 	const { UploadStatus } = require('disk/uploader/src/config');
 	const { createVideoPreviewMiddleware } = require('disk/uploader/src/video-preview');
 	const { Uuid } = require('utils/uuid');
+	const { Type } = require('type');
 	const { confirmDestructiveAction, Alert } = require('alert');
+	const { createFileByContentByUnifiedLink } = require('disk/opener/unified-link/rest');
 
 	const UPLOADER_CONTEXT_NAME = 'DiskmobileAirUploader';
 
+	/**
+	 * @extends {LayoutComponent<DiskUploaderViewProps, DiskUploaderViewState>}
+	 */
 	class DiskUploaderView extends LayoutComponent
 	{
+		/**
+		 * @param {DiskUploaderViewProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -47,7 +55,7 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {[]}
+		 * @return {Array<DiskUploadTask>}
 		 */
 		get tasks()
 		{
@@ -56,7 +64,7 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {[]}
+		 * @return {Array<DiskUploadTask>}
 		 */
 		get successTasks()
 		{
@@ -65,13 +73,17 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {[]}
+		 * @return {Array<DiskUploadTask>}
 		 */
 		get pendingTasks()
 		{
 			return this.tasks.filter((item) => !item.status || item.status === UploadStatus.PROGRESS);
 		}
 
+		/**
+		 * @param {string} suffix
+		 * @return {string}
+		 */
 		#getTestId(suffix)
 		{
 			return `disk-uploader-view-${suffix}`;
@@ -82,6 +94,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			this.tasks.forEach((task) => this.uploaderClient.addTask(clone(task)));
 		}
 
+		/**
+		 * @param {string} id
+		 * @param {DiskUploadDoneData} [data]
+		 */
 		#onUploadDone = (id, data) => {
 			this.#setTask(id, {
 				status: UploadStatus.DONE,
@@ -90,6 +106,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			});
 		};
 
+		/**
+		 * @param {string} id
+		 * @param {DiskUploadProgress} [data]
+		 */
 		#onUploadProgress = (id, data) => {
 			if (!this.taskProgressHandlers.has(id))
 			{
@@ -115,12 +135,20 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			}
 		};
 
+		/**
+		 * @param {string} id
+		 */
 		#onUploadError = (id) => {
 			this.#setTask(id, {
 				status: UploadStatus.ERROR,
 			});
 		};
 
+		/**
+		 * @param {string} id
+		 * @param {DiskUploadProgress} progress
+		 * @return {void}
+		 */
 		#setTaskProgress(id, { byteSent, byteTotal })
 		{
 			const index = this.tasks.findIndex((item) => item.taskId === id);
@@ -142,6 +170,11 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {string} id
+		 * @param {Partial<DiskUploadTask>} [data]
+		 * @return {Promise<void>}
+		 */
 		#setTask(id, data = {})
 		{
 			const index = this.tasks.findIndex((item) => item.taskId === id);
@@ -158,6 +191,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		/**
+		 * @param {string} id
+		 * @return {void}
+		 */
 		#removeTask(id)
 		{
 			if (this.state.finalization)
@@ -189,6 +226,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {string} id
+		 * @return {void}
+		 */
 		#cancelTask(id)
 		{
 			if (this.state.finalization)
@@ -203,6 +244,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {string} id
+		 * @return {void}
+		 */
 		#retryTask(id)
 		{
 			if (this.state.finalization)
@@ -263,7 +308,7 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			}
 		};
 
-		#commitAndClose = () => {
+		commitAndClose = () => {
 			if (this.state.finalization)
 			{
 				return;
@@ -323,6 +368,10 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			});
 		};
 
+		/**
+		 * @param {DiskUploadTask} task
+		 * @return {Promise<DiskUploadCommitResult>}
+		 */
 		async #commitTask(task)
 		{
 			const videoPreview = await createVideoPreviewMiddleware(task);
@@ -333,7 +382,11 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 				videoPreview,
 			);
 
-			return BX.ajax(commitConfig);
+			const { uniqueCode } = this.props;
+
+			return Type.isStringFilled(uniqueCode)
+				? createFileByContentByUnifiedLink(uniqueCode, commitConfig)
+				: BX.ajax(commitConfig);
 		}
 
 		render()
@@ -363,6 +416,9 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View}
+		 */
 		#renderButtons()
 		{
 			return BoxFooter(
@@ -378,7 +434,7 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 					style: {
 						marginBottom: 10,
 					},
-					onClick: this.#commitAndClose,
+					onClick: this.commitAndClose,
 				}),
 				Button({
 					testId: this.#getTestId('cancel-button'),
@@ -391,6 +447,9 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @return {View|null}
+		 */
 		#renderBadge()
 		{
 			const successCount = this.successTasks.length;
@@ -402,6 +461,9 @@ jn.define('disk/uploader/src/view', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @return {View}
+		 */
 		#renderScrollSafeArea()
 		{
 			return View({

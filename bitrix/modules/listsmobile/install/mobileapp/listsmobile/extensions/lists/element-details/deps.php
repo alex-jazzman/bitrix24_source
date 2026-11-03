@@ -3,7 +3,10 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'tokens',
 		'loc',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
 		'event-emitter',
 		'in-app-url',
 		'notify-manager',

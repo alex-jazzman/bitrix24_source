@@ -9,6 +9,7 @@ $MESS["CRM_ACTIVITY_EMAIL_CREATION_LIMITED"] = "You have reached the limit for n
 $MESS["CRM_ACTIVITY_EMAIL_CUSTOM_LIMITED"] = "You have reached the limit for number of emails you can send per day. Please change the limit in sender settings. %link_start%Details%link_end%.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Please specify the message sender.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD"] = "Please specify the message recipient.";
+$MESS["CRM_ACTIVITY_EMAIL_LARGE_ATTACHMENT_SEND_ERROR"] = "Could not verify file link. Try sending the email again.";
 $MESS["CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Maximum possible attachment size exceeded (#SIZE#)";
 $MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "You cannot add more than #COUNT# recipients";
 $MESS["CRM_ACTIVITY_INVALID_EMAIL"] = "'#VALUE#' is not a valid e-mail address.";

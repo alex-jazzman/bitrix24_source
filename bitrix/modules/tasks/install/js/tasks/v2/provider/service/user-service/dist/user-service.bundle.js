@@ -26,6 +26,7 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 	}
 
 	class UserService {
+		#loadingPromises = new Map();
 		getUrl(id) {
 			const settings = main_core.Extension.getSettings('tasks.v2.application.task-card');
 			const urlTemplate = settings.userDetailUrlTemplate;
@@ -36,12 +37,33 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		}
 		async list(ids) {
 			const unloadedIds = this.#getUnloadedIds(ids);
-			if (unloadedIds.length === 0) {
-				return;
+			const loadingPromises = new Set();
+			const idsToLoad = unloadedIds.filter(id => {
+				const loadingPromise = this.#loadingPromises.get(id);
+				if (loadingPromise) {
+					loadingPromises.add(loadingPromise);
+					return false;
+				}
+				return true;
+			});
+			if (idsToLoad.length > 0) {
+				const loadingPromise = this.#load(idsToLoad);
+				idsToLoad.forEach(id => this.#loadingPromises.set(id, loadingPromise));
+				void loadingPromise.finally(() => {
+					idsToLoad.forEach(id => {
+						if (this.#loadingPromises.get(id) === loadingPromise) {
+							this.#loadingPromises.delete(id);
+						}
+					});
+				});
+				loadingPromises.add(loadingPromise);
 			}
+			await Promise.all(loadingPromises);
+		}
+		async #load(ids) {
 			try {
 				const data = await tasks_v2_lib_apiClient.apiClient.post(tasks_v2_const.Endpoint.UserList, {
-					ids: unloadedIds
+					ids
 				});
 				const users = data.map(user => mapDtoToModel(user));
 				await this.$store.dispatch(`${tasks_v2_const.Model.Users}/upsertMany`, users);

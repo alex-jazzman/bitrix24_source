@@ -542,6 +542,8 @@ class crm extends CModule
 
 		$this->InstallUserFields();
 
+		\Bitrix\Crm\Preview\Route::setCrmRoutes();
+
 		//region BUSINESS TYPES
 		$arResult = $DB->Query("SELECT COUNT(*) AS QTY FROM b_crm_biz_type")->Fetch();
 		$qty = (is_array($arResult) && isset($arResult["QTY"])) ? intval($arResult["QTY"]) : 0;
@@ -905,8 +907,6 @@ class crm extends CModule
 		$APPLICATION->SetFileAccessPermission('/bitrix/admin/crm_bizproc_activity_settings.php', ['2' => 'R']);
 		$APPLICATION->SetFileAccessPermission('/bitrix/admin/crm_bizproc_selector.php', ['2' => 'R']);
 		$APPLICATION->SetFileAccessPermission('/bitrix/admin/crm_bizproc_wf_settings.php', ['2' => 'R']);
-
-		\Bitrix\Crm\Preview\Route::setCrmRoutes();
 
 		return true;
 	}

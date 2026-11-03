@@ -5,6 +5,10 @@ export const Search = defineComponent({
 	name: 'Search',
 
 	props: {
+		testIdPrefix: {
+			type: String,
+			default: '',
+		},
 		searchArea: {
 			type: [HTMLElement, null],
 			required: true,
@@ -111,12 +115,14 @@ export const Search = defineComponent({
 
 	template: `
 		<div
-			class="crm-ai-report-drawer__content-block-header-search ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon"
+			class="crm-ai-report-drawer__content-block-header-search ui-ctl ui-ctl-sm ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon"
+			:data-testid="testIdPrefix ? testIdPrefix + '-search' : null"
 		>
 			<input
 				ref="searchInput"
 				type="text"
 				class="ui-ctl-element"
+				:data-testid="testIdPrefix ? testIdPrefix + '-search-input' : null"
 				:placeholder="loc('CRM_AI_REPORT_DRAWER_SEARCH_PLACEHOLDER')"
 				v-model="searchText"
 			>
@@ -124,6 +130,8 @@ export const Search = defineComponent({
 				v-if="hasSearchText"
 				type="button"
 				class="ui-ctl-after ui-ctl-icon-clear"
+				:data-testid="testIdPrefix ? testIdPrefix + '-search-clear-button' : null"
+				:aria-label="loc('CRM_AI_REPORT_DRAWER_SEARCH_CLEAR')"
 				@click.stop.prevent="clearSearch"
 			/>
 			<span v-else class="ui-ctl-icon ui-ctl-icon-search ui-ctl-after"></span>

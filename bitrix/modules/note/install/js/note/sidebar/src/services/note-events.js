@@ -1,6 +1,8 @@
 export const NoteEvent = {
 	DOCUMENT_RENAMED: 'Note:documentRenamed',
 	COLLECTION_RENAMED: 'Note:collectionRenamed',
+	// Payload: `{ collectionId, status: 'started' | 'cancelled' }`.
+	COLLECTION_DELETION_STARTED: 'Note:collectionDeletionStarted',
 	DOCUMENT_CHILDREN_CHANGED: 'Note:documentChildrenChanged',
 	DOCUMENTS_BULK_RESTORED: 'Note:documentsBulkRestored',
 	// Workspace → sidebar: a bulk archive/delete/move ran on the current page. The
@@ -27,16 +29,16 @@ export const NoteEvent = {
 	// within the frame of the press, so the flag travels locally first.
 	// Payload: `{ entityType, entityId, isFavorite }`.
 	FAVORITE_CHANGED: 'Note:favoriteChanged',
-	// [EVENT-01] The only public way in and out of the BitrixGPT panel. Payload
+	// The only public way in and out of the BitrixGPT panel. Payload
 	// `{ desired?: 'open' | 'close' }`; without `desired` the shell toggles the current state. The
 	// single listener is the note.app shell, which owns that state.
 	AI_CHAT_TOGGLE_REQUESTED: 'Note:aiChatToggleRequested',
-	// [EVENT-02] Who occupies the right rail: `{ owner: NoteRailOwner | null }`. Every resident
+	// Who occupies the right rail: `{ owner: NoteRailOwner | null }`. Every resident
 	// announces itself, and anyone seeing a foreign owner collapses.
 	RAIL_OCCUPANCY_CHANGED: 'Note:railOccupancyChanged',
 };
 
-// [EVENT-02] The three residents of the single right rail. The chat belongs to the app shell, the
+// The three residents of the single right rail. The chat belongs to the app shell, the
 // other two to the document page — the vocabulary lives here, next to the event, rather than with
 // either side.
 export const NoteRailOwner = Object.freeze({

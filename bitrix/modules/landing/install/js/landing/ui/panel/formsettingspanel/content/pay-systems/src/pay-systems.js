@@ -13,7 +13,7 @@ import 'ui.sidepanel-content';
 
 import messageIcon from './images/message-icon.svg';
 
-export default class PaySystems extends ContentWrapper
+export class PaySystems extends ContentWrapper
 {
 	#moduleNotIncludedErrorCode = 'MODULE_NOT_INCLUDED';
 	#schemeManager: SchemeManager;
@@ -159,3 +159,4 @@ export default class PaySystems extends ContentWrapper
 		}
 	}
 }
+export { PaySystems as Content };

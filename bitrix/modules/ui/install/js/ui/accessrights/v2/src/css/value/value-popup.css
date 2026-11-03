@@ -1,6 +1,13 @@
+.ui-access-rights-v2-value-popup {
+	--popup-window-background-color: var(--ui-color-bg-content-secondary, #f6fafb);
+	--popup-window-border-radius: 18px;
+	--popup-window-box-shadow: 0 8px 17px 0 rgba(0, 0, 0, 0.21);
+}
+
 .ui-access-rights-v2-value-popup-buttons {
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
-	gap: 10px;
+	gap: 12px;
+	padding-top: 12px;
 }

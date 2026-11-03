@@ -140,7 +140,8 @@ const ajaxActions = {
 	createCall: 'call.CallManager.create',
 	createChildCall: 'call.CallManager.createChildCall',
 	getPublicChannels: 'pull.channel.public.list',
-	getCall: 'call.CallManager.get'
+	getCall: 'call.CallManager.get',
+	registerRingingDevice: 'call.Call.registerRingingDevice'
 };
 
 export const CallScheme = {
@@ -672,6 +673,8 @@ class EngineLegacy
 		{
 			call.addInvitedUsers(params.invitedUsers);
 
+			this.#registerRingingDevice(call);
+
 			BX.onCustomEvent(window, "CallEvents::incomingCall", [{
 				call: call,
 				video: params.video === true,
@@ -681,6 +684,29 @@ class EngineLegacy
 		}
 		this.log(call.id, "Incoming call " + call.id);
 	};
+
+	// Register this classic-scheme device as a ringing callee so the backend keeps
+	// it in the call when the same user declines on another device (device-scoped
+	// decline). Mirrors the JWT engine — scope is private 1-1 calls only, and the
+	// request runs once per call instance (repeated Call::incoming reuse the same
+	// call object). Best-effort: a failure must not block showing the incoming call.
+	#registerRingingDevice(call)
+	{
+		if (call.associatedEntity?.isDeviceScoped !== true || call.ringingDeviceRegistered)
+		{
+			return;
+		}
+
+		call.ringingDeviceRegistered = true;
+		BX.ajax.runAction(ajaxActions.registerRingingDevice, {
+			data: {
+				callUuid: call.uuid,
+				callInstanceId: call.instanceId,
+			},
+		}).catch(() => {
+			call.ringingDeviceRegistered = false;
+		});
+	}
 
 	#onUnknownCallPing(params, extra)
 	{

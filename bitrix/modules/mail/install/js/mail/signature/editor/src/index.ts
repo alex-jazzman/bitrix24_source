@@ -1,4 +1,13 @@
 export { SignatureEditor } from './signature-editor';
+export { ImageCapability } from './feature/image/image-capability';
+export type { ImageCapabilityOptions, ImageCapabilityState } from './feature/image/image-capability';
+export { LocalImageUploader } from './feature/image/local-image-uploader';
+export type { LocalImageUploaderOptions } from './feature/image/local-image-uploader';
+export { DiskImagePicker } from './feature/image/disk-image-picker';
+export type { DiskImagePickerOptions } from './feature/image/disk-image-picker';
+export { ImageSourceMenu } from './feature/image/image-source-menu';
+export type { ImageSourceMenuOptions } from './feature/image/image-source-menu';
+export { buildSignatureImageMarker } from './lib/signature-image/markup';
 export { SignatureMacroCatalog } from './macro-catalog';
 export {
 	SignatureMacroCapability,

@@ -20,6 +20,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.fonts.opensans',
 	'clipboard',
 	'ui.alerts',
+	// Column splitter (see the Column splitter regions in style.css / script.js): the control that
+	// brings a collapsed column back is a stock AIR button carrying an icon-set icon and a UI hint.
+	// script.js builds it on BX.ready, so all three have to be on the page by then rather than
+	// borrowed from whichever neighbouring component happens to load them.
+	'ui.buttons',
+	'ui.hint',
+	'ui.icon-set.outline',
 ]);
 
 $fillDefaultMessages = static function (string $entityTypeName, array $messages): array {
@@ -154,7 +161,46 @@ $messages = $fillDefaultMessages($entityTypeName, $arResult['MESSAGES']);
 
 $containerId = "{$guid}_container";
 $tabContainerId = "{$guid}_tabs";
-?><div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-entity-wrap"><?
+
+/*
+	Column splitter: the width the user set last is kept in that user's own portal settings, written
+	from script.js through BX.userOptions, so it follows the person rather than the browser. Read
+	here and printed with the card below, because a card that asked for it instead would be drawn at
+	the default first and jump to the stored width once the answer arrived.
+*/
+$splitOption = CUserOptions::GetOption('crm', 'entity_card_split', []);
+$splitState = (is_array($splitOption) && is_string($splitOption['state'] ?? null)) ? $splitOption['state'] : '';
+$splitExpandLeftSuffix = [
+	CCrmOwnerType::Lead => '_LEAD',
+	CCrmOwnerType::Deal => '_DEAL',
+	CCrmOwnerType::Contact => '_CONTACT',
+	CCrmOwnerType::Company => '_COMPANY',
+	CCrmOwnerType::Quote => '_QUOTE',
+	CCrmOwnerType::Invoice => '_INVOICE',
+	CCrmOwnerType::SmartInvoice => '_INVOICE',
+][(int)$entityTypeID] ?? '';
+?><script>
+	/*
+		Column splitter (see the Column splitter regions in style.css / script.js). script.js is a head
+		script and has no language file of its own, so the names of its separator and of the control
+		that brings a collapsed column back, and that control's hint, are published here, ahead of the
+		card, and read from the page messages at the moment they are used.
+
+		The stored width travels the same way and for the same reason — it has to be on the page by
+		the time the splitter is built. Empty for a user who has never moved the divider, and script.js
+		then falls back to the tab's old store and to its own default.
+	*/
+	BX.message({
+		"CRM_ENT_DETAIL_SPLIT_SEPARATOR": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_SEPARATOR')?>",
+		"CRM_ENT_DETAIL_SPLIT_EXPAND_LEFT": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_EXPAND_LEFT' . $splitExpandLeftSuffix)?>",
+		"CRM_ENT_DETAIL_SPLIT_EXPAND_RIGHT": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_EXPAND_RIGHT')?>",
+		"CRM_ENT_DETAIL_SPLIT_HINT_LEFT_TITLE": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_HINT_LEFT_TITLE')?>",
+		"CRM_ENT_DETAIL_SPLIT_HINT_LEFT_TEXT": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_HINT_LEFT_TEXT')?>",
+		"CRM_ENT_DETAIL_SPLIT_HINT_RIGHT_TITLE": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_HINT_RIGHT_TITLE')?>",
+		"CRM_ENT_DETAIL_SPLIT_HINT_RIGHT_TEXT": "<?=GetMessageJS('CRM_ENT_DETAIL_SPLIT_HINT_RIGHT_TEXT')?>",
+		"CRM_ENT_DETAIL_SPLIT_STATE": <?=Json::encode($splitState)?>
+	});
+</script><div id="<?=htmlspecialcharsbx($containerId)?>" class="crm-entity-wrap"><?
 
 	if($arResult['ENABLE_PROGRESS_BAR'])
 	{
@@ -342,6 +388,9 @@ $tabContainerId = "{$guid}_tabs";
 		<button
 			id="crm_entity_bp_starter"
 			class="ui-btn ui-btn-sm ui-btn-round ui-btn-no-caps<?= $btnBizprocClass ?>"
+			aria-haspopup="dialog"
+			title="<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL')?>"
+			aria-label="<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL')?>"
 			<?= $availabilityLock ? "onclick=\"{$availabilityLock}\"" : "" ?>
 		>
 			<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_BIZPROC_STARTER_LABEL')?>

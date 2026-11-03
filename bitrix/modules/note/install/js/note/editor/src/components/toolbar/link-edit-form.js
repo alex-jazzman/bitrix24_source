@@ -38,7 +38,7 @@ export const LinkEditFormComponent = {
 			default: false,
 		},
 	},
-	emits: ['update:linkValue', 'apply', 'unset'],
+	emits: ['update:linkValue', 'apply', 'unset', 'field-focus'],
 	computed: {
 		safeLinkHref(): string
 		{
@@ -53,9 +53,24 @@ export const LinkEditFormComponent = {
 			return !this.linkValue && !this.linkIsActive;
 		},
 	},
+	watch: {
+		autofocus(value: boolean): void
+		{
+			if (value)
+			{
+				this.focusInput();
+			}
+		},
+	},
 	mounted()
 	{
 		if (this.autofocus)
+		{
+			this.focusInput();
+		}
+	},
+	methods: {
+		focusInput(): void
 		{
 			this.$nextTick(() => {
 				const input = this.$refs.input;
@@ -65,9 +80,7 @@ export const LinkEditFormComponent = {
 					input.select();
 				}
 			});
-		}
-	},
-	methods: {
+		},
 		emitValue(value: string): void
 		{
 			this.$emit('update:linkValue', value.trim());
@@ -98,6 +111,7 @@ export const LinkEditFormComponent = {
 				:value="linkValue"
 				class="note-editor-input note-editor-input-clamp"
 				placeholder="https://"
+				@focus="$emit('field-focus')"
 				@input="emitValue($event.target.value)"
 				@keydown="handleKeydown"
 			/>

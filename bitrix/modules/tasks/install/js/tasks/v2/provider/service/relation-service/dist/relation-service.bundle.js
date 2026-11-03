@@ -17,48 +17,52 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		async list(taskId, withIds = false) {
 			const hasUpdatePromises = this.#updatePromises.length > 0;
 			await Promise.all(this.#updatePromises);
-			const {
-				tasks,
-				ids,
-				statuses
-			} = await this.requestTasks(taskId, withIds);
-			if (withIds) {
-				if (!hasUpdatePromises && ids.length === 0) {
-					void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/setFieldFilled`, {
-						id: taskId,
-						fieldName: this.#meta.id,
-						isFilled: false
-					});
+			return tasks_v2_provider_service_taskService.taskService.withStageSnapshot(async snapshot => {
+				const {
+					tasks,
+					ids,
+					statuses
+				} = await this.requestTasks(taskId, withIds);
+				if (withIds) {
+					if (!hasUpdatePromises && ids.length === 0) {
+						void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/setFieldFilled`, {
+							id: taskId,
+							fieldName: this.#meta.id,
+							isFilled: false
+						});
+					}
+					this.#updateStoreRelationTasks(taskId, ids, false, statuses);
 				}
-				this.#updateStoreRelationTasks(taskId, ids, false, statuses);
-			}
-			tasks.forEach(taskDto => {
-				if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
-					void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, taskDto.id);
-				}
-				tasks_v2_provider_service_taskService.taskService.extractTask({
-					...taskDto,
-					[this.#meta.relationToField]: taskId
+				tasks.forEach(taskDto => {
+					if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
+						void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, taskDto.id);
+					}
+					tasks_v2_provider_service_taskService.taskService.extractTask({
+						...taskDto,
+						[this.#meta.relationToField]: taskId
+					}, true, snapshot);
 				});
+				return tasks;
 			});
-			return tasks;
 		}
 		async listByIds(taskId, taskIds) {
-			const tasks = await this.requestTasksByIds(taskId, taskIds);
-			const newTaskIds = tasks.map(({
-				id
-			}) => id);
-			this.#updateStoreRelationTasks(taskId, newTaskIds, true);
-			tasks.forEach(taskDto => {
-				if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
-					void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, taskDto.id);
-				}
-				tasks_v2_provider_service_taskService.taskService.extractTask({
-					...taskDto,
-					[this.#meta.relationToField]: taskId
+			return tasks_v2_provider_service_taskService.taskService.withStageSnapshot(async snapshot => {
+				const tasks = await this.requestTasksByIds(taskId, taskIds);
+				const newTaskIds = tasks.map(({
+					id
+				}) => id);
+				this.#updateStoreRelationTasks(taskId, newTaskIds, true);
+				tasks.forEach(taskDto => {
+					if (!tasks_v2_provider_service_taskService.taskService.hasStoreTask(taskDto.id, false)) {
+						void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, taskDto.id);
+					}
+					tasks_v2_provider_service_taskService.taskService.extractTask({
+						...taskDto,
+						[this.#meta.relationToField]: taskId
+					}, true, snapshot);
 				});
+				return tasks;
 			});
-			return tasks;
 		}
 		async getSubTaskIds(taskId, taskIds) {
 			const tasks = await this.requestSubTaskIds(taskId, taskIds);
@@ -382,7 +386,13 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			if (tasks_v2_provider_service_taskService.taskService.hasStoreTask(parentId)) {
 				return;
 			}
-			const parent = await this.#requestParent(parentId);
+			const parent = await tasks_v2_provider_service_taskService.taskService.withStageSnapshot(async snapshot => {
+				const data = await this.#requestParent(parentId);
+				if (data) {
+					tasks_v2_provider_service_taskService.taskService.extractTask(data, true, snapshot);
+				}
+				return data;
+			});
 			if (!parent) {
 				void tasks_v2_provider_service_taskService.taskService.updateStoreTask(taskId, {
 					parentId: 0
@@ -394,7 +404,6 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 				});
 				return;
 			}
-			tasks_v2_provider_service_taskService.taskService.extractTask(parent);
 			void this.$store.dispatch(`${tasks_v2_const.Model.Tasks}/addPartiallyLoaded`, parentId);
 		}
 		async setParent(taskId, parentId) {

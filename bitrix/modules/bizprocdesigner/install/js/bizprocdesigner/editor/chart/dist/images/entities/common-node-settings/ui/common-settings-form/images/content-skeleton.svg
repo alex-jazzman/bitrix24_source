@@ -1,0 +1,73 @@
+<svg width="580" height="915" viewBox="0 0 580 915" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<g id="animated-elements">
+		<rect x="18" y="16" width="46" height="46" rx="7" fill="#EDEEF0"/>
+		<rect x="82" y="31" width="255" height="16" rx="6" fill="#C9CCD0"/>
+		<rect x="462" y="31" width="16" height="16" rx="4" fill="#EDEEF0"/>
+		<rect x="490" y="31" width="16" height="16" rx="4" fill="#EDEEF0"/>
+		<rect x="518" y="31" width="16" height="16" rx="4" fill="#EDEEF0"/>
+		<rect x="546" y="31" width="16" height="16" rx="4" fill="#EDEEF0"/>
+		<rect x="18" y="92" width="86" height="12" rx="4" fill="#C9CCD0"/>
+		<rect x="18" y="122" width="86" height="2" rx="1" fill="#C9CCD0"/>
+		<rect x="122" y="92" width="86" height="12" rx="4" fill="#EDEEF0"/>
+		<rect x="484.5" y="85.5" width="77" height="27" rx="7.5" stroke="#C9CCD0"/>
+		<rect x="496" y="93" width="54" height="12" rx="4" fill="#C9CCD0"/>
+		<path d="M18 154C18 147.373 23.3726 142 30 142H550C556.627 142 562 147.373 562 154V403C562 409.627 556.627 415 550 415H30C23.3726 415 18 409.627 18 403V154Z" fill="#EDEEF0"/>
+		<rect x="38" y="162" width="24" height="24" rx="4" fill="white"/>
+		<rect x="79" y="166" width="255" height="16" rx="6" fill="white"/>
+		<rect x="38" y="204" width="471" height="8" rx="4" fill="white"/>
+		<rect x="38" y="220" width="348" height="8" rx="4" fill="white"/>
+		<rect x="38" y="236" width="348" height="8" rx="4" fill="white"/>
+		<rect x="37.9312" y="262" width="157" height="8" rx="4" fill="white"/>
+		<rect x="37.9312" y="279" width="503" height="38" rx="8" fill="white"/>
+		<rect x="37.9312" y="341" width="157" height="8" rx="4" fill="white"/>
+		<rect x="37.9312" y="358" width="503" height="38" rx="8" fill="white"/>
+		<path d="M18 449C18 442.373 23.3726 437 30 437H550C556.627 437 562 442.373 562 449V660C562 666.627 556.627 672 550 672H30C23.3726 672 18 666.627 18 660V449Z" fill="#EDEEF0"/>
+		<rect x="38" y="457" width="24" height="24" rx="4" fill="white"/>
+		<rect x="79" y="461" width="255" height="16" rx="6" fill="white"/>
+		<rect x="38" y="499" width="471" height="8" rx="4" fill="white"/>
+		<rect x="38" y="515" width="348" height="8" rx="4" fill="white"/>
+		<rect x="37.9312" y="547" width="127" height="8" rx="4" fill="white"/>
+		<rect x="37.9312" y="573" width="240" height="12" rx="4" fill="white"/>
+		<rect x="37.9312" y="597" width="151" height="12" rx="4" fill="white"/>
+		<rect x="37.9312" y="621" width="185" height="12" rx="4" fill="white"/>
+		<rect x="445.931" y="547" width="55" height="8" rx="4" fill="white"/>
+		<rect x="455.931" y="573" width="45" height="12" rx="4" fill="white"/>
+		<rect x="437.931" y="597" width="63" height="12" rx="4" fill="white"/>
+		<rect x="479.931" y="621" width="21" height="12" rx="4" fill="white"/>
+		<g filter="url(#filter0_d_853_57384)">
+			<path d="M18 706C18 699.373 23.3726 694 30 694H550C556.627 694 562 699.373 562 706V888C562 894.627 556.627 900 550 900H30C23.3726 900 18 894.627 18 888V706Z" fill="#EDEEF0"/>
+			<rect x="38.4312" y="801.5" width="457" height="75" rx="7.5" stroke="white"/>
+			<rect x="49.9312" y="813" width="6" height="12" rx="2" fill="white"/>
+			<rect x="67.9312" y="813" width="23" height="12" rx="4" fill="white"/>
+			<rect x="102.931" y="813" width="281" height="12" rx="4" fill="white"/>
+			<rect x="102.931" y="833" width="237" height="12" rx="4" fill="white"/>
+			<rect x="102.931" y="853" width="337" height="12" rx="4" fill="white"/>
+			<rect x="38" y="714" width="24" height="24" rx="4" fill="white"/>
+			<rect x="79" y="718" width="255" height="16" rx="6" fill="white"/>
+			<rect x="38" y="756" width="471" height="8" rx="4" fill="white"/>
+			<rect x="38" y="772" width="348" height="8" rx="4" fill="white"/>
+		</g>
+	</g>
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="915"/>
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#828b95" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#828b95" stop-opacity="0.05" offset="50%"/>
+		<stop stop-color="#828b95" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1.5s" begin="0s" repeatCount="indefinite"/>
+	<defs>
+		<filter id="filter0_d_853_57384" x="16" y="693" width="548" height="210" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+			<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+			<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+			<feOffset dy="1"/>
+			<feGaussianBlur stdDeviation="1"/>
+			<feComposite in2="hardAlpha" operator="out"/>
+			<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.13 0"/>
+			<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_853_57384"/>
+			<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_853_57384" result="shape"/>
+		</filter>
+	</defs>
+</svg>

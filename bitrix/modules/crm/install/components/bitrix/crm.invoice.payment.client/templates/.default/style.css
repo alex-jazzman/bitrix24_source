@@ -177,7 +177,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 	width: 15px;
 	height: 20px;
 	margin: 0 9px 0 0;
-	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.png) 0 0 no-repeat;
+	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.webp) 0 0 no-repeat;
 }
 
 .crm-invoice-payment-button-print:before {
@@ -187,7 +187,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 	width: 15px;
 	height: 20px;
 	margin: 0 9px 0 0;
-	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.png) -17px 0 no-repeat;
+	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.webp) -17px 0 no-repeat;
 }
 
 .crm-invoice-payment-button-de{
@@ -361,12 +361,12 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 
 .crm-invoice-payment-copy-logo {
 	width: 60px;
-	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.png) -39px 0 no-repeat;
+	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.webp) -39px 0 no-repeat;
 }
 
 .crm-invoice-payment-copy-logo-en{
 	width:53px;
-	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.png) -99px 0 no-repeat;
+	background: url(/bitrix/js/crm/css/../images/crm-invoice-client-sprite.webp) -99px 0 no-repeat;
 }
 
 .crm-invoice-payment-paid{

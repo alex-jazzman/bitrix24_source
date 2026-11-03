@@ -1,0 +1,4 @@
+<?php
+
+$MESS['MOBILE_MENU_TARIFF_SUBSCRIPTION_NOT_AVAILABLE'] = 'Подписка недоступна';
+$MESS['MOBILE_MENU_TARIFF_SUBSCRIPTION_ACTIVATION_ERROR'] = 'Ошибка активации подписки';

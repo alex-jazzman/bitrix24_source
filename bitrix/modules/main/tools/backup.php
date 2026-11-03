@@ -257,20 +257,23 @@ if (!$NS['step'])
 
 	if ($dump_bucket_id == -1)
 	{
-		$arc_name = DOCUMENT_ROOT . BX_ROOT . "/backup/" . date('Ymd_His_') . rand(11111111, 99999999);
+		$name = DOCUMENT_ROOT . BX_ROOT . "/backup/" . date('Ymd_His_') . rand(11111111, 99999999);
+		$NS['arc_name'] = $name . ($arParams['dump_use_compression'] ? ".gz" : '');
+		$NS['dump_name'] = $name . '.sql';
 	}
 	elseif (($arc_name = $argv[1]) && !is_dir($arc_name))
 	{
 		$arc_name = str_replace(['.tar', '.gz', '.enc'], '', $arc_name);
+		$NS['arc_name'] = $arc_name . ".tar" . ($arParams['dump_use_compression'] ? ".gz" : '');
+		$NS['dump_name'] = $arc_name . '.sql';
 	}
 	else
 	{
 		$prefix = str_replace('/', '', COption::GetOptionString("main", "server_name", ""));
 		$arc_name = CBackup::GetArcName(preg_match('#^[a-z0-9.\-]+$#i', $prefix) ? substr($prefix, 0, 20) . '_' : '');
+		$NS['arc_name'] = $arc_name . ".tar" . ($arParams['dump_use_compression'] ? ".gz" : '');
+		$NS['dump_name'] = $arc_name . '.sql';
 	}
-
-	$NS['arc_name'] = $arc_name . ($NS['dump_encrypt_key'] ? ".enc" : ".tar") . ($arParams['dump_use_compression'] ? ".gz" : '');
-	$NS['dump_name'] = $arc_name . '.sql';
 
 	if (!empty($arParams['dump_site_id']))
 	{
@@ -312,6 +315,10 @@ if (!$NS['step'])
 		$NS['step_cnt']++;
 	}
 	if ($arParams['dump_integrity_check'])
+	{
+		$NS['step_cnt']++;
+	}
+	if ($NS['dump_encrypt_key'])
 	{
 		$NS['step_cnt']++;
 	}
@@ -377,7 +384,7 @@ if ($NS['step'] <= 2)
 
 		ShowBackupStatus('Archiving database dump');
 		$tar = new CTar;
-		$tar->EncryptKey = $NS['dump_encrypt_key'];
+		$tar->EncryptKey = '';
 		$tar->ArchiveSizeLimit = $arParams['dump_archive_size_limit'];
 		$tar->gzip = $arParams['dump_use_compression'];
 		$tar->path = DOCUMENT_ROOT;
@@ -494,7 +501,7 @@ if ($NS['step'] == 4)
 		$DirScan->startPath = $NS['startPath'];
 
 		$tar = new CTar;
-		$tar->EncryptKey = $NS['dump_encrypt_key'];
+		$tar->EncryptKey = '';
 		$tar->ArchiveSizeLimit = $arParams['dump_archive_size_limit'];
 		$tar->gzip = $arParams['dump_use_compression'];
 		$tar->ReadBlockCurrent = intval($NS['ReadBlockCurrent']);
@@ -600,7 +607,7 @@ if ($NS['step'] == 5)
 	{
 		ShowBackupStatus('Checking archive integrity');
 		$tar = new CTarCheck;
-		$tar->EncryptKey = $NS['dump_encrypt_key'];
+		$tar->EncryptKey = '';
 
 		if (!$tar->openRead($NS["arc_name"]))
 		{
@@ -633,7 +640,80 @@ if ($NS['step'] == 5)
 
 $DB->DoConnect();
 
-if ($NS['step'] == 6)
+// Step 6: Encrypt backup files
+if ($NS["step"] == 6)
+{
+	$NS['step_done'] = 0;
+	if ($NS['dump_encrypt_key'])
+	{
+		ShowBackupStatus('Encrypting backup files');
+
+		$arc_parts = glob($NS['arc_name'] . '*');
+		if (!$arc_parts)
+		{
+			RaiseErrorAndDie(getMessage('DUMP_MAIN_ERROR'));
+		}
+
+		$parts_total = count($arc_parts);
+		$parts_done = count(preg_grep('/\.enc(\.\d+)?$/', $arc_parts));
+		if ($parts_total)
+		{
+			$NS['step_done'] = $parts_done / $parts_total;
+		}
+
+		$allEncoded = true;
+		foreach ($arc_parts as $arc_part)
+		{
+			if (!preg_match('/\.enc(\.\d+)?$/', $arc_part))
+			{
+				$enc_name = CTar::encryptFile($arc_part, $NS['dump_encrypt_key']);
+				if ($enc_name)
+				{
+					// disk quota is not touched here: the resulting files are accounted once at the end of the script
+					unlink($arc_part);
+				}
+				else
+				{
+					RaiseErrorAndDie(getMessage('DUMP_MAIN_ERROR'));
+				}
+
+				$parts_done++;
+				$NS['step_done'] = $parts_done / $parts_total;
+
+				if (!haveTime())
+				{
+					$allEncoded = false;
+					break;
+				}
+			}
+		}
+
+		if ($allEncoded)
+		{
+			$NS['arc_name'] .= '.enc';
+
+			$NS['arc_size'] = 0;
+			$name = $NS['arc_name'];
+			$tar = new CTar();
+			while (file_exists($name))
+			{
+				$NS['arc_size'] += filesize($name);
+				$name = $tar->getNextName($name);
+			}
+
+			$NS["step"] = 7;
+			$NS['step_finished']++;
+		}
+
+		CheckPoint();
+	}
+	else
+	{
+		$NS["step"] = 7;
+	}
+}
+
+if ($NS['step'] == 7)
 {
 	// Send to the cloud
 	$NS['step_done'] = 0;
@@ -810,10 +890,10 @@ if ($NS['step'] == 6)
 		}
 		$NS['step_finished']++;
 	}
-	$NS['step'] = 7;
+	$NS['step'] = 8;
 }
 
-if ($NS['step'] == 7)
+if ($NS['step'] == 8)
 {
 	// Delete old backups
 	$NS['step_done'] = 0;

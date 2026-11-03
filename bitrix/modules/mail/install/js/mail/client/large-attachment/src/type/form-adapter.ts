@@ -8,6 +8,7 @@ export type FormAttachment = {
 export type LargeAttachmentSendContract = {
 	token: string,
 	fileIds: number[],
+	sourceFileIds?: number[],
 };
 
 export type FormAdapterUnsubscribe = () => void;

@@ -15,6 +15,7 @@ jn.define('im/messenger/controller/recent/const/src/service', (require, exports,
 		vuex: 'vuex',
 		action: 'action',
 		select: 'select',
+		itemButton: 'item-button',
 		external: 'external',
 		inviteBanner: 'invite-banner',
 	};

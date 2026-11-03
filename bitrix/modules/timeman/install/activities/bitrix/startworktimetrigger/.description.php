@@ -33,7 +33,7 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 $arActivityDescription =
 	(new ActivityDescription(
 		(string)Loc::getMessage('START_WORK_TIME_NAME'),
-		(string)Loc::getMessage('START_WORK_TIME_DESCR'),
+		(string)Loc::getMessage('START_WORK_TIME_DESCR_MSGVER_1'),
 		[ActivityType::TRIGGER->value],
 	))
 		->setClass('StartWorkTimeTrigger')
@@ -46,6 +46,14 @@ $arActivityDescription =
 			'USER' => [
 				'Name' => (string)Loc::getMessage('START_WORK_TIME_TRIGGER_RETURN_FIELD_USER'),
 				'Type' => FieldType::USER,
+			],
+			'RECORD_ID' => [
+				'Name' => (string)Loc::getMessage('START_WORK_TIME_TRIGGER_RETURN_FIELD_RECORD_ID'),
+				'Type' => FieldType::INT,
+			],
+			'WORKDAY_START' => [
+				'Name' => (string)Loc::getMessage('START_WORK_TIME_TRIGGER_RETURN_FIELD_WORKDAY_START'),
+				'Type' => FieldType::DATETIME,
 			],
 		])
 		->setIcon(Outline::TIMER->name)

@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/textfield.bundle.css',
 	'js' => 'dist/textfield.bundle.js',
 	'rel' => [
+		'landing.ui.component.internal',
 		'landing.ui.field.basefield',
 		'main.core',
 		'main.core.events',
-		'landing.ui.component.internal',
 	],
 	'skip_core' => false,
 ];

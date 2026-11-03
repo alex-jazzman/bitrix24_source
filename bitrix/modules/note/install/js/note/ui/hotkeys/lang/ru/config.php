@@ -42,6 +42,8 @@ $MESS['NOTE_HOTKEYS_ACTION_ALIGN_JUSTIFY'] = 'По ширине';
 
 $MESS['NOTE_HOTKEYS_ACTION_LINK'] = 'Ссылка';
 $MESS['NOTE_HOTKEYS_ACTION_ATTACHMENTS'] = 'Вложения';
+$MESS['NOTE_HOTKEYS_ACTION_DISK_ATTACHMENT'] = 'Файл с диска';
+$MESS['NOTE_HOTKEYS_ACTION_DATE'] = 'Дата';
 
 $MESS['NOTE_HOTKEYS_ACTION_UNDO'] = 'Отменить';
 $MESS['NOTE_HOTKEYS_ACTION_REDO'] = 'Повторить';
@@ -52,7 +54,8 @@ $MESS['NOTE_HOTKEYS_MD_SECTION_TITLE'] = 'Markdown';
 $MESS['NOTE_HOTKEYS_MD_GROUP_BLOCKS'] = 'Блоки';
 $MESS['NOTE_HOTKEYS_MD_GROUP_INLINE'] = 'Текст';
 $MESS['NOTE_HOTKEYS_MD_GROUP_ENTITIES'] = 'Файлы и упоминания';
-$MESS['NOTE_HOTKEYS_MD_ENTITIES_HINT'] = 'Такая запись распознаётся только при вставке готового Markdown, загрузке .md или через REST';
+$MESS['NOTE_HOTKEYS_MD_GROUP_INSERTS'] = 'Специальные элементы';
+$MESS['NOTE_HOTKEYS_MD_ENTITIES_HINT'] = 'Такая запись работает только при вставке Markdown, загрузке файла .md или через REST';
 
 $MESS['NOTE_HOTKEYS_MD_HEADINGS'] = 'Заголовки 1–4';
 $MESS['NOTE_HOTKEYS_MD_DIVIDER'] = 'Разделитель';
@@ -61,6 +64,8 @@ $MESS['NOTE_HOTKEYS_MD_IMAGE'] = 'Изображение';
 $MESS['NOTE_HOTKEYS_MD_VIDEO'] = 'Видео';
 $MESS['NOTE_HOTKEYS_MD_FILE'] = 'Файл';
 $MESS['NOTE_HOTKEYS_MD_MENTION_USER'] = 'Упоминание сотрудника';
-$MESS['NOTE_HOTKEYS_MD_MENTION_DOCUMENT'] = 'Упоминание документа';
+$MESS['NOTE_HOTKEYS_MD_MENTION_DOCUMENT'] = 'Упоминание статьи';
 $MESS['NOTE_HOTKEYS_MD_MENTION_COLLECTION'] = 'Упоминание базы знаний';
+$MESS['NOTE_HOTKEYS_MD_MENTION_DISKFOLDER'] = 'Упоминание папки диска';
 $MESS['NOTE_HOTKEYS_MD_MENTION_TASK'] = 'Упоминание задачи';
+$MESS['NOTE_HOTKEYS_MD_DATE'] = 'Дата';

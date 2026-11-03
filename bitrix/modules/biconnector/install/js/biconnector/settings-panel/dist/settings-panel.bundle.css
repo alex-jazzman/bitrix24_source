@@ -4,6 +4,18 @@
 	gap: var(--ui-space-stack-lg);
 }
 
+@media (max-width: 768px) {
+	.biconnector-settings-slider .ui-toolbar .ui-toolbar-title-box {
+		flex-basis: auto;
+	}
+
+	.biconnector-settings-slider .ui-toolbar-right-buttons {
+		flex-basis: auto;
+		margin-left: auto;
+		padding-left: 12px;
+	}
+}
+
 .biconnector-settings-card__action-row {
 	display: flex;
 	align-items: center;

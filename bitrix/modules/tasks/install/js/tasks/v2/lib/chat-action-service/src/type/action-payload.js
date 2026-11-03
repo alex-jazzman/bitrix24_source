@@ -5,4 +5,6 @@ export type ActionPayload = {
 	entityId?: number,
 	bindElement: HTMLElement,
 	coordinates?: Coordinates,
+	isCardMounted?: boolean,
+	isTaskDataReady?: boolean,
 };

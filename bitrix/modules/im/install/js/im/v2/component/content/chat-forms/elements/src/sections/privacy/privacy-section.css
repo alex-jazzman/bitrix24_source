@@ -1,0 +1,18 @@
+/* The field brings the rhythm of the form body itself: it is no longer a section card. */
+.bx-im-chat-forms-privacy {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* The options stand on the background of the form, so the group is a card of its own, the same
+   card the privacy type field of the project wizard draws. Wins over the paddingless group of
+   the radio element by specificity, whatever the order of the files in the bundle. The wizard
+   leaves this card flat; here it carries the hairline of every other surface of the form. */
+.bx-im-chat-forms-privacy .bx-im-chat-forms-privacy__options {
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	/* The blur token holds a filter function, so the radius is a length here. */
+	box-shadow: var(--ui-area-box-shadow-default-x, 0) var(--ui-area-box-shadow-default-y, 1px) 1px
+		var(--ui-area-box-shadow-default-spread, 0) var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+}

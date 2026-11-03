@@ -2,6 +2,7 @@
  * @module mail/addressbook/add-address
  */
 jn.define('mail/addressbook/add-address', (require, exports, module) => {
+	const { Indent } = require('tokens');
 	const { StringInput, InputDesign, InputMode, InputSize } = require('ui-system/form/inputs/string');
 	const { EmailInput } = require('ui-system/form/inputs/email');
 	const { PureComponent } = require('layout/pure-component');
@@ -109,9 +110,9 @@ jn.define('mail/addressbook/add-address', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						paddingTop: 10,
-						paddingLeft: 18,
-						paddingRight: 18,
+						paddingTop: Indent.L.toNumber(),
+						paddingLeft: Indent.XL3.toNumber(),
+						paddingRight: Indent.XL3.toNumber(),
 						flex: 1,
 					},
 				},

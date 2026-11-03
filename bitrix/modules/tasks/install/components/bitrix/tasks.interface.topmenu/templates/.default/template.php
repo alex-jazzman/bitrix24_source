@@ -64,6 +64,7 @@ if(
 			'ID' => $menuId,
 			'ITEMS' => $arResult['ITEMS'],
 			'DISABLE_SETTINGS' => $arParams["USER_ID"] !== User::getId(),
+			'ARIA_LABEL' => GetMessage('TASKS_PANEL_NAV_ARIA_LABEL'),
 			"THEME" => defined("AIR_SITE_TEMPLATE") ? "air" : null,
 		),
 		$component,

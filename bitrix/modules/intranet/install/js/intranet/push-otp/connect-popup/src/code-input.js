@@ -46,6 +46,7 @@ export class CodeInput
 				className: this.#className,
 				name: `${this.#name}[]`,
 				type: 'text',
+				inputmode: 'numeric',
 				autocomplete: 'one-time-code',
 				maxlength: '1',
 			},

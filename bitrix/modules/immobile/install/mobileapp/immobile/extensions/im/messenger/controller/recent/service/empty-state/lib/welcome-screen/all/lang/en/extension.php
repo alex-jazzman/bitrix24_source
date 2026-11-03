@@ -1,0 +1,4 @@
+<?php
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_BUTTON'] = 'Create a chat';
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_TEXT'] = 'You can create a chat or message a coworker.';
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_ALL_TITLE'] = 'No chats here yet';

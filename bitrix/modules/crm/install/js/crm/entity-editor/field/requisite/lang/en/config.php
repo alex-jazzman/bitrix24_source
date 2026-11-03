@@ -1,5 +1,6 @@
 <?php
 $MESS["CLIENT_REQUISITES_ADDRESS_SHOW_ADDRESS"] = "Show address";
+$MESS['REQUISITE_BANK_DETAIL_SELECT_ARIA_LABEL'] = 'Select banking details';
 $MESS["REQUISITE_LABEL_DETAILS_SELECT"] = "select from list";
 $MESS["REQUISITE_LABEL_DETAILS_TEXT"] = "details";
 $MESS["REQUISITE_LIST_EMPTY_PRESET_LIST"] = "No details template was found";
@@ -8,6 +9,7 @@ $MESS["REQUISITE_LIST_ITEM_DELETE_CONFIRMATION_TITLE"] = "Delete details";
 $MESS["REQUISITE_LIST_ITEM_ERROR_CAPTION"] = "Error";
 $MESS["REQUISITE_LIST_ITEM_HIDE_CONFIRMATION_CONTENT"] = "Are you sure you want to clear the details fields?";
 $MESS["REQUISITE_LIST_ITEM_HIDE_CONFIRMATION_TITLE"] = "Clear details fields";
+$MESS['REQUISITE_SELECT_ARIA_LABEL'] = 'Select company details';
 $MESS["REQUISITE_TOOLTIP_ADD"] = "Add details";
 $MESS["REQUISITE_TOOLTIP_ADD_BANK_DETAILS"] = "add banking details";
 $MESS["REQUISITE_TOOLTIP_BANK_DETAILS_TITLE"] = "Banking details";

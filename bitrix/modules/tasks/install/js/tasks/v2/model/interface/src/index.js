@@ -1,2 +1,2 @@
 export { Interface } from './interface';
-export type { DeadlineUserOption, InterfaceModelParams, StateFlags, UserFieldScheme, TaskListOptions } from './types';
+export type { DeadlineUserOption, InterfaceModelParams, StateFlags, UserFieldScheme, TaskListOptions, FilesViewMode } from './types';

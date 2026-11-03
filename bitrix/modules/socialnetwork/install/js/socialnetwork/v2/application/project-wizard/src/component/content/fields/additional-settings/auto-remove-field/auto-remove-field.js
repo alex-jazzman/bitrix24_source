@@ -89,6 +89,7 @@ export const AutoRemoveField = {
 			<AutoDeleteMessagePopup
 				v-if="shownPopup"
 				:delay="messagesAutoDeleteDelay"
+				:targetContainer
 				@change="onAutoDeleteDelayChange"
 				@close="closeAutoDeleteMessageDelayPopup"
 			/>

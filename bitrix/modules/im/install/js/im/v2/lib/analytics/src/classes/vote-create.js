@@ -4,9 +4,10 @@ import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 import { type ImModelChat } from 'im.v2.model';
 
-import { getCollabId } from '../helpers/get-collab-id.js';
-import { AnalyticsTool, AnalyticsEvent } from '../const';
-import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
+import { getProjectId } from '../helpers/get-collab-id.js';
+import { AnalyticsCategory, AnalyticsTool, AnalyticsEvent } from '../const';
+import { getCategoryByChat } from '../helpers/get-category-by-chat-type';
+import { getChatType } from '../helpers/get-chat-type';
 import { getUserType } from '../helpers/get-user-type';
 
 export class Vote
@@ -28,22 +29,31 @@ export class Vote
 		const options = {
 			tool: AnalyticsTool.im,
 			event: AnalyticsEvent.clickCreatePoll,
-			category: getCategoryByChatType(chatType),
-			p1: `chatType_${chatType}`,
+			category: getCategoryByChat(chat),
+			p1: `chatType_${getChatType(chat)}`,
 			p2: getUserType(),
 			p5: `chatId_${chat.chatId}`,
 		};
 
 		if (chatType === ChatType.comment)
 		{
-			const parentChat = Core.getStore().getters['chats/getByChatId'](chat.parentChatId);
+			const parentChat: ?ImModelChat = Core.getStore().getters['chats/getByChatId'](chat.parentChatId);
+			if (!parentChat)
+			{
+				return options;
+			}
+
 			options.p1 = `chatType_${parentChat.type}`;
 			options.p4 = `parentChatId_${chat.parentChatId}`;
 		}
 
-		if (chatType === ChatType.collab)
+		if (options.category === AnalyticsCategory.collab)
 		{
-			options.p4 = getCollabId(chat.chatId);
+			const projectId = getProjectId(chat);
+			if (projectId)
+			{
+				options.p4 = projectId;
+			}
 		}
 
 		return options;

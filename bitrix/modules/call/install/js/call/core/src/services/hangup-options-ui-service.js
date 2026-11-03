@@ -10,9 +10,8 @@ export class HangupOptionsUiService extends EventEmitter
 	 * @param {object} config
 	 * @param {*} config.viewPort
 	 * @param {*} config.container
-	 * @param {*} [config.callStore]
 	 */
-	constructor({ viewPort, container, callStore })
+	constructor({ viewPort, container })
 	{
 		super();
 		this.setEventNamespace('BX.Call.HangupOptionsUiService');
@@ -20,7 +19,6 @@ export class HangupOptionsUiService extends EventEmitter
 		this.viewPort = viewPort;
 		this.container = container;
 		this.hangupOptionsMenu = null;
-		this.callStore = callStore ?? null;
 	}
 
 	/**
@@ -99,12 +97,18 @@ export class HangupOptionsUiService extends EventEmitter
 				},
 				onDestroy: () => {
 					this.hangupOptionsMenu = null;
+					bindElement.setAttribute('aria-expanded', 'false');
+					if (!document.activeElement || document.activeElement === document.body)
+					{
+						bindElement.focus();
+					}
 				},
 			},
 			items: menuItems,
 		});
 
 		this.hangupOptionsMenu.show();
+		bindElement.setAttribute('aria-expanded', 'true');
 	}
 
 	/**
@@ -113,8 +117,6 @@ export class HangupOptionsUiService extends EventEmitter
 	 */
 	destroy()
 	{
-		this.callStore = null;
-
 		if (this.hangupOptionsMenu !== null)
 		{
 			this.hangupOptionsMenu.destroy();

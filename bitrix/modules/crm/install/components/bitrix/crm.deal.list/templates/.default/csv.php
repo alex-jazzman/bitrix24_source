@@ -185,6 +185,11 @@ else
 							$dealData['CLOSED'] = isset($arResult['CLOSED_LIST'][$closed]) ? $arResult['CLOSED_LIST'][$closed] : $closed;
 							break;
 						}
+						case 'OPENED':
+						{
+							$dealData['OPENED'] = ($arDeal['OPENED'] ?? null) === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO');
+							break;
+						}
 						case 'CONTACT_CREATED_BY_ID':
 						case 'CONTACT_MODIFY_BY_ID':
 						case 'CONTACT_ASSIGNED_BY_ID':

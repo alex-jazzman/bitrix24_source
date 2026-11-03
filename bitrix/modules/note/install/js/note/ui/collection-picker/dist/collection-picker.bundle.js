@@ -19,9 +19,15 @@ this.BX.Note = this.BX.Note || {};
 		const allowCreateItem = Boolean(options?.allowCreateItem);
 		const createFooterLabel = String(options?.createFooterLabel || '');
 		const onItemCreateAsync = main_core.Type.isFunction(options?.onItemCreateAsync) ? options.onItemCreateAsync : null;
+		const confirmAfterCreate = Boolean(options?.confirmAfterCreate);
 		const showAvatars = Boolean(options?.showAvatars);
 		const onSelectionChange = main_core.Type.isFunction(options?.onSelectionChange) ? options.onSelectionChange : () => {};
-		const node = main_core.Tag.render`<div class="note-collection-picker__selector"></div>`;
+		const node = main_core.Tag.render`
+		<div
+			class="note-collection-picker__selector"
+			data-testid="note-collection-picker-selector"
+		></div>
+	`;
 		let selector = null;
 		const build = () => {
 			if (selector) {
@@ -29,7 +35,19 @@ this.BX.Note = this.BX.Note || {};
 			}
 			const isMobile = document.documentElement.classList.contains('note-mobile');
 			const targetWidth = node.offsetWidth || 432;
-			const dialogEvents = {};
+			const dialogEvents = {
+				onLoad: () => {
+					const entityDialog = main_core.Type.isFunction(selector?.getDialog) ? selector.getDialog() : null;
+					const hasAvailableCollections = entityDialog && main_core.Type.isFunction(entityDialog.getEntityItems) && entityDialog.getEntityItems(ENTITY_ID).length > 0;
+					if (!entityDialog || allowCreateItem || hasAvailableCollections) {
+						return;
+					}
+					const emptyState = entityDialog.getRecentTab()?.getStub()?.getOuterContainer?.();
+					if (emptyState) {
+						emptyState.dataset.testid = 'note-collection-picker-empty';
+					}
+				}
+			};
 			if (allowCreateItem && onItemCreateAsync) {
 				// Inline create via SearchTabFooter — backend auto-assigns LEVEL_MODERATE to creator.
 				dialogEvents['Search:onItemCreateAsync'] = event => {
@@ -37,7 +55,26 @@ this.BX.Note = this.BX.Note || {};
 					if (name === '') {
 						return Promise.resolve();
 					}
-					return onItemCreateAsync(name);
+					return Promise.resolve(onItemCreateAsync(name)).then(created => {
+						if (!confirmAfterCreate) {
+							return created;
+						}
+						const id = Number(created?.id);
+						if (!Number.isInteger(id) || id <= 0) {
+							return created;
+						}
+						selector.addTag({
+							id,
+							entityId: ENTITY_ID,
+							title: String(created?.title || name),
+							animate: false
+						});
+						const entityDialog = main_core.Type.isFunction(selector.getDialog) ? selector.getDialog() : null;
+						if (entityDialog && main_core.Type.isFunction(entityDialog.hide)) {
+							setTimeout(() => entityDialog.hide(), 0);
+						}
+						return created;
+					});
 				};
 			}
 			selector = new ui_entitySelector.TagSelector({
@@ -62,6 +99,11 @@ this.BX.Note = this.BX.Note || {};
 							accessLevel
 						}
 					}],
+					recentTabOptions: allowCreateItem ? undefined : {
+						stubOptions: {
+							title: main_core.Loc.getMessage('UI_SELECTOR_SEARCH_STUB_TITLE') || ''
+						}
+					},
 					searchOptions: allowCreateItem ? {
 						allowCreateItem: true,
 						footerOptions: {
@@ -78,9 +120,15 @@ this.BX.Note = this.BX.Note || {};
 			});
 			note_ui_themeContext.NoteThemeContext.applyToTagSelector(selector);
 			selector.renderTo(node);
+			node.dataset.testid = 'note-collection-picker-selector';
 			const entityDialog = main_core.Type.isFunction(selector.getDialog) ? selector.getDialog() : null;
 			if (entityDialog) {
 				note_ui_themeContext.NoteThemeContext.themeEntitySelector(entityDialog);
+				const createFooter = allowCreateItem ? entityDialog.getSearchTab()?.getFooter?.() : null;
+				const createAction = createFooter?.getContainer?.();
+				if (createAction) {
+					createAction.dataset.testid = 'note-collection-picker-create';
+				}
 			}
 		};
 		return {
@@ -136,6 +184,7 @@ this.BX.Note = this.BX.Note || {};
 		const canCreateCollection = Boolean(options?.canCreateCollection);
 		const createFooterLabel = String(options?.createFooterLabel || '');
 		const onCreateCollection = main_core.Type.isFunction(options?.onCreateCollection) ? options.onCreateCollection : null;
+		const confirmAfterCreate = Boolean(options?.confirmAfterCreate);
 		const mobileDropdownHeight = Number(options?.mobileDropdownHeight) || 280;
 		return new Promise(resolve => {
 			let isResolved = false;
@@ -158,14 +207,21 @@ this.BX.Note = this.BX.Note || {};
 					return;
 				}
 				const collectionTitle = String(created?.title || name);
-				// Defer hide so SearchTabFooter's post-emit chain (clearSearch + selectFirstTab) can run first.
-				setTimeout(() => {
-					finish({
-						collectionId: id,
-						collectionTitle
-					});
-					dialog.hide();
-				}, 0);
+				const createdCollection = {
+					id,
+					title: collectionTitle
+				};
+				if (!confirmAfterCreate) {
+					// Defer hide so SearchTabFooter's post-emit chain can finish first.
+					setTimeout(() => {
+						finish({
+							collectionId: id,
+							collectionTitle
+						});
+						dialog.hide();
+					}, 0);
+				}
+				return createdCollection;
 			}) : null;
 			const picker = createCollectionSelector({
 				placeholder,
@@ -174,6 +230,7 @@ this.BX.Note = this.BX.Note || {};
 				allowCreateItem: canCreateCollection,
 				createFooterLabel,
 				onItemCreateAsync,
+				confirmAfterCreate,
 				onSelectionChange: () => updatePrimaryState()
 			});
 			const textNode = main_core.Tag.render`<div class="note-collection-picker__text"></div>`;

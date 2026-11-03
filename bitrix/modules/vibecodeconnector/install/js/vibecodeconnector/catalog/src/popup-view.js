@@ -2,7 +2,7 @@ import { Tag } from 'main.core';
 
 import { type TabConfig } from './catalog';
 import { type TabController } from './tab-controller';
-import { renderPopupFab } from './components/popup-fab';
+import { CatalogPopupFab } from './components/popup-fab';
 import { CatalogPopupList } from './components/popup-list';
 import { CatalogPopupSearch } from './components/popup-search';
 import { type CatalogStateValue } from './components/popup-state-dropdown';
@@ -20,6 +20,7 @@ type CatalogPopupViewOptions = {
 	onSearchClear: () => void,
 	onScroll: () => void,
 	onChatOpen?: () => void,
+	onCreateClosed?: () => void,
 	useSearch?: boolean,
 	initialSkeletonTiles: number,
 	paginationSkeletonTiles: number,
@@ -36,6 +37,7 @@ export class CatalogPopupView
 	#tabsNav: CatalogPopupTabsNav;
 	#search: CatalogPopupSearch;
 	#list: CatalogPopupList;
+	#fab: CatalogPopupFab;
 
 	constructor(options: CatalogPopupViewOptions)
 	{
@@ -51,6 +53,7 @@ export class CatalogPopupView
 			onClear: options.onSearchClear,
 			useSearch: options.useSearch,
 		});
+		this.#fab = new CatalogPopupFab({ onCreateClosed: options.onCreateClosed });
 		this.#list = new CatalogPopupList({
 			onScroll: options.onScroll,
 			onChatOpen: options.onChatOpen,
@@ -78,7 +81,7 @@ export class CatalogPopupView
 				</header>
 				<div class="vibecode-catalog__content">
 					${this.#list.render()}
-					${renderPopupFab()}
+					${this.#fab.render()}
 				</div>
 			</div>
 		`;
@@ -91,6 +94,7 @@ export class CatalogPopupView
 		this.#tabsNav.destroy();
 		this.#search.destroy();
 		this.#list.destroy();
+		this.#fab.destroy();
 		this.#rootNode = null;
 	}
 

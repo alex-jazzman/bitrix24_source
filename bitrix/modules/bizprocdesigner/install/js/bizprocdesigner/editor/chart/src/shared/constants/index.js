@@ -106,6 +106,18 @@ export const PROPERTY_TYPES: { [string]: string } = Object.freeze({
 	DOCUMENT: 'document',
 });
 
+export const RELATION_PACKAGE_SETTINGS_KEY = 'relationPackage';
+
+export const RELATION_PACKAGE_ROLES: { [string]: string } = Object.freeze({
+	SOURCE_DOCUMENT: 'sourceDocument',
+	TARGET_FIELD: 'targetField',
+});
+
+// Own entity-selector entity of the designer instead of the base bizproc one: it answers with the
+// same document fields plus what the contributors of this module add. Not registered through an
+// entity-selector config.php, so every dialog has to state `dynamicLoad` itself.
+export const DOCUMENT_FIELDS_ENTITY_ID = 'bizprocdesigner-document';
+
 export const SHARED_TOAST_TYPES = Object.freeze({
 	WARNING: 'warning',
 });
@@ -116,6 +128,8 @@ export const COMPLEX_NODE_PORT_LABELS: { [string]: string } = Object.freeze({
 	relation: 'NG',
 	aux: 'T',
 });
+
+export const MAX_AUX_COUNT = 5;
 
 export const BX_FLAG_YES = 'Y';
 export const BX_FLAG_NO = 'N';
@@ -139,16 +153,16 @@ export const NODE_SETTINGS_TABS = Object.freeze({
 	rules: 'rules',
 });
 
-// System variables, mirroring bizproc SystemProvider::getSystemFields() (plain data, no ajax,
-// no dialog). `type` seeds Modification mode: date/user types enable the matching modifiers.
-export const SYSTEM_VARIABLES = Object.freeze([
-	{ object: 'Workflow', field: 'ID', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_WORKFLOW_ID', type: null },
-	{ object: 'Workflow', field: 'TemplateId', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_TEMPLATE_ID', type: null },
-	{ object: 'Template', field: 'TargetUser', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_TARGET_USER', type: 'user' },
-	{ object: 'User', field: 'ID', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_USER_ID', type: 'user' },
-	{ object: 'System', field: 'Now', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_NOW', type: 'datetime' },
-	{ object: 'System', field: 'NowLocal', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_NOW_LOCAL', type: 'datetime' },
-	{ object: 'System', field: 'Date', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_DATE', type: 'date' },
-	{ object: 'System', field: 'Eol', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_EOL', type: null },
-	{ object: 'System', field: 'HostUrl', labelKey: 'BIZPROCDESIGNER_EDITOR_EXPRESSION_BUILDER_SYS_HOST_URL', type: null },
-]);
+/** The only way into the process data window: the menu item and the publication error handler emit it (EVENT-01). */
+export const PROCESS_DATA_EVENTS = Object.freeze({
+	OPEN: 'BizprocDesigner.ProcessData.Open',
+});
+
+/** The only way into the library window: the menu items of the editor emit it. */
+export const FRAGMENT_LIBRARY_EVENTS = Object.freeze({
+	OPEN: 'BizprocDesigner.FragmentLibrary.Open',
+	// A selection on its way into the library. The menu of a group selection reaches the dialog through
+	// the widget it belongs to; the menu of a single node is built by the mediator, which has no such
+	// widget above it, so the two entry points meet at this event instead.
+	SAVE: 'BizprocDesigner.FragmentLibrary.Save',
+});

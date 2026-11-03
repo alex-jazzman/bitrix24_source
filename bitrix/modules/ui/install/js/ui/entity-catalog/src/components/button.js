@@ -23,14 +23,18 @@ export const Button = {
 					: Loc.getMessage('UI_JS_ENTITY_CATALOG_ITEM_DEFAULT_BUTTON_TEXT')
 			);
 		},
+		buttonAriaLabel(): ?string
+		{
+			return Type.isStringFilled(this.buttonData.ariaLabel) ? this.buttonData.ariaLabel : null;
+		},
 	},
 	methods: {
-		handleButtonClick(pointerEvent)
+		handleButtonClick(originalEvent)
 		{
 			const event = new BaseEvent({
 				data: {
 					eventData: this.eventData,
-					originalEvent: pointerEvent,
+					originalEvent,
 				}
 			});
 
@@ -38,15 +42,18 @@ export const Button = {
 			{
 				this.buttonData.action.call(this, event);
 			}
-		}
+		},
 	},
 	template: `
 		<div class="ui-entity-catalog__option-btn-block">
-			<div 
+			<button
+				type="button"
+				data-testid="entity-catalog-item-action"
 				class="ui-entity-catalog__btn"
 				:class="{'--lock': buttonData.locked}"
+				:aria-label="buttonAriaLabel"
 				@click="handleButtonClick"
-			>{{buttonText}}</div>
+			>{{buttonText}}</button>
 		</div>
 	`
 };

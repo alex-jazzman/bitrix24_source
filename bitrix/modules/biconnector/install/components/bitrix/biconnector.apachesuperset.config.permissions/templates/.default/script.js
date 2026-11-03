@@ -1,2 +1,549 @@
-this.BX=this.BX||{},function(e,t,r,n,i,o,s){"use strict";function a(e,t){var r="undefined"!=typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(!r){if(Array.isArray(e)||(r=function(e,t){if(!e)return;if("string"==typeof e)return u(e,t);var r=Object.prototype.toString.call(e).slice(8,-1);"Object"===r&&e.constructor&&(r=e.constructor.name);if("Map"===r||"Set"===r)return Array.from(e);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return u(e,t)}(e))||t&&e&&"number"==typeof e.length){r&&(e=r);var n=0,i=function(){};return{s:i,n:function(){return n>=e.length?{done:!0}:{done:!1,value:e[n++]}},e:function(e){throw e},f:i}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var o,s=!0,a=!1;return{s:function(){r=r.call(e)},n:function(){var e=r.next();return s=e.done,e},e:function(e){a=!0,o=e},f:function(){try{s||null==r.return||r.return()}finally{if(a)throw o}}}}function u(e,t){(null==t||t>e.length)&&(t=e.length);for(var r=0,n=new Array(t);r<t;r++)n[r]=e[r];return n}function c(e,t){var r=Object.keys(e);if(Object.getOwnPropertySymbols){var n=Object.getOwnPropertySymbols(e);t&&(n=n.filter((function(t){return Object.getOwnPropertyDescriptor(e,t).enumerable}))),r.push.apply(r,n)}return r}var d={props:{},mounted:function(){o.EventEmitter.subscribe("BX.UI.AccessRights.V2:onSectionHeaderClick",this.handleOnSectionHeaderClick),o.EventEmitter.subscribe("BX.UI.AccessRights.V2:onRightClick",this.handleOnRightClick),o.EventEmitter.subscribe("BX.UI.AccessRights.V2:onRightDelete",this.handleOnRightDelete),o.EventEmitter.subscribe("BX.UI.AccessRights.V2:additionalRightData",this.getRightDataForSave),o.EventEmitter.subscribe("BX.UI.AccessRights.V2:afterSave",this.afterSaveRights),o.EventEmitter.subscribe("BX.UI.AccessRights.V2:onResetState",this.handleResetState),o.EventEmitter.subscribe("BIConnector.GroupPopup:onGroupUpdated",this.handleGroupChange),o.EventEmitter.subscribe("BIConnector.GroupPopup:onPopupClose",this.handleGroupPopupClose),o.EventEmitter.subscribe("BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide",this.handleDashboardScopeSelectorClose),o.EventEmitter.subscribe("BIConnector.GroupPopup.ScopeSelector:onDialogHide",this.handleScopeSelectorClose),o.EventEmitter.subscribe("BIConnector.GroupPopup.DashboardSelector:onDialogHide",this.handleDashboardListEdit),o.EventEmitter.subscribe("BIConnector.GroupPopup.DashboardList:onDashboardRemove",this.handleDashboardListEdit)},beforeUnmount:function(){o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:onSectionHeaderClick",this.handleOnSectionHeaderClick),o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:onRightClick",this.handleOnRightClick),o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:onRightDelete",this.handleOnRightDelete),o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:additionalRightData",this.getRightDataForSave),o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:afterSave",this.afterSaveRights),o.EventEmitter.unsubscribe("BX.UI.AccessRights.V2:onResetState",this.handleResetState),o.EventEmitter.unsubscribe("BIConnector.GroupPopup:onGroupUpdated",this.handleGroupChange),o.EventEmitter.unsubscribe("BIConnector.GroupPopup:onPopupClose",this.handleGroupPopupClose),o.EventEmitter.unsubscribe("BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide",this.handleDashboardScopeSelectorClose),o.EventEmitter.unsubscribe("BIConnector.GroupPopup.ScopeSelector:onDialogHide",this.handleScopeSelectorClose),o.EventEmitter.unsubscribe("BIConnector.GroupPopup.DashboardSelector:onDialogHide",this.handleDashboardListEdit),o.EventEmitter.unsubscribe("BIConnector.GroupPopup.DashboardList:onDashboardRemove",this.handleDashboardListEdit)},computed:{},methods:{handleDashboardScopeSelectorClose:function(e){var t;null!==(t=e.getData())&&void 0!==t&&t.isScopeListEdited&&n.PermissionsAnalytics.sendGroupDashboardScopeEditAnalytics(n.PermissionsAnalyticsSource.permissionsSlider)},handleDashboardListEdit:function(e){var t;null!==(t=e.getData())&&void 0!==t&&t.isDashboardListEdited&&n.PermissionsAnalytics.sendGroupDashboardEditAnalytics(n.PermissionsAnalyticsSource.permissionsSlider)},handleScopeSelectorClose:function(e){var t;null!==(t=e.getData())&&void 0!==t&&t.isScopeListEdited&&n.PermissionsAnalytics.sendGroupScopeEditAnalytics(n.PermissionsAnalyticsSource.permissionsSlider)},handleGroupPopupClose:function(e){var t=e.getData(),r=null==t?void 0:t.group,i=null==t?void 0:t.isTitleEdited,o=null==t?void 0:t.isDashboardListEdited,s=null==t?void 0:t.isScopeListEdited;r&&(i||o||s)&&n.PermissionsAnalytics.sendGroupActionAnalytics(n.PermissionsAnalyticsSource.permissionsSlider,!1,o,s)},handleOnSectionHeaderClick:function(e){n.PermissionsAnalytics.sendClickGroupActionAnalytics(n.PermissionsAnalyticsSource.permissionsSlider,!0);var t=e.getData();if("SECTION_RIGHTS_GROUP"===t.section.sectionCode){for(var i=new Set(t.section.rights.keys()),a=0;i.has("new_G".concat(a));)a++;var u="new_G".concat(a),d=function(e){for(var t=1;t<arguments.length;t++){var r=null!=arguments[t]?arguments[t]:{};t%2?c(Object(r),!0).forEach((function(t){babelHelpers.defineProperty(e,t,r[t])})):Object.getOwnPropertyDescriptors?Object.defineProperties(e,Object.getOwnPropertyDescriptors(r)):c(Object(r)).forEach((function(t){Object.defineProperty(e,t,Object.getOwnPropertyDescriptor(r,t))}))}return e}({},this.$store.getters.newGroupPermissions);d.id=u;var l={id:d.id,name:this.$Bitrix.Loc.getMessage("BI_GROUP_NEW_TITLE"),type:r.GroupType.custom,dashboardIds:[],scopes:[]};this.$store.commit("addGroup",l),o.EventEmitter.emit("BX.UI.AccessRights.V2:addRight",{guid:this.$store.getters.appGuid,sectionCode:"SECTION_RIGHTS_GROUP",right:d}),this.right=d,r.DashboardGroup.open({groupId:s.Runtime.clone(d.id),groups:s.Runtime.clone(this.$store.getters.groups),dashboards:s.Runtime.clone(this.$store.getters.dashboards),saveEnabled:!1,user:this.$store.getters.user})}},handleOnRightClick:function(e){n.PermissionsAnalytics.sendClickGroupActionAnalytics(n.PermissionsAnalyticsSource.permissionsSlider,!1);var t=e.getData();if(t.right){this.right=t.right;var i=t.right.id;r.DashboardGroup.open({groupId:s.Runtime.clone(i),groups:s.Runtime.clone(this.$store.getters.groups),dashboards:s.Runtime.clone(this.$store.getters.dashboards),saveEnabled:!1,user:this.$store.getters.user})}},handleOnRightDelete:function(e){n.PermissionsAnalytics.sendGroupDeleteAnalytics(n.PermissionsAnalyticsSource.permissionsSlider);var t=e.getData();t.right&&this.$store.commit("deleteGroup",t.right.id)},handleGroupChange:function(e){var t,r,n=null===(t=e.getData())||void 0===t?void 0:t.group,i=null===(r=e.getData())||void 0===r?void 0:r.dashboards;if(n||i){var a=this.right;a&&(this.$store.commit("updateGroup",{group:n,dashboards:i}),o.EventEmitter.emit("BX.UI.AccessRights.V2:updateRightTitle",{guid:this.$store.getters.appGuid,sectionCode:"SECTION_RIGHTS_GROUP",rightId:a.id,rightTitle:n.name}),o.EventEmitter.emit("BX.UI.AccessRights.V2:updateRightSubtitle",{guid:this.$store.getters.appGuid,sectionCode:"SECTION_RIGHTS_GROUP",rightId:a.id,rightSubtitle:s.Loc.getMessagePlural("BI_GROUP_SUBTITLE",n.dashboardIds.length,{"#COUNT#":n.dashboardIds.length})}))}},getRightDataForSave:function(e){var t=e.getData();if(t.right){var r=t.right.id,n=this.$store.getters.groupForSave(r);n&&(t.additionalRightData={group:n},e.setCompatData(t))}return e},afterSaveRights:function(e){var t,r=this,n=e.getData();if(n.accessRights){var i,o,s,u,c,d=babelHelpers.toConsumableArray(null!==(i=null===(o=n.accessRights)||void 0===o||null===(s=o.get("SECTION_RIGHTS_GROUP"))||void 0===s||null===(u=s.rights)||void 0===u?void 0:u.values())&&void 0!==i?i:[]),l=new Set(d.map((function(e){return e.id}))),h=new Set,p=this.$store.getters.groups,f=a(this.$store.getters.groups);try{for(f.s();!(c=f.n()).done;){var g=c.value;h.add(g.id)}}catch(e){f.e(e)}finally{f.f()}var b=p.filter((function(e){return!l.has(e.id)})),v=d.filter((function(e){return!h.has(e.id)}));if(b.length>0&&v.length>0){var m,S=a(b);try{var E=function(){var e=m.value,t=v.filter((function(t){return t.title===e.name})).map((function(e){return e.id}));1===t.length?r.$store.commit("updateGroupId",{oldId:e.id,newId:t[0]}):window.location.reload()};for(S.s();!(m=S.n()).done;)E()}catch(e){S.e(e)}finally{S.f()}}this.$store.commit("setStateAsInitial")}null!==(t=parent)&&void 0!==t&&t.BX&&parent.BX.Event.EventEmitter.emit("BIConnector.AccessRights:onRightsSaved")},handleResetState:function(){this.$store.commit("resetState")}},template:"<template/>"};function l(e,t){var r="undefined"!=typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(!r){if(Array.isArray(e)||(r=function(e,t){if(!e)return;if("string"==typeof e)return h(e,t);var r=Object.prototype.toString.call(e).slice(8,-1);"Object"===r&&e.constructor&&(r=e.constructor.name);if("Map"===r||"Set"===r)return Array.from(e);if("Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r))return h(e,t)}(e))||t&&e&&"number"==typeof e.length){r&&(e=r);var n=0,i=function(){};return{s:i,n:function(){return n>=e.length?{done:!0}:{done:!1,value:e[n++]}},e:function(e){throw e},f:i}}throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}var o,s=!0,a=!1;return{s:function(){r=r.call(e)},n:function(){var e=r.next();return s=e.done,e},e:function(e){a=!0,o=e},f:function(){try{s||null==r.return||r.return()}finally{if(a)throw o}}}}function h(e,t){(null==t||t>e.length)&&(t=e.length);for(var r=0,n=new Array(t);r<t;r++)n[r]=e[r];return n}var p=function(){function e(){babelHelpers.classCallCheck(this,e)}return babelHelpers.createClass(e,null,[{key:"buildStore",value:function(t){return e.initialGroups=s.Runtime.clone(t.groups),e.initialDashboards=s.Runtime.clone(t.dashboards),i.createStore({state:function(){return t},mutations:{addGroup:function(e,t){e.groups.push(t)},updateGroup:function(t,r){var n=r.group,i=r.dashboards,o=t.groups.findIndex((function(e){return e.id===n.id}));if(!(o<0)){var s=t.groups[o];s.name=n.name,s.scopes=n.scopes,s.dashboardIds=n.dashboardIds,t.dashboards=i,e.checkModifiedGroups(t.groups,t.dashboards,t.appGuid)}},updateGroupId:function(e,t){var r=e.groups.find((function(e){return e.id===t.oldId}));r&&(r.id=t.newId)},deleteGroup:function(e,t){e.groups=e.groups.filter((function(e){return e.id!==t}))},resetState:function(t){t.groups=e.initialGroups,t.dashboards=e.initialDashboards},setStateAsInitial:function(t){e.initialGroups=t.groups,e.initialDashboards=t.dashboards}},getters:{user:function(e){return e.user},newGroupPermissions:function(e){return e.newGroupPermissions},groups:function(e){return e.groups},group:function(e){return function(t){var r=s.Runtime.clone(e.groups.find((function(e){return e.id===t})));return r||null}},groupForSave:function(e){return function(t){var r=s.Runtime.clone(e.groups.find((function(e){return e.id===t})));if(!r)return null;r.dashboards=[];var n,i=l(r.dashboardIds);try{for(i.s();!(n=i.n()).done;){var o=n.value;r.dashboards.push(e.dashboards.get(o))}}catch(e){i.e(e)}finally{i.f()}return delete r.dashboardIds,r}},dashboards:function(e){return e.dashboards},dashboardScopes:function(e){return function(t){var r,n;return null!==(r=null===(n=e.dashboards.get(t))||void 0===n?void 0:n.scopes)&&void 0!==r?r:null}},appGuid:function(e){return e.appGuid}}})}},{key:"checkModifiedGroups",value:function(t,r,n){var i,s=new Set,a=l(t);try{var u=function(){var t=i.value,r=e.initialGroups.find((function(e){return e.id===t.id}));return r?t.name!==r.name||r.dashboardIds.length!==t.dashboardIds.length?(s.add(t.id),"continue"):void(e.areSetsEqual(new Set(r.scopes.map((function(e){return e.code}))),new Set(t.scopes.map((function(e){return e.code}))))||s.add(t.id)):(s.add(t.id),"continue")};for(a.s();!(i=a.n()).done;)u()}catch(e){a.e(e)}finally{a.f()}var c,d=new Set,h=l(r.values());try{for(h.s();!(c=h.n()).done;){var p=c.value,f=e.initialDashboards.get(p.id);f?e.areSetsEqual(new Set(f.scopes.map((function(e){return e.code}))),new Set(p.scopes.map((function(e){return e.code}))))||d.add(p.id):d.add(p.id)}}catch(e){h.e(e)}finally{h.f()}var g,b=l(t);try{for(b.s();!(g=b.n()).done;){var v,m=g.value,S=!1,E=l(m.dashboardIds);try{for(E.s();!(v=E.n()).done;){var y=v.value;S=S||d.has(y)}}catch(e){E.e(e)}finally{E.f()}o.EventEmitter.emit("BX.UI.AccessRights.V2:markRightAsModified",{guid:n,sectionCode:"SECTION_RIGHTS_GROUP",rightId:m.id,isModified:s.has(m.id)||S})}}catch(e){b.e(e)}finally{b.f()}}},{key:"areSetsEqual",value:function(e,t){if(e.size!==t.size)return!1;var r,n=l(e);try{for(n.s();!(r=n.n()).done;){var i=r.value;if(!t.has(i))return!1}}catch(e){n.e(e)}finally{n.f()}return!0}}]),e}(),f=function(){function e(){babelHelpers.classCallCheck(this,e)}return babelHelpers.createClass(e,null,[{key:"init",value:function(e){var r=e.newGroupPermissions,n=e.dashboardGroups,i=e.dashboards,o=e.user,s=e.appGuid,a={groups:n,dashboards:new Map(Object.entries(i).map((function(e){var t=babelHelpers.slicedToArray(e,2),r=t[0],n=t[1];return[Number(r),n]}))),newGroupPermissions:r,appGuid:s,user:o},u=t.BitrixVue.createApp({name:"BIConnectorRights",data:function(){return{}},components:{PermissionsApp:d},computed:{componentName:function(){return d}},template:"\n\t\t\t\t<PermissionsApp/>\n\t\t\t"}),c=p.buildStore(a);u.use(c),u.mount("#bx-biconnector-role-main2")}}]),e}();e.Permissions=f}(this.BX.BIConnector=this.BX.BIConnector||{},BX.Vue3,BX.BIConnector,BX.BIConnector,BX.Vue3.Vuex,BX.Event,BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, ui_vue3, main_core, main_core_events, biconnector_dashboardGroup, biconnector_tableGroup, biconnector_apacheSupersetAnalytics, ui_vue3_vuex) {
+	'use strict';
+
+	const SectionCode = Object.freeze({
+		dashboardGroup: 'SECTION_RIGHTS_GROUP',
+		tableGroup: 'SECTION_RIGHTS_TABLE_GROUP'
+	});
+
+	// The recognizer repeats the server one (/^T(0|[1-9]\d*)$/D) and adds the new_T<N> placeholder of an unsaved row.
+	const TABLE_RIGHT_ID_PATTERN = /^(new_)?T(0|[1-9]\d*)$/;
+	const NEW_TABLE_RIGHT_ID_PREFIX = 'new_T';
+	const PermissionsApp = {
+		props: {},
+		mounted() {
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:onSectionHeaderClick', this.handleOnSectionHeaderClick);
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:onRightClick', this.handleOnRightClick);
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:onRightDelete', this.handleOnRightDelete);
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:additionalRightData', this.getRightDataForSave);
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:afterSave', this.afterSaveRights);
+			main_core_events.EventEmitter.subscribe('BX.UI.AccessRights.V2:onResetState', this.handleResetState);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup:onGroupUpdated', this.handleGroupChange);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup:onPopupClose', this.handleGroupPopupClose);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', this.handleDashboardScopeSelectorClose);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.ScopeSelector:onDialogHide', this.handleScopeSelectorClose);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardSelector:onDialogHide', this.handleDashboardListEdit);
+			main_core_events.EventEmitter.subscribe('BIConnector.GroupPopup.DashboardList:onDashboardRemove', this.handleDashboardListEdit);
+			main_core_events.EventEmitter.subscribe('BIConnector.TableGroupPopup:onGroupUpdated', this.handleTableGroupChange);
+			main_core_events.EventEmitter.subscribe('BIConnector.TableGroupPopup:onPopupClose', this.handleTableGroupChange);
+		},
+		beforeUnmount() {
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:onSectionHeaderClick', this.handleOnSectionHeaderClick);
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:onRightClick', this.handleOnRightClick);
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:onRightDelete', this.handleOnRightDelete);
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:additionalRightData', this.getRightDataForSave);
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:afterSave', this.afterSaveRights);
+			main_core_events.EventEmitter.unsubscribe('BX.UI.AccessRights.V2:onResetState', this.handleResetState);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup:onGroupUpdated', this.handleGroupChange);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup:onPopupClose', this.handleGroupPopupClose);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardScopeSelector:onDialogHide', this.handleDashboardScopeSelectorClose);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup.ScopeSelector:onDialogHide', this.handleScopeSelectorClose);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardSelector:onDialogHide', this.handleDashboardListEdit);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.GroupPopup.DashboardList:onDashboardRemove', this.handleDashboardListEdit);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.TableGroupPopup:onGroupUpdated', this.handleTableGroupChange);
+			main_core_events.EventEmitter.unsubscribe('BIConnector.TableGroupPopup:onPopupClose', this.handleTableGroupChange);
+		},
+		computed: {},
+		methods: {
+			handleDashboardScopeSelectorClose(event) {
+				if (!event.getData()?.isScopeListEdited) {
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDashboardScopeEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider);
+			},
+			handleDashboardListEdit(event) {
+				if (!event.getData()?.isDashboardListEdited) {
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDashboardEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider);
+			},
+			handleScopeSelectorClose(event) {
+				if (!event.getData()?.isScopeListEdited) {
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupScopeEditAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider);
+			},
+			handleGroupPopupClose(event) {
+				const eventData = event.getData();
+				const group = eventData?.group;
+				const isTitleEdited = eventData?.isTitleEdited;
+				const isDashboardListEdited = eventData?.isDashboardListEdited;
+				const isScopeListEdited = eventData?.isScopeListEdited;
+				if (!group || !isTitleEdited && !isDashboardListEdited && !isScopeListEdited) {
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider, false, isDashboardListEdited, isScopeListEdited);
+			},
+			isTableRightId(rightId) {
+				return TABLE_RIGHT_ID_PATTERN.test(String(rightId));
+			},
+			openTableGroupPopup(groupId) {
+				biconnector_tableGroup.TableGroupPopup.open({
+					groupId,
+					groups: main_core.Runtime.clone(this.$store.getters.tableGroups),
+					tables: main_core.Runtime.clone(this.$store.getters.tables)
+				});
+			},
+			addTableGroupRight(existingRightIds) {
+				let groupIndex = 0;
+				while (existingRightIds.has(`${NEW_TABLE_RIGHT_ID_PREFIX}${groupIndex}`)) {
+					groupIndex++;
+				}
+				const right = {
+					...this.$store.getters.newTableGroupPermissions
+				};
+				right.id = `${NEW_TABLE_RIGHT_ID_PREFIX}${groupIndex}`;
+				const group = {
+					id: right.id,
+					name: main_core.Loc.getMessage('BI_TABLE_GROUP_NAME_NEW'),
+					type: biconnector_tableGroup.TableGroupType.custom,
+					tableCodes: []
+				};
+				this.$store.commit('addTableGroup', group);
+				main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:addRight', {
+					guid: this.$store.getters.appGuid,
+					sectionCode: SectionCode.tableGroup,
+					right
+				});
+				this.openTableGroupPopup(group.id);
+			},
+			handleOnSectionHeaderClick(event) {
+				const eventData = event.getData();
+				if (eventData.section?.sectionCode === SectionCode.tableGroup) {
+					this.addTableGroupRight(new Set(eventData.section.rights.keys()));
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendClickGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider, true);
+				if (eventData.section?.sectionCode === SectionCode.dashboardGroup) {
+					const rightCodes = new Set(eventData.section.rights.keys());
+					let groupIndex = 0;
+					while (rightCodes.has(`new_G${groupIndex}`)) {
+						groupIndex++;
+					}
+					const newGroupCode = `new_G${groupIndex}`;
+					const right = {
+						...this.$store.getters.newGroupPermissions
+					};
+					right.id = newGroupCode;
+					const group = {
+						id: right.id,
+						name: this.$Bitrix.Loc.getMessage('BI_GROUP_NEW_TITLE'),
+						type: biconnector_dashboardGroup.GroupType.custom,
+						dashboardIds: [],
+						scopes: []
+					};
+					this.$store.commit('addGroup', group);
+					main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:addRight', {
+						guid: this.$store.getters.appGuid,
+						sectionCode: SectionCode.dashboardGroup,
+						right
+					});
+					this.right = right;
+					biconnector_dashboardGroup.DashboardGroup.open({
+						groupId: main_core.Runtime.clone(right.id),
+						groups: main_core.Runtime.clone(this.$store.getters.groups),
+						dashboards: main_core.Runtime.clone(this.$store.getters.dashboards),
+						saveEnabled: false,
+						user: this.$store.getters.user
+					});
+				}
+			},
+			handleOnRightClick(event) {
+				const eventData = event.getData();
+				if (eventData.right && this.isTableRightId(eventData.right.id)) {
+					this.openTableGroupPopup(eventData.right.id);
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendClickGroupActionAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider, false);
+				if (eventData.right) {
+					/** @type AccessRightItem */
+					this.right = eventData.right;
+					const rightId = eventData.right.id;
+					biconnector_dashboardGroup.DashboardGroup.open({
+						groupId: main_core.Runtime.clone(rightId),
+						groups: main_core.Runtime.clone(this.$store.getters.groups),
+						dashboards: main_core.Runtime.clone(this.$store.getters.dashboards),
+						saveEnabled: false,
+						user: this.$store.getters.user
+					});
+				}
+			},
+			handleOnRightDelete(event) {
+				const eventData = event.getData();
+				if (eventData.right && this.isTableRightId(eventData.right.id)) {
+					this.$store.commit('deleteTableGroup', eventData.right.id);
+					return;
+				}
+				biconnector_apacheSupersetAnalytics.PermissionsAnalytics.sendGroupDeleteAnalytics(biconnector_apacheSupersetAnalytics.PermissionsAnalyticsSource.permissionsSlider);
+				if (eventData.right) {
+					this.$store.commit('deleteGroup', eventData.right.id);
+				}
+			},
+			handleGroupChange(event) {
+				const group = event.getData()?.group;
+				const dashboards = event.getData()?.dashboards;
+				if (!group && !dashboards) {
+					return;
+				}
+
+				/** @type AccessRightItem */
+				const right = this.right;
+				if (right) {
+					this.$store.commit('updateGroup', {
+						group,
+						dashboards
+					});
+					main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:updateRightTitle', {
+						guid: this.$store.getters.appGuid,
+						sectionCode: SectionCode.dashboardGroup,
+						rightId: right.id,
+						rightTitle: group.name
+					});
+					main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:updateRightSubtitle', {
+						guid: this.$store.getters.appGuid,
+						sectionCode: SectionCode.dashboardGroup,
+						rightId: right.id,
+						rightSubtitle: main_core.Loc.getMessagePlural('BI_GROUP_SUBTITLE', group.dashboardIds.length, {
+							'#COUNT#': group.dashboardIds.length
+						})
+					});
+				}
+			},
+			handleTableGroupChange(event) {
+				const group = event.getData()?.group;
+				if (!group) {
+					return;
+				}
+				this.$store.commit('updateTableGroup', group);
+				main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:updateRightTitle', {
+					guid: this.$store.getters.appGuid,
+					sectionCode: SectionCode.tableGroup,
+					rightId: group.id,
+					rightTitle: group.name
+				});
+				main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:updateRightSubtitle', {
+					guid: this.$store.getters.appGuid,
+					sectionCode: SectionCode.tableGroup,
+					rightId: group.id,
+					rightSubtitle: main_core.Loc.getMessagePlural('BI_TABLE_GROUP_SUBTITLE', group.tableCodes.length, {
+						'#COUNT#': group.tableCodes.length
+					})
+				});
+			},
+			getRightDataForSave(event) {
+				const eventData = event.getData();
+				if (eventData.right) {
+					const rightId = eventData.right.id;
+					const group = this.isTableRightId(rightId) ? this.$store.getters.tableGroupForSave(rightId) : this.$store.getters.groupForSave(rightId);
+					if (group) {
+						eventData.additionalRightData = {
+							group
+						};
+						event.setCompatData(eventData);
+					}
+				}
+				return event;
+			},
+			remapSavedGroupIds(accessRights, sectionCode, groups, updateIdMutation) {
+				const savedRights = [...(accessRights.get(sectionCode)?.rights?.values() ?? [])];
+				const savedRightIds = new Set(savedRights.map(item => item.id));
+				const groupIds = new Set(groups.map(group => group.id));
+				const newGroupsBeforeSave = groups.filter(group => !savedRightIds.has(group.id));
+				const newGroupsAfterSave = savedRights.filter(right => !groupIds.has(right.id));
+				if (newGroupsBeforeSave.length === 0 || newGroupsAfterSave.length === 0) {
+					return;
+				}
+				for (const newGroupBeforeSave of newGroupsBeforeSave) {
+					const possibleNewIds = newGroupsAfterSave.filter(item => item.title === newGroupBeforeSave.name).map(item => item.id);
+					if (possibleNewIds.length === 1) {
+						this.$store.commit(updateIdMutation, {
+							oldId: newGroupBeforeSave.id,
+							newId: possibleNewIds[0]
+						});
+					} else {
+						window.location.reload();
+					}
+				}
+			},
+			afterSaveRights(event) {
+				const eventData = event.getData();
+				if (eventData.accessRights) {
+					this.remapSavedGroupIds(eventData.accessRights, SectionCode.dashboardGroup, this.$store.getters.groups, 'updateGroupId');
+					this.remapSavedGroupIds(eventData.accessRights, SectionCode.tableGroup, this.$store.getters.tableGroups, 'updateTableGroupId');
+					this.$store.commit('setStateAsInitial');
+				}
+				if (parent?.BX) {
+					parent.BX.Event.EventEmitter.emit('BIConnector.AccessRights:onRightsSaved');
+				}
+			},
+			handleResetState() {
+				this.$store.commit('resetState');
+			}
+		},
+		template: '<template/>'
+	};
+
+	/* eslint-disable no-param-reassign */
+	class Store {
+		// eslint-disable-next-line max-lines-per-function
+		static buildStore(defaultValues) {
+			Store.initialGroups = main_core.Runtime.clone(defaultValues.groups);
+			Store.initialDashboards = main_core.Runtime.clone(defaultValues.dashboards);
+			Store.initialTableGroups = main_core.Runtime.clone(defaultValues.tableGroups);
+			return ui_vue3_vuex.createStore({
+				state() {
+					return defaultValues;
+				},
+				mutations: {
+					addGroup(state, group) {
+						state.groups.push(group);
+					},
+					updateGroup(state, data) {
+						const updatedGroup = data.group;
+						const updatedDashboards = data.dashboards;
+						const groupIndex = state.groups.findIndex(item => item.id === updatedGroup.id);
+						if (groupIndex < 0) {
+							return;
+						}
+						const group = state.groups[groupIndex];
+						group.name = updatedGroup.name;
+						group.scopes = updatedGroup.scopes;
+						group.dashboardIds = updatedGroup.dashboardIds;
+						state.dashboards = updatedDashboards;
+						Store.checkModifiedGroups(state.groups, state.dashboards, state.appGuid);
+					},
+					updateGroupId(state, data) {
+						const group = state.groups.find(item => item.id === data.oldId);
+						if (group) {
+							group.id = data.newId;
+						}
+					},
+					deleteGroup(state, groupId) {
+						state.groups = state.groups.filter(group => group.id !== groupId);
+					},
+					addTableGroup(state, group) {
+						state.tableGroups.push(group);
+					},
+					updateTableGroup(state, updatedGroup) {
+						const group = state.tableGroups.find(item => item.id === updatedGroup.id);
+						if (!group) {
+							return;
+						}
+						group.name = updatedGroup.name;
+						group.tableCodes = [...updatedGroup.tableCodes];
+						Store.checkModifiedTableGroups(state.tableGroups, state.appGuid);
+					},
+					updateTableGroupId(state, data) {
+						const group = state.tableGroups.find(item => item.id === data.oldId);
+						if (group) {
+							group.id = data.newId;
+						}
+					},
+					deleteTableGroup(state, groupId) {
+						state.tableGroups = state.tableGroups.filter(group => group.id !== groupId);
+					},
+					resetState(state) {
+						state.groups = Store.initialGroups;
+						state.dashboards = Store.initialDashboards;
+						state.tableGroups = main_core.Runtime.clone(Store.initialTableGroups);
+					},
+					setStateAsInitial(state) {
+						Store.initialGroups = state.groups;
+						Store.initialDashboards = state.dashboards;
+						Store.initialTableGroups = main_core.Runtime.clone(state.tableGroups);
+					}
+				},
+				getters: {
+					user(state) {
+						return state.user;
+					},
+					newGroupPermissions(state) {
+						return state.newGroupPermissions;
+					},
+					groups(state) {
+						return state.groups;
+					},
+					group(state) {
+						return groupId => {
+							const group = main_core.Runtime.clone(state.groups.find(item => item.id === groupId));
+							if (!group) {
+								return null;
+							}
+							return group;
+						};
+					},
+					groupForSave(state) {
+						return groupId => {
+							const group = main_core.Runtime.clone(state.groups.find(item => item.id === groupId));
+							if (!group) {
+								return null;
+							}
+							group.dashboards = [];
+							for (const dashboardId of group.dashboardIds) {
+								group.dashboards.push(state.dashboards.get(dashboardId));
+							}
+							delete group.dashboardIds;
+							return group;
+						};
+					},
+					dashboards(state) {
+						return state.dashboards;
+					},
+					dashboardScopes(state) {
+						return dashboardId => state.dashboards.get(dashboardId)?.scopes ?? null;
+					},
+					appGuid(state) {
+						return state.appGuid;
+					},
+					newTableGroupPermissions(state) {
+						return state.newTableGroupPermissions;
+					},
+					tableGroups(state) {
+						return state.tableGroups;
+					},
+					tables(state) {
+						return state.tables;
+					},
+					tableGroup(state) {
+						return groupId => {
+							const group = state.tableGroups.find(item => item.id === groupId);
+							return group ? main_core.Runtime.clone(group) : null;
+						};
+					},
+					tableGroupForSave(state) {
+						return groupId => {
+							const group = state.tableGroups.find(item => item.id === groupId);
+							if (!group) {
+								return null;
+							}
+							return {
+								id: group.id,
+								name: group.name,
+								type: group.type,
+								tableCodes: main_core.Runtime.clone(group.tableCodes)
+							};
+						};
+					}
+				}
+			});
+		}
+		static checkModifiedGroups(currentGroups, currentDashboards, appGuid) {
+			const modifiedGroupIds = new Set();
+			for (const currentGroup of currentGroups) {
+				const initialGroup = Store.initialGroups.find(item => item.id === currentGroup.id);
+				if (!initialGroup) {
+					modifiedGroupIds.add(currentGroup.id);
+					continue;
+				}
+				if (currentGroup.name !== initialGroup.name) {
+					modifiedGroupIds.add(currentGroup.id);
+					continue;
+				}
+				if (initialGroup.dashboardIds.length !== currentGroup.dashboardIds.length) {
+					modifiedGroupIds.add(currentGroup.id);
+					continue;
+				}
+				if (!Store.areSetsEqual(new Set(initialGroup.scopes.map(scope => scope.code)), new Set(currentGroup.scopes.map(scope => scope.code)))) {
+					modifiedGroupIds.add(currentGroup.id);
+				}
+			}
+			const modifiedDashboardIds = new Set();
+			for (const currentDashboard of currentDashboards.values()) {
+				const initialDashboard = Store.initialDashboards.get(currentDashboard.id);
+				if (!initialDashboard) {
+					modifiedDashboardIds.add(currentDashboard.id);
+					continue;
+				}
+				if (!Store.areSetsEqual(new Set(initialDashboard.scopes.map(scope => scope.code)), new Set(currentDashboard.scopes.map(scope => scope.code)))) {
+					modifiedDashboardIds.add(currentDashboard.id);
+				}
+			}
+			for (const group of currentGroups) {
+				let hasModifiedDashboards = false;
+				for (const dashboardId of group.dashboardIds) {
+					hasModifiedDashboards = hasModifiedDashboards || modifiedDashboardIds.has(dashboardId);
+				}
+				main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:markRightAsModified', {
+					guid: appGuid,
+					sectionCode: SectionCode.dashboardGroup,
+					rightId: group.id,
+					isModified: modifiedGroupIds.has(group.id) || hasModifiedDashboards
+				});
+			}
+		}
+		static checkModifiedTableGroups(currentGroups, appGuid) {
+			for (const currentGroup of currentGroups) {
+				const initialGroup = Store.initialTableGroups.find(item => item.id === currentGroup.id);
+				const isModified = !initialGroup || initialGroup.name !== currentGroup.name || !Store.areSetsEqual(new Set(initialGroup.tableCodes), new Set(currentGroup.tableCodes));
+				main_core_events.EventEmitter.emit('BX.UI.AccessRights.V2:markRightAsModified', {
+					guid: appGuid,
+					sectionCode: SectionCode.tableGroup,
+					rightId: currentGroup.id,
+					isModified
+				});
+			}
+		}
+		static areSetsEqual(setA, setB) {
+			if (setA.size !== setB.size) {
+				return false;
+			}
+			for (const item of setA) {
+				if (!setB.has(item)) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	class Permissions {
+		static init(params) {
+			const {
+				newGroupPermissions,
+				dashboardGroups,
+				dashboards,
+				newTableGroupPermissions,
+				tableGroups,
+				tables,
+				user,
+				appGuid
+			} = params;
+			const state = {
+				groups: dashboardGroups,
+				dashboards: new Map(Object.entries(dashboards).map(([key, value]) => [Number(key), value])),
+				newGroupPermissions,
+				tableGroups: tableGroups ?? [],
+				tables: tables ?? [],
+				newTableGroupPermissions,
+				appGuid,
+				user
+			};
+			const permissionsApp = ui_vue3.BitrixVue.createApp({
+				name: 'BIConnectorRights',
+				data() {
+					return {};
+				},
+				components: {
+					PermissionsApp
+				},
+				computed: {
+					componentName() {
+						return PermissionsApp;
+					}
+				},
+				template: `
+				<PermissionsApp/>
+			`
+			});
+			const store = Store.buildStore(state);
+			permissionsApp.use(store);
+			permissionsApp.mount('#bx-biconnector-role-main2');
+		}
+	}
+
+	exports.Permissions = Permissions;
+
+})(this.BX.BIConnector = this.BX.BIConnector || {}, BX.Vue3, BX, BX.Event, BX.BIConnector, BX.BIConnector, BX.BIConnector, BX.Vue3.Vuex);
 //# sourceMappingURL=script.js.map

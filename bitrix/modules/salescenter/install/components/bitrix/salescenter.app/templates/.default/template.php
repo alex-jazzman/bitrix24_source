@@ -34,6 +34,7 @@ Extension::load([
 	'ui.entity-editor',
 	'ui.hint',
 	'bitrix24.phoneverify',
+	'applayout',
 ]);
 
 if (Loader::includeModule('location'))

@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\UI\Buttons;
+
 $containerID = 'tasks_group_selector';
 if (isset($arResult['GROUPS'][$arParams['GROUP_ID']]))
 {
@@ -17,18 +19,26 @@ else
 		'text' => \GetMessage('TASKS_BTN_GROUP_WO')
 	);
 }
+
+\Bitrix\Main\UI\Extension::load(['ui.buttons']);
+
+$groupBtn = new Buttons\Button([
+	'text' => $currentGroup['text'],
+	'color' => Buttons\Color::LIGHT_BORDER,
+	'round' => true,
+	'noCaps' => true,
+	'dropdown' => true,
+]);
+$groupBtn->addAttribute('id', $containerID);
+$groupBtn->addAttribute('data-testid', 'tasks-filter-group-btn');
+$groupBtn->addAttribute('aria-label', \GetMessage('TASKS_FILTER_GROUP_BTN_ARIA_LABEL', ['#NAME#' => $currentGroup['text']]));
+$groupBtn->addAttribute('aria-haspopup', 'menu');
+$groupBtn->addAttribute('aria-expanded', 'false');
 ?>
 
 <div class="pagetitle-container pagetitle-flexible-space">
-	<div id="<?=htmlspecialcharsbx($containerID)?>"
-		 class="tasks-interface-toolbar-button-container">
-		<div class="webform-small-button webform-small-button-transparent webform-small-button-dropdown">
-			<span class="webform-small-button-text"
-				  id="<?=htmlspecialcharsbx($containerID)?>_text">
-					<?=htmlspecialcharsbx($currentGroup['text'])?>
-				</span>
-			<span class="webform-small-button-icon"></span>
-		</div>
+	<div class="tasks-interface-toolbar-button-container">
+		<?= $groupBtn->render() ?>
 	</div>
 </div>
 
@@ -56,7 +66,8 @@ else
 				groupLimit: <?= intval($arParams['GROUP_SELECTOR_LIMIT'])?>,
 				messages: {
 					TASKS_BTN_GROUP_WO: "<?= \GetMessageJS('TASKS_BTN_GROUP_WO')?>",
-					TASKS_BTN_GROUP_SELECT: "<?= \GetMessageJS('TASKS_BTN_GROUP_SELECT')?>"
+					TASKS_BTN_GROUP_SELECT: "<?= \GetMessageJS('TASKS_BTN_GROUP_SELECT')?>",
+					TASKS_FILTER_GROUP_BTN_ARIA_LABEL: "<?= \GetMessageJS('TASKS_FILTER_GROUP_BTN_ARIA_LABEL')?>"
 				},
 				offsetLeft: <?= $arParams['PROJECT_VIEW'] === 'Y' ? 19 : 0 ?>
 			});

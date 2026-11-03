@@ -9,7 +9,7 @@ use \Bitrix\Main\Localization\Loc;
 return array(
 	'code' => 'news-detail',
 	'section' => ['dynamic', 'dynamic:detail', 'dynamic:socialnetwork:livefeed'],
-	'type' => ['page', 'knowledge', 'group'],
+	'type' => ['page', 'knowledge', 'group', 'vibe'],
 	'name' => Loc::getMessage('LANDING_DEMO_NEWS_DETAIL-NAME'),
 	'description' => Loc::getMessage('LANDING_DEMO_NEWS_DETAIL-DESC'),
 	'publication' => true,

@@ -14,7 +14,8 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 	const { Feature } = require('im/messenger/lib/feature');
 	const { runAttachFromProject } = require('im/messenger/controller/attach-chat/flow');
 	const { ChatService } = require('im/messenger/provider/services/chat');
-	const { DialogType, CopilotRoleType, OpenDialogContextType } = require('im/messenger/const');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
+	const { Analytics, DialogType, CopilotRoleType, OpenDialogContextType } = require('im/messenger/const');
 	const { MenuVisibility } = require('im/messenger/controller/dialog-creator/menu-visibility');
 
 	const { CollabEntityCreationSelector } = require('im/messenger/controller/collab-entity-creation-selector/src/selector');
@@ -69,6 +70,8 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 						return;
 					}
 
+					this.#sendCreateClickAnalytics(Analytics.Event.clickCreateTask);
+
 					this.#openTaskCreationWidget(projectData)
 						.catch((error) => {
 							Notification.showErrorToast();
@@ -95,6 +98,8 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 						return;
 					}
 
+					this.#sendCreateClickAnalytics(Analytics.Event.clickCreateEvent);
+
 					this.#openCalendarCreationWidget(projectData)
 						.catch((error) => {
 							Notification.showErrorToast();
@@ -113,6 +118,12 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 				iconType: IconType.groupChat,
 				text: Loc.getMessage('IMMOBILE_COLLAB_ENTITY_CREATION_WIDGET_GROUP_CHAT_ITEM_TITLE'),
 				onClick: () => {
+					AnalyticsService.getInstance().sendStartCreation({
+						category: Analytics.Category.project,
+						type: Analytics.Type.chat,
+						section: Analytics.Section.projectTab,
+					});
+
 					const createGroupChat = new CreateGroupChat(this.parentChatId);
 					createGroupChat.open({
 						selectorShowWidgetParams: {
@@ -168,6 +179,12 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 				iconType: IconType.copilot,
 				text: Loc.getMessageWithCopilotBotName('IMMOBILE_COLLAB_ENTITY_CREATION_WIDGET_COPILOT_ITEM_TITLE'),
 				onClick: () => {
+					AnalyticsService.getInstance().sendStartCreation({
+						category: Analytics.Category.project,
+						type: Analytics.Type.copilot,
+						section: Analytics.Section.projectTab,
+					});
+
 					const chatService = new ChatService();
 					chatService.createCopilot({
 						type: DialogType.copilot.toUpperCase(),
@@ -234,6 +251,14 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 				name: dialog.name,
 				avatar: dialog.avatar
 			};
+		}
+
+		/**
+		 * @param {string} event
+		 */
+		#sendCreateClickAnalytics(event)
+		{
+			AnalyticsService.getInstance().sendProjectTabCreateClick({ event });
 		}
 
 		/**

@@ -38,5 +38,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setGroups([ ActivityGroup::CLIENT_BASE->value ])
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setIcon(Outline::BLACK_LIST->name)
+	->set('NODE_DESCRIPTION', Loc::getMessage('CRM_EXA_NODE_DESCRIPTION') ?? '')
 	->toArray()
 ;

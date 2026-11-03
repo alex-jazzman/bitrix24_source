@@ -67,7 +67,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this._showEmptyFields = BX.prop.getBoolean(this._settings, "showEmptyFields", false);
 		this._personalViewAllowed = BX.prop.getBoolean(this._settings, "personalViewAllowed", true);
 
-		this.hostColumnForQuickEditorId = this?._settings?.hostColumnForQuickEditorId ?? null;
+		const hostColumnForQuickEditorId = this._settings.hostColumnForQuickEditorId;
+		this.hostColumnForQuickEditorId = BX.Type.isStringFilled(hostColumnForQuickEditorId)
+			? hostColumnForQuickEditorId
+			: null
+		;
 		this.hostColumnForQuickEditor =
 			!BX.Type.isNull(this.hostColumnForQuickEditorId)
 				? BX.CRM.Kanban.Grid.getInstance().getColumn(this.hostColumnForQuickEditorId)
@@ -1044,6 +1048,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	{
 		return BX.prop.getObject(this._settings, "attributeConfig", null);
 	};
+	BX.Crm.EntityEditor.prototype.getAiFillPolicySettings = function()
+	{
+		return BX.prop.getObject(this._settings, "aiFillPolicySettings", null);
+	};
 	//endregion
 	//region D&D
 	BX.Crm.EntityEditor.prototype.onDrop = function(dragContainer, draggedItem, x, y)
@@ -1141,7 +1149,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		}
 	};
 	BX.Crm.EntityEditor.prototype.registerSaveAnalyticsEvent = function(status) {
-		BX.Crm.EntityEditor.superclass.registerSaveAnalyticsEvent.apply(this, [status]);
+		sendSaveAnalytics.call(this, status);
 
 		trySendAnalyticsIfEntityClose.call(this, status);
 	};
@@ -1170,6 +1178,50 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		this.items[self.getId()] = self;
 		return self;
 	};
+}
+
+// repeats BX.UI.EntityEditor.registerSaveAnalyticsEvent: it sends the event before returning, too late to clean p4 up
+function sendSaveAnalytics(status)
+{
+	const analyticsConfig = BX.prop.getObject(this._settings, 'analyticsConfig', {});
+
+	let analyticsData = BX.prop.getObject(analyticsConfig, 'data', null);
+	if (!BX.Type.isPlainObject(analyticsData))
+	{
+		return;
+	}
+
+	analyticsData.status = status;
+
+	if (status === 'success' && this._isNew && this._entityId > 0)
+	{
+		analyticsData.p2 = `id_${this._entityId}`;
+	}
+
+	if (BX.prop.getBoolean(analyticsConfig, 'appendParamsFromCurrentUrl', false))
+	{
+		const currentUrl = new BX.Uri(decodeURI(window.location.href));
+
+		analyticsData = {
+			...(currentUrl.getQueryParam('st') || {}),
+			...analyticsData,
+		};
+	}
+
+	dropLegacyWorkplaceP4(analyticsData);
+
+	BX.UI.Analytics.sendData(analyticsData);
+}
+
+function dropLegacyWorkplaceP4(analyticsData)
+{
+	const isSaveEvent = analyticsData.event === 'entity_create' || analyticsData.event === 'entity_edit';
+	const isLegacyWorkplace = analyticsData.p4 === 'myCompany_0' || analyticsData.p4 === 'myCompany_1';
+
+	if (isSaveEvent && isLegacyWorkplace)
+	{
+		delete analyticsData.p4;
+	}
 }
 
 function trySendAnalyticsIfEntityClose(status)

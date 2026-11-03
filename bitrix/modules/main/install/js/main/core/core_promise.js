@@ -12,6 +12,15 @@
 
 	var BX = window.BX;
 
+	/**
+	 * A custom deferred implementation written before native Promise was available.
+	 * It is not Promises/A+ compliant: then() returns a preallocated next promise
+	 * instead of a new one, and settling is done from the outside via
+	 * fulfill(), reject() and resolve().
+	 *
+	 * @deprecated
+	 * @use Promise
+	 */
 	BX.Promise = function(fn, ctx) // fn is future-reserved
 	{
 		this.state = null;

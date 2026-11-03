@@ -1,14 +1,14 @@
 import { Color } from 'im.v2.const';
 
 import { AvatarSize } from '../../const/const';
-import { Avatar } from '../base/avatar';
+import { LegacyAvatar } from '../base/legacy-avatar';
 
 import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const ExtranetChatAvatar = {
 	name: 'ExtranetChatAvatar',
-	components: { Avatar },
+	components: { LegacyAvatar },
 	props:
 	{
 		dialogId: {
@@ -60,12 +60,12 @@ export const ExtranetChatAvatar = {
 		},
 	},
 	template: `
-		<Avatar
+		<LegacyAvatar
 			:dialogId="dialogId"
-			:title="dialogName" 
-			:size="size" 
-			:url="dialogAvatarUrl" 
-			:backgroundColor="extranetBackgroundColor" 
+			:title="dialogName"
+			:size="size"
+			:url="dialogAvatarUrl"
+			:backgroundColor="extranetBackgroundColor"
 		/>
 	`,
 };

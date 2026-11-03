@@ -34,9 +34,16 @@ export function createTemplatePreparationController(
 ): TemplatePreparationController
 {
 	let sequence = 0;
+	let isPending = false;
 	let lastReference: TemplateReference | null = null;
 
 	const select = (reference: TemplateReference): void => {
+		if (isPending)
+		{
+			return;
+		}
+
+		isPending = true;
 		lastReference = reference;
 		const requestSequence = ++sequence;
 		params.onPendingChange(true);
@@ -56,11 +63,19 @@ export function createTemplatePreparationController(
 			editor: params.editor,
 			state: params.state,
 			formId: params.formId,
+			isCurrent: (): boolean => sequence === requestSequence,
 		}, reference).then(
 			(result): void => {
 				if (sequence === requestSequence)
 				{
-					params.onResult(result);
+					if (result.status === 'failed')
+					{
+						params.onError();
+					}
+					else
+					{
+						params.onResult(result);
+					}
 				}
 			},
 			(error): void => {
@@ -72,6 +87,7 @@ export function createTemplatePreparationController(
 		).finally((): void => {
 			if (sequence === requestSequence)
 			{
+				isPending = false;
 				params.onPendingChange(false);
 			}
 		});

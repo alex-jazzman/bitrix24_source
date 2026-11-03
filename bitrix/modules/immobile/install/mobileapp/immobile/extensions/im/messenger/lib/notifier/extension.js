@@ -8,10 +8,8 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 
 	const { Theme } = require('im/lib/theme');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const {
-		EventType,
-		RecentTabByNavigationTab,
-	} = require('im/messenger/const');
+	const { EventType } = require('im/messenger/const');
+	const { FolderComposition } = require('im/messenger/controller/recent/service/lib/folder-composition');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
@@ -71,8 +69,8 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 			{
 				const sections = options.recentConfig.sections;
 				const tabId = serviceLocator.get('recent-manager').getActiveRecentId();
-				const currentRecentTab = RecentTabByNavigationTab[tabId];
-				if (sections.includes(currentRecentTab))
+				const tabSections = FolderComposition.getSectionsByTabId(tabId);
+				if (sections.some((section) => tabSections.has(section)))
 				{
 					return false;
 				}

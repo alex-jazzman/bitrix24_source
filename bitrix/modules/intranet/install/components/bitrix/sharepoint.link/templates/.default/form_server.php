@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die(); 
 
 __IncludeLang($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/lang/'.LANGUAGE_ID.'/template.php');
+$service = is_array($arResult['SERVICE'] ?? null) ? $arResult['SERVICE'] : [];
 ?>
 
 <script>
@@ -48,6 +49,7 @@ function _SLtestParams()
 	
 	var arParams = {
 		mode: 'test',
+		ID: <?=(int)$arParams['IBLOCK_ID']?>,
 		sp_server: form.sp_server.value,
 		sp_user: form.sp_user.value,
 		sp_pass: form.sp_pass.value,
@@ -58,7 +60,7 @@ function _SLtestParams()
 	SLnextButton.disable();
 	
 	var url = '<?=CUtil::JSEscape($arResult['SELF'])?>';
-	BX.ajax.get(url, arParams, function() {
+	BX.ajax.post(url, arParams, function() {
 		SLnextButton.enable();
 		BX.closeWait();
 		bParamsChanged = false;
@@ -81,19 +83,26 @@ var SLnextButton = new BX.CWindowButton({
 	{
 		var form = this.parentWindow.GetForm();
 
-		var url = '<?=CUtil::JSEscape($arResult['SELF'])?>?mode=edit&ID=<?=$arParams['IBLOCK_ID']?>';
+		var url = '<?=CUtil::JSEscape($arResult['SELF'])?>';
+		var arParams = {
+			mode: 'edit',
+			ID: <?=(int)$arParams['IBLOCK_ID']?>,
+			sessid: BX.bitrix_sessid()
+		};
 		
 		var steps = 5;
 		
 		if (form.sp_server.value.length > 0 && form.sp_server.value != 'http://')
 		{
-			url += '&server=' + BX.util.urlencode(form.sp_server.value) + '&user=' + BX.util.urlencode(form.sp_user.value) + '&pass=' + BX.util.urlencode(form.sp_pass.value);
+			arParams.server = form.sp_server.value;
+			arParams.user = form.sp_user.value;
+			arParams.pass = form.sp_pass.value;
 			step = 2;
 		}
 		
 		if (window.sp_list_id)
 		{
-			url += '&list_id=' + window.sp_list_id;
+			arParams.list_id = window.sp_list_id;
 			step = 3;
 		}
 		
@@ -112,7 +121,7 @@ var SLnextButton = new BX.CWindowButton({
 					{
 						if (form.sp_interval[i].checked)
 						{
-							url += '&period=' + form.sp_interval[i].value;
+							arParams.period = form.sp_interval[i].value;
 							break;
 						}
 					}
@@ -125,14 +134,12 @@ var SLnextButton = new BX.CWindowButton({
 						val = val.split('|');
 						
 						if (val.length > 0 && val[0].length > 0 && val[1].length > 0)
-							url += '&'+BX.util.urlencode('FIELDS[' + val[0] + ']') + '=' + BX.util.urlencode(val[1]);
+							arParams['FIELDS[' + val[0] + ']'] = val[1];
 					}
 
 				}
 			}
 		}
-		
-		url += '&sessid=' + BX.bitrix_sessid();
 		
 		for (var i=1; i<=steps;i++)
 		{
@@ -146,8 +153,7 @@ var SLnextButton = new BX.CWindowButton({
 				(step == 3 ? '<?=CUtil::JSEscape(GetMessage('SL_FORM_SERVER_WAIT_STEP_3'))?>' : 
 				(step == 4 ? '<?=CUtil::JSEscape(GetMessage('SL_FORM_SERVER_WAIT_STEP_4'))?>' : '')));
 		
-		var url = url.split('?')
-		BX.ajax.post(url[0], url[1], function(data) {
+		BX.ajax.post(url, arParams, function(data) {
 			data = BX.util.trim(data);
 			
 			var cont = BX('step' + step);
@@ -170,7 +176,7 @@ wnd.SetHead('<?=CUtil::JSEscape(GetMessage('SL_FORM_SERVER_STEP_HEAD'))?>');
 wnd.ClearButtons(SLnextButton);
 wnd.SetButtons(SLnextButton);
 </script>
-<form>
+<form autocomplete="off">
 <div id="bx_admin_form">
 <div id="error_message"></div>
 
@@ -182,7 +188,16 @@ wnd.SetButtons(SLnextButton);
 			</tr>
 			<tr>
 				<td class="bx-popup-label bx-width30" valign="top"><?=GetMessage('SL_SETTINGS_CONN_SERVER')?>: </td>
-				<td><input type="text" name="sp_server" value="<?=$arResult['SERVICE']['SP_URL'] ? htmlspecialcharsbx($arResult['SERVICE']['SP_URL']) : 'http://'?>" size="50" onchange="bParamsChanged = true;" onblur="SLtestParams();" />
+				<td>
+					<select name="sp_server" onchange="bParamsChanged = true;" onblur="SLtestParams();"<?=empty($arResult['ALLOWED_ORIGINS']) ? ' disabled' : ''?>>
+						<?if (empty($arResult['ALLOWED_ORIGINS'])):?>
+							<option value=""><?=GetMessage('SL_FORM_SERVER_EMPTY')?></option>
+						<?else:?>
+							<?foreach ($arResult['ALLOWED_ORIGINS'] as $origin):?>
+								<option value="<?=htmlspecialcharsbx($origin)?>"<?=$origin === $arResult['SELECTED_ORIGIN'] ? ' selected' : ''?>><?=htmlspecialcharsbx($origin)?></option>
+							<?endforeach;?>
+						<?endif;?>
+					</select>
 				<div id="sp_server_result_0" style="display: none;"><? ShowError(GetMessage('SL_FORM_SERVER_DOWN'))?></div>
 				<div id="sp_server_result_1" style="display: none;"><? ShowNote(GetMessage('SL_FORM_SERVER_OK'))?></div>
 				</td>
@@ -192,12 +207,12 @@ wnd.SetButtons(SLnextButton);
 			</tr>
 			<tr>
 				<td class="bx-popup-label" valign="top"><?=GetMessage('SL_SETTINGS_CONN_USER')?>: </td>
-				<td><input type="text" name="sp_user" value="<?=htmlspecialcharsbx($arResult['SERVICE']['SP_AUTH_USER'])?>" size="30" onchange="bParamsChanged = true;" onblur="SLtestParams();" /></td>
+				<td><input type="text" name="sp_user" value="<?=htmlspecialcharsbx($service['SP_AUTH_USER'] ?? '')?>" autocomplete="off" size="30" onchange="bParamsChanged = true;" onblur="SLtestParams();" /></td>
 			</tr>
 			<tr>
 				<td class="bx-popup-label" valign="top"><?=GetMessage('SL_SETTINGS_CONN_PASS')?>: </td>
 				<td>
-					<input type="password" name="sp_pass"  value="<?=htmlspecialcharsbx($arResult['SERVICE']['SP_AUTH_PASS'])?>" size="30" onchange="bParamsChanged = true" onblur="SLtestParams();" />
+					<input type="password" name="sp_pass" value="<?=htmlspecialcharsbx($service['SP_AUTH_PASS'] ?? '')?>" autocomplete="new-password" size="30" onchange="bParamsChanged = true" onblur="SLtestParams();" />
 					<input type="checkbox" id="show_pass" onclick="SLshowPass(this.checked)" /> <label for="show_pass"><?=GetMessage('SL_SETTINGS_CONN_PASS_SHOW_SYMBOLS')?></label>
 					<div id="sp_auth_result_0" style="display: none;"><? ShowError(GetMessage('SL_FORM_SERVER_AUTH_FAILED'))?></div>
 					<div id="sp_auth_result_1" style="display: none;"><? ShowNote(GetMessage('SL_FORM_SERVER_AUTH_OK'))?></div>

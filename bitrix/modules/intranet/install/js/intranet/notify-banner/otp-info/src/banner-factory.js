@@ -37,7 +37,7 @@ export class BannerFactory
 
 	createForBlockOtp(type: BannerType, options: Object = {}): Popup
 	{
-		const content = this.#createContent(type, options);
+		const content = this.#createContent(type, { ...options, blockMode: true });
 
 		return PopupWindowManager.create(
 			content.getId(),
@@ -45,7 +45,7 @@ export class BannerFactory
 			{
 				content: this.#renderContent(content),
 				buttons: content.getButtons(),
-				closeByEsc: !content.isTimeEnd(),
+				closeByEsc: false,
 				padding: 24,
 				className: 'intranet-otp-motivating-popup',
 				overlay: true,

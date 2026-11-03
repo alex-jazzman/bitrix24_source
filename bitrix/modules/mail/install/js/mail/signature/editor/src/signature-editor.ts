@@ -29,7 +29,7 @@ export class SignatureEditor
 	constructor(options: SignatureEditorOptions)
 	{
 		this.#options = options;
-		this.#editor = new HtmlEditorAdapter(options.editorInstanceId);
+		this.#editor = new HtmlEditorAdapter(options.editorInstanceId, options.initialContent);
 		this.#editor.syncToolbar();
 		this.#editor.subscribeToViewModeChanges();
 		Dom.attr(options.alertContainer, {
@@ -76,6 +76,7 @@ export class SignatureEditor
 		}
 
 		this.#destroyed = true;
+		this.#editor.destroy();
 		for (const capability of this.#connectedCapabilities)
 		{
 			capability.disconnect?.();

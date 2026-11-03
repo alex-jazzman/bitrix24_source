@@ -17,6 +17,10 @@ export const CommentsOpener = {
 			type: Number,
 			required: true,
 		},
+		contextId: {
+			type: Number,
+			default: 0,
+		},
 		channelId: {
 			type: String,
 			required: true,
@@ -85,7 +89,7 @@ export const CommentsOpener = {
 	},
 	template: `
 		<div class="bx-im-content-comments__container">
-			<CommentsContent :dialogId="commentsDialogId" :channelId="channelId" />
+			<CommentsContent :dialogId="commentsDialogId" :contextId="contextId" :channelId="channelId" />
 		</div>
 	`,
 };

@@ -20,7 +20,7 @@ const AgreementBlock = {
 		}
 	},
 	template: `
-		<div>
+		<div data-testid="crm-agreements-root">
 			<component v-bind:is="'field'"
 				v-for="field in fields"
 				v-bind:key="field.id"
@@ -29,6 +29,7 @@ const AgreementBlock = {
 
 			<b24-popup
 				:mountId="formId"
+				:messages="messages"
 				:show="visible" 
 				:title="title" 
 				:maxWidth="maxWidth" 
@@ -36,23 +37,23 @@ const AgreementBlock = {
 				:isOnTop="true"
 				:scrollDown="true"
 				:scrollDownText="messages.get('consentReadAll')"
-				@hide="reject"
+				@hide="onHide"
 			>
-				<div style="padding: 0 12px 12px;">
-					<div v-html="html"></div>
+				<div data-testid="crm-agreement-popup" style="padding: 0 12px 12px;">
+					<div data-testid="crm-agreement-popup-text" v-html="html"></div>
 					
-					<div class="b24-form-btn-container" style="padding: 12px 0 0;">
+					<div v-if="!isReadOnly()" class="b24-form-btn-container" style="padding: 12px 0 0;">
 						<div class="b24-form-btn-block"
 							@click.prevent="apply"						
 						>
-							<button type="button" class="b24-form-btn">
+							<button data-testid="crm-agreement-popup-accept-btn" type="button" class="b24-form-btn">
 								{{ messages.get('consentAccept') }}
 							</button>
 						</div>
 						<div class="b24-form-btn-block"
 							@click.prevent="reject"						
 						>
-							<button type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
+							<button data-testid="crm-agreement-popup-reject-btn" type="button" class="b24-form-btn b24-form-btn-white b24-form-btn-border">
 								{{ messages.get('consentReject') }}
 							</button>
 						</div>
@@ -71,6 +72,22 @@ const AgreementBlock = {
 		}
 	},
 	methods: {
+		isReadOnly()
+		{
+			return this.field && this.field.isAcceptedBySubmit();
+		},
+		onHide()
+		{
+			if (this.isReadOnly())
+			{
+				this.field = null;
+				this.hidePopup();
+
+				return;
+			}
+
+			this.reject();
+		},
 		apply()
 		{
 			this.field.applyConsent();

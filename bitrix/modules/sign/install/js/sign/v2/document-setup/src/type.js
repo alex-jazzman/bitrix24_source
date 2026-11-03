@@ -44,6 +44,7 @@ export type DocumentDetails = {
 	groupId: number | null;
 	providerCode: string | null,
 	dateSignUntil: Date,
+	inviteMessage: string | null,
 	externalDateCreateSourceType: string | null,
 	externalDateCreate: string | null,
 	hcmLinkDateSettingId: number | null,

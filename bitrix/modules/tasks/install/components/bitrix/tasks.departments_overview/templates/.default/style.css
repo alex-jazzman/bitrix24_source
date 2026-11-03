@@ -18,6 +18,7 @@
 
 .tasks-grid-avatar {
 	display: inline-block;
+	flex: none;
 	vertical-align: middle;
 	width: 20px;
 	height: 20px;
@@ -33,12 +34,14 @@
 }
 
 .tasks-grid-username {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
 	overflow: hidden;
 	vertical-align: middle;
 	color: #525c69;
 	text-decoration: none;
-	white-space: nowrap;
+	white-space: normal;
 	padding: 5px 0;
 	margin: -5px 0;
 }
@@ -46,14 +49,49 @@
 .tasks-grid-username-inner {
 	display: inline-block;
 	vertical-align: middle;
-	height: 20px;
-	line-height: 20px;
+	min-height: 20px;
+	line-height: 1.4;
 	color: #525c69;
+	overflow-wrap: anywhere;
 }
 
 .tasks-grid-username:hover {
 	color: #525c69;
 	text-decoration: none;
+}
+
+.tasks-manage-department-button {
+	-webkit-appearance: none;
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--ui-color-link-primary-base, #2066b0);
+	cursor: pointer;
+	font: inherit;
+	text-align: left;
+}
+
+.tasks-manage-department-button:hover {
+	text-decoration: underline;
+}
+
+.tasks-manage-effective {
+	color: var(--ui-color-text-primary, #333);
+}
+
+.tasks-manage-effective-low {
+	color: var(--ui-color-palette-red-80, #d2000d);
+}
+
+.tasks-manage-department-button:focus-visible,
+.tasks-manage-effective:focus-visible,
+.tasks-grid-username:focus-visible,
+.tasks-manage-counter-total a:focus-visible {
+	border-radius: 2px;
+	outline: 2px solid var(--ui-color-link-primary-base, #2066b0);
+	outline-offset: 2px;
 }
 
 .tasks-grid-wrapper,
@@ -120,12 +158,12 @@
 .tasks-manage-counter-notify-digit {
 	display: inline-block;
 	margin-left: 5px;
-	background-color: rgba(210,0,13,.13);
-	color: #535c69;
-	padding: 0 5px;
+	background-color: var(--ui-color-background-alert, rgba(210, 0, 13, .13));
+	color: var(--ui-color-text-secondary, #535c69);
+	padding: 1px 5px;
 	min-width: 20px;
-	height: 15px;
-	line-height: 15px;
+	min-height: 15px;
+	line-height: 1.4;
 	text-align: center;
 	font-size: 9px;
 	border-radius: 8px;
@@ -159,4 +197,17 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+}
+
+.tasks-departments-overview-status,
+.tasks-overview-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
 }

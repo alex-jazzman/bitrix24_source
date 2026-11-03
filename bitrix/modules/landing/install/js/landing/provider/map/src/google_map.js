@@ -108,13 +108,16 @@ export class GoogleMap extends BaseProvider
 	 */
 	addMarker(options): void
 	{
-		let item = {};
-		item.marker = new google.maps.Marker({
-			position: options.latLng,
-			map: this.mapInstance,
-			draggable: options.draggable,
-		});
+		const item = {
+			latLng: Type.isFunction(options.latLng?.toJSON) ? options.latLng.toJSON() : { ...options.latLng },
+			marker: new google.maps.Marker({
+				position: options.latLng,
+				map: this.mapInstance,
+				draggable: options.draggable,
+			}),
+		};
 
+		item.positionChangeListener = item.marker.addListener('position_changed', () => this.updateMarkerPosition(item));
 		item.form = BX.Landing.getMode() === "edit" ? this.createBalloonEditForm(options, item) : null;
 		item.content = this.createBalloonContent(options);
 
@@ -168,6 +171,7 @@ export class GoogleMap extends BaseProvider
 
 	removeMarker(event): void
 	{
+		event.positionChangeListener?.remove();
 		event.marker.setMap(null);
 		this.markers.remove(event);
 	}
@@ -175,6 +179,7 @@ export class GoogleMap extends BaseProvider
 	clearMarkers(): void
 	{
 		this.markers.forEach(marker => {
+			marker.positionChangeListener?.remove();
 			marker.marker.setMap(null);
 		});
 		this.markers.clear();
@@ -184,32 +189,56 @@ export class GoogleMap extends BaseProvider
 	{
 		this.preventChangeEvent = true;
 		this.mapInstance.setZoom(zoom);
+		this.mapOptions.zoom = zoom;
 	}
 
 	setCenter(center): void
 	{
 		this.preventChangeEvent = true;
 		this.mapInstance.setCenter(center);
+		this.mapOptions.center = Type.isFunction(center?.toJSON) ? center.toJSON() : { ...center };
+	}
+
+	updateMarkerPosition(item): void
+	{
+		const position = item.marker.getPosition();
+		if (position)
+		{
+			Object.assign(item, { latLng: position.toJSON() });
+		}
 	}
 
 	getMarkersValue(): {}
 	{
-		return this.markers.map(function (item)
-		{
+		return this.markers.map((item) => {
+			this.updateMarkerPosition(item);
+
 			return {
 				title: item.form ? item.form.fields[0].getValue() : "",
 				description: item.form ? item.form.fields[1].getValue() : "",
 				showByDefault: item.form ? !!item.form.fields[2].getValue()[0] : "",
-				latLng: item.marker.position.toJSON(),
+				latLng: { ...item.latLng },
 			};
 		});
 	}
 
 	getValue(): {}
 	{
+		const center = this.mapInstance.getCenter();
+		if (center)
+		{
+			this.mapOptions.center = center.toJSON();
+		}
+
+		const zoom = this.mapInstance.getZoom();
+		if (Type.isNumber(zoom))
+		{
+			this.mapOptions.zoom = zoom;
+		}
+
 		return {
-			center: this.mapInstance.getCenter() ? this.mapInstance.getCenter().toJSON() : {},
-			zoom: this.mapInstance.getZoom(),
+			center: { ...this.mapOptions.center },
+			zoom: this.mapOptions.zoom,
 			markers: this.getMarkersValue(),
 		};
 	}

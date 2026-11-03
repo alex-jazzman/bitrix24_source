@@ -1,9 +1,9 @@
 <?php
 
-$MESS['SONET_V2_GRID_SHARED_ROLE_A_PROJECT'] = 'Руководитель проекта';
-$MESS['SONET_V2_GRID_SHARED_ROLE_A_PROJECT_AUTO'] = 'Руководитель проекта (подключён)';
-$MESS['SONET_V2_GRID_SHARED_ROLE_E_PROJECT'] = 'Помощник руководителя проекта';
-$MESS['SONET_V2_GRID_SHARED_ROLE_E_PROJECT_AUTO'] = 'Помощник руководителя проекта (подключён)';
+$MESS['SONET_V2_GRID_SHARED_ROLE_A_PROJECT'] = 'Владелец';
+$MESS['SONET_V2_GRID_SHARED_ROLE_A_PROJECT_AUTO'] = 'Владелец (подключён)';
+$MESS['SONET_V2_GRID_SHARED_ROLE_E_PROJECT'] = 'Модератор';
+$MESS['SONET_V2_GRID_SHARED_ROLE_E_PROJECT_AUTO'] = 'Модератор (подключён)';
 $MESS['SONET_V2_GRID_SHARED_ROLE_K_PROJECT'] = 'Участник проекта';
 $MESS['SONET_V2_GRID_SHARED_ROLE_K_PROJECT_AUTO'] = 'Участник проекта (подключён)';
 $MESS['SONET_V2_GRID_SHARED_ROLE_A_SCRUM'] = 'Владелец продукта';
